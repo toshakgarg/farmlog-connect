@@ -10,11 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as FarmerRouteImport } from './routes/farmer'
 import { Route as SupervisorRouteImport } from './routes/supervisor'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FarmerRoute = FarmerRouteImport.update({
+  id: '/farmer',
+  path: '/farmer',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SupervisorRoute = SupervisorRouteImport.update({
@@ -25,27 +31,31 @@ const SupervisorRoute = SupervisorRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/farmer': typeof FarmerRoute
   '/supervisor': typeof SupervisorRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/farmer': typeof FarmerRoute
   '/supervisor': typeof SupervisorRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/farmer': typeof FarmerRoute
   '/supervisor': typeof SupervisorRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/supervisor'
+  fullPaths: '/' | '/farmer' | '/supervisor'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/supervisor'
-  id: '__root__' | '/' | '/supervisor'
+  to: '/' | '/farmer' | '/supervisor'
+  id: '__root__' | '/' | '/farmer' | '/supervisor'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  FarmerRoute: typeof FarmerRoute
   SupervisorRoute: typeof SupervisorRoute
 }
 
@@ -56,6 +66,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/farmer': {
+      id: '/farmer'
+      path: '/farmer'
+      fullPath: '/farmer'
+      preLoaderRoute: typeof FarmerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/supervisor': {
@@ -70,6 +87,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  FarmerRoute: FarmerRoute,
   SupervisorRoute: SupervisorRoute,
 }
 export const routeTree = rootRouteImport
