@@ -5,13 +5,15 @@ import { getStorage, type FirebaseStorage } from "firebase/storage";
 
 const env = import.meta.env as Record<string, string | undefined>;
 
+// Defaults from the farmlog-connect project; environment variables override.
+// NOTE: the supplied apiKey appears truncated — set VITE_FIREBASE_API_KEY with the full key.
 export const firebaseConfig: FirebaseOptions = {
-  apiKey: env["VITE_FIREBASE_API_KEY"] ?? "",
-  authDomain: env["VITE_FIREBASE_AUTH_DOMAIN"] ?? "",
-  projectId: env["VITE_FIREBASE_PROJECT_ID"] ?? "",
-  storageBucket: env["VITE_FIREBASE_STORAGE_BUCKET"] ?? "",
-  messagingSenderId: env["VITE_FIREBASE_MESSAGING_SENDER_ID"] ?? "",
-  appId: env["VITE_FIREBASE_APP_ID"] ?? "",
+  apiKey: env["VITE_FIREBASE_API_KEY"] ?? "AIz...4QU",
+  authDomain: env["VITE_FIREBASE_AUTH_DOMAIN"] ?? "farmlog-connect.firebaseapp.com",
+  projectId: env["VITE_FIREBASE_PROJECT_ID"] ?? "farmlog-connect",
+  storageBucket: env["VITE_FIREBASE_STORAGE_BUCKET"] ?? "farmlog-connect.firebasestorage.app",
+  messagingSenderId: env["VITE_FIREBASE_MESSAGING_SENDER_ID"] ?? "1053936524676",
+  appId: env["VITE_FIREBASE_APP_ID"] ?? "1:1053936524676:web:7acc81015446817da891d1",
 };
 
 
