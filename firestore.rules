@@ -1,0 +1,39 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function profile() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    function role() { return signedIn() ? profile().role : ''; }
+    function isAdmin() { return role() == 'admin'; }
+    function isSupervisor() { return role() == 'supervisor'; }
+
+    // User profiles: users read their own; admins read/write all.
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow create: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow update, delete: if isAdmin();
+    }
+
+    // Dynamic survey questions: readable by any signed-in user, writable by admins.
+    match /questions/{qid} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    // Farmer records.
+    match /records/{rid} {
+      allow read: if isAdmin()
+        || (isSupervisor() && resource.data.supervisorID == request.auth.uid)
+        || (signedIn() && resource.data.authUid == request.auth.uid);
+      allow create: if isAdmin()
+        || (isSupervisor() && request.resource.data.supervisorID == request.auth.uid);
+      allow update: if isAdmin()
+        || (isSupervisor() && resource.data.supervisorID == request.auth.uid)
+        || (signedIn() && resource.data.authUid == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+  }
+}
