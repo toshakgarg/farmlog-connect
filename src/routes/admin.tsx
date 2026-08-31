@@ -363,7 +363,9 @@ function QuestionsManager({
     if (target < 0 || target >= questions.length) return;
     const a = questions[index];
     const b = questions[target];
+    if (!a || !b) return;
     await Promise.all([saveQuestion({ ...a, order: target }), saveQuestion({ ...b, order: index })]);
+
     onChanged();
   }
 
