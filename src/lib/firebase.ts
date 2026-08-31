@@ -6,7 +6,7 @@ import { getStorage, type FirebaseStorage } from "firebase/storage";
 const env = import.meta.env as Record<string, string | undefined>;
 
 // Defaults from the farmlog-connect project; environment variables override.
-// NOTE: the supplied apiKey appears truncated — set VITE_FIREBASE_API_KEY with the full key.
+// The Firebase apiKey is a public client key (not a secret) — set VITE_FIREBASE_API_KEY.
 export const firebaseConfig: FirebaseOptions = {
   apiKey: env["VITE_FIREBASE_API_KEY"] ?? "",
   authDomain: env["VITE_FIREBASE_AUTH_DOMAIN"] ?? "farmlog-connect.firebaseapp.com",
