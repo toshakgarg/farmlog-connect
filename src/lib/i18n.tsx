@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 
 export type Lang = "hi" | "en";
 
@@ -109,9 +117,15 @@ export const strings: Dict = {
     hi: "Firebase अभी जुड़ा नहीं है। VITE_FIREBASE_* एनवायरनमेंट वेरिएबल जोड़ें।",
   },
   wrongRole: { en: "This account does not have that role.", hi: "इस खाते की यह भूमिका नहीं है।" },
-  requiredFieldsMissing: { en: "Please fill all required fields", hi: "कृपया सभी अनिवार्य फ़ील्ड भरें" },
+  requiredFieldsMissing: {
+    en: "Please fill all required fields",
+    hi: "कृपया सभी अनिवार्य फ़ील्ड भरें",
+  },
   updateAnswers: { en: "Update my answers", hi: "मेरे उत्तर अपडेट करें" },
-  noProfileLinked: { en: "No farmer profile is linked to this account yet.", hi: "इस खाते से अभी कोई किसान प्रोफ़ाइल जुड़ी नहीं है।" },
+  noProfileLinked: {
+    en: "No farmer profile is linked to this account yet.",
+    hi: "इस खाते से अभी कोई किसान प्रोफ़ाइल जुड़ी नहीं है।",
+  },
   language: { en: "भाषा / Language", hi: "भाषा / Language" },
 };
 

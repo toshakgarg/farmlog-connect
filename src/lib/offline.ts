@@ -13,7 +13,8 @@ function db() {
   if (!dbPromise) {
     dbPromise = openDB(DB_NAME, 1, {
       upgrade(d) {
-        if (!d.objectStoreNames.contains(STORE_RECORDS)) d.createObjectStore(STORE_RECORDS, { keyPath: "id" });
+        if (!d.objectStoreNames.contains(STORE_RECORDS))
+          d.createObjectStore(STORE_RECORDS, { keyPath: "id" });
         if (!d.objectStoreNames.contains(STORE_PHOTOS)) d.createObjectStore(STORE_PHOTOS);
         if (!d.objectStoreNames.contains(STORE_META)) d.createObjectStore(STORE_META);
       },

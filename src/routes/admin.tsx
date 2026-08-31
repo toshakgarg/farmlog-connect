@@ -31,9 +31,16 @@ export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
       { title: "Admin Panel — FarmLog Survey Management" },
-      { name: "description", content: "Manage supervisors, farmers, survey questions and export all agricultural field data." },
+      {
+        name: "description",
+        content:
+          "Manage supervisors, farmers, survey questions and export all agricultural field data.",
+      },
       { property: "og:title", content: "Admin Panel — FarmLog Survey Management" },
-      { property: "og:description", content: "Manage accounts, dynamic survey questions and export farmer records as CSV." },
+      {
+        property: "og:description",
+        content: "Manage accounts, dynamic survey questions and export farmer records as CSV.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -50,7 +57,14 @@ function AdminPage() {
   const [supervisors, setSupervisors] = useState<AppUser[]>([]);
   const [farmerUsers, setFarmerUsers] = useState<AppUser[]>([]);
   const [detail, setDetail] = useState<FarmerRecord | null>(null);
-  const [filters, setFilters] = useState({ village: "", supervisor: "", min: "", max: "", from: "", to: "" });
+  const [filters, setFilters] = useState({
+    village: "",
+    supervisor: "",
+    min: "",
+    max: "",
+    from: "",
+    to: "",
+  });
 
   useEffect(() => {
     if (ready && !profile) navigate({ to: "/" });
@@ -81,7 +95,8 @@ function AdminPage() {
   const filtered = useMemo(
     () =>
       records.filter((r) => {
-        if (filters.village && !r.village?.toLowerCase().includes(filters.village.toLowerCase())) return false;
+        if (filters.village && !r.village?.toLowerCase().includes(filters.village.toLowerCase()))
+          return false;
         if (filters.supervisor && r.supervisorID !== filters.supervisor) return false;
         if (filters.min && (r.killahs ?? 0) < Number(filters.min)) return false;
         if (filters.max && (r.killahs ?? 0) > Number(filters.max)) return false;
@@ -93,10 +108,15 @@ function AdminPage() {
   );
 
   if (!ready || !profile) {
-    return <div className="flex min-h-screen items-center justify-center text-sm">{t("loading")}</div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center text-sm">{t("loading")}</div>
+    );
   }
 
-  const supervisorName = (uid: string) => supervisors.find((s) => s.uid === uid)?.name ?? uid.slice(0, 6);
+  const supervisorName = (uid?: string | null) => {
+    if (!uid) return "Unknown";
+    return supervisors.find((s) => s.uid === uid)?.name ?? uid.slice(0, 6);
+  };
 
   return (
     <AppShell title={t("appName")} subtitle={`${t("admin")} · ${profile.name}`}>
@@ -119,8 +139,14 @@ function AdminPage() {
           <TabsContent value="dashboard" className="space-y-4">
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <Stat label={t("totalFarmers")} value={records.length} />
-              <Stat label={t("totalKillahs")} value={records.reduce((s, r) => s + (r.killahs ?? 0), 0)} />
-              <Stat label={t("pendingSyncs")} value={records.filter((r) => r.status !== "synced").length} />
+              <Stat
+                label={t("totalKillahs")}
+                value={records.reduce((s, r) => s + (r.killahs ?? 0), 0)}
+              />
+              <Stat
+                label={t("pendingSyncs")}
+                value={records.filter((r) => r.status !== "synced").length}
+              />
               <Stat label={t("supervisors")} value={supervisors.length} />
             </div>
             <Card>
@@ -147,7 +173,9 @@ function AdminPage() {
                       <StatusBadge status={r.status} />
                     </button>
                   ))}
-                {records.length === 0 ? <p className="text-sm text-muted-foreground">{t("noRecords")}</p> : null}
+                {records.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">{t("noRecords")}</p>
+                ) : null}
               </CardContent>
             </Card>
           </TabsContent>
@@ -158,34 +186,69 @@ function AdminPage() {
                 <CardTitle className="text-base">{t("filters")}</CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                <Input placeholder={t("village")} value={filters.village} onChange={(e) => setFilters({ ...filters, village: e.target.value })} />
+                <Input
+                  placeholder={t("village")}
+                  value={filters.village}
+                  onChange={(e) => setFilters({ ...filters, village: e.target.value })}
+                />
                 <select
                   className="h-9 rounded-lg border border-input bg-card px-2 text-sm"
                   value={filters.supervisor}
                   onChange={(e) => setFilters({ ...filters, supervisor: e.target.value })}
                 >
-                  <option value="">{t("all")} — {t("supervisor")}</option>
+                  <option value="">
+                    {t("all")} — {t("supervisor")}
+                  </option>
                   {supervisors.map((s) => (
-                    <option key={s.uid} value={s.uid}>{s.name}</option>
+                    <option key={s.uid} value={s.uid}>
+                      {s.name}
+                    </option>
                   ))}
                 </select>
-                <Input type="number" placeholder={t("minLand")} value={filters.min} onChange={(e) => setFilters({ ...filters, min: e.target.value })} />
-                <Input type="number" placeholder={t("maxLand")} value={filters.max} onChange={(e) => setFilters({ ...filters, max: e.target.value })} />
-                <Input type="date" value={filters.from} onChange={(e) => setFilters({ ...filters, from: e.target.value })} />
-                <Input type="date" value={filters.to} onChange={(e) => setFilters({ ...filters, to: e.target.value })} />
+                <Input
+                  type="number"
+                  placeholder={t("minLand")}
+                  value={filters.min}
+                  onChange={(e) => setFilters({ ...filters, min: e.target.value })}
+                />
+                <Input
+                  type="number"
+                  placeholder={t("maxLand")}
+                  value={filters.max}
+                  onChange={(e) => setFilters({ ...filters, max: e.target.value })}
+                />
+                <Input
+                  type="date"
+                  value={filters.from}
+                  onChange={(e) => setFilters({ ...filters, from: e.target.value })}
+                />
+                <Input
+                  type="date"
+                  value={filters.to}
+                  onChange={(e) => setFilters({ ...filters, to: e.target.value })}
+                />
               </CardContent>
             </Card>
             <Button
               variant="secondary"
               className="w-full touch-row"
-              onClick={() => downloadCsv(`farmlog-${Date.now()}.csv`, recordsToCsv(filtered, questions))}
+              onClick={() =>
+                downloadCsv(`farmlog-${Date.now()}.csv`, recordsToCsv(filtered, questions))
+              }
             >
               <Download className="mr-2 size-4" /> {t("exportCsv")}
             </Button>
             <div className="space-y-2">
               {filtered.map((r) => (
-                <div key={r.id} className="flex items-center gap-2 rounded-xl border border-border bg-card p-3">
-                  <button type="button" className="min-w-0 flex-1 text-left" onClick={() => setDetail(r)}>
+                <div
+                  key={r.id}
+                  className="flex items-center gap-2 rounded-xl border border-border bg-card p-3"
+                >
+                  <button
+                    type="button"
+                    className="min-w-0 flex-1 text-left"
+                    onClick={() => setDetail(r)}
+                  >
                     <p className="truncate font-semibold">{r.fullName}</p>
                     <p className="truncate text-xs text-muted-foreground">
                       {r.village} · {r.killahs ?? 0} · {supervisorName(r.supervisorID)} ·{" "}
@@ -207,7 +270,9 @@ function AdminPage() {
                   </Button>
                 </div>
               ))}
-              {filtered.length === 0 ? <p className="py-8 text-center text-sm text-muted-foreground">{t("noRecords")}</p> : null}
+              {filtered.length === 0 ? (
+                <p className="py-8 text-center text-sm text-muted-foreground">{t("noRecords")}</p>
+              ) : null}
             </div>
           </TabsContent>
 
@@ -299,7 +364,10 @@ function RecordDetail({
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
           {questions.map((q) => (
-            <div key={q.id} className="flex justify-between gap-3 border-b border-border pb-2 last:border-0">
+            <div
+              key={q.id}
+              className="flex justify-between gap-3 border-b border-border pb-2 last:border-0"
+            >
               <span className="text-muted-foreground">{lang === "hi" ? q.labelHi : q.labelEn}</span>
               <span className="font-medium">{String(record.answers?.[q.id] ?? "-")}</span>
             </div>
@@ -313,7 +381,12 @@ function RecordDetail({
         <CardContent className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {record.photos.map((p, i) => (
             <div key={i} className="overflow-hidden rounded-lg border border-border">
-              <img src={p.url} alt={`${record.fullName} ${i + 1}`} className="aspect-square w-full object-cover" loading="lazy" />
+              <img
+                src={p.url}
+                alt={`${record.fullName} ${i + 1}`}
+                className="aspect-square w-full object-cover"
+                loading="lazy"
+              />
               <p className="flex items-center gap-1 p-2 text-[10px] text-muted-foreground">
                 <MapPin className="size-3" />
                 {p.latitude ? `${p.latitude.toFixed(5)}, ${p.longitude?.toFixed(5)}` : "-"} ·{" "}
@@ -321,7 +394,9 @@ function RecordDetail({
               </p>
             </div>
           ))}
-          {record.photos.length === 0 ? <p className="text-sm text-muted-foreground">{t("noRecords")}</p> : null}
+          {record.photos.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t("noRecords")}</p>
+          ) : null}
         </CardContent>
       </Card>
     </div>
@@ -338,7 +413,14 @@ function QuestionsManager({
   lang: string;
 }) {
   const { t } = useI18n();
-  const [draft, setDraft] = useState({ labelEn: "", labelHi: "", type: "text" as QuestionType, options: "", required: false, farmerEditable: false });
+  const [draft, setDraft] = useState({
+    labelEn: "",
+    labelHi: "",
+    type: "text" as QuestionType,
+    options: "",
+    required: false,
+    farmerEditable: false,
+  });
 
   async function add() {
     if (!draft.labelEn && !draft.labelHi) return;
@@ -347,13 +429,26 @@ function QuestionsManager({
       labelEn: draft.labelEn,
       labelHi: draft.labelHi,
       type: draft.type,
-      options: draft.type === "category" ? draft.options.split(",").map((s) => s.trim()).filter(Boolean) : [],
+      options:
+        draft.type === "category"
+          ? draft.options
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : [],
       required: draft.required,
       farmerEditable: draft.farmerEditable,
       order: questions.length,
     };
     await saveQuestion(q);
-    setDraft({ labelEn: "", labelHi: "", type: "text", options: "", required: false, farmerEditable: false });
+    setDraft({
+      labelEn: "",
+      labelHi: "",
+      type: "text",
+      options: "",
+      required: false,
+      farmerEditable: false,
+    });
     toast.success(t("saved"));
     onChanged();
   }
@@ -364,7 +459,10 @@ function QuestionsManager({
     const a = questions[index];
     const b = questions[target];
     if (!a || !b) return;
-    await Promise.all([saveQuestion({ ...a, order: target }), saveQuestion({ ...b, order: index })]);
+    await Promise.all([
+      saveQuestion({ ...a, order: target }),
+      saveQuestion({ ...b, order: index }),
+    ]);
 
     onChanged();
   }
@@ -373,17 +471,25 @@ function QuestionsManager({
     <div className="space-y-4">
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-base">{t("add")} — {t("question")}</CardTitle>
+          <CardTitle className="text-base">
+            {t("add")} — {t("question")}
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label>{t("labelEn")}</Label>
-              <Input value={draft.labelEn} onChange={(e) => setDraft({ ...draft, labelEn: e.target.value })} />
+              <Input
+                value={draft.labelEn}
+                onChange={(e) => setDraft({ ...draft, labelEn: e.target.value })}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>{t("labelHi")}</Label>
-              <Input value={draft.labelHi} onChange={(e) => setDraft({ ...draft, labelHi: e.target.value })} />
+              <Input
+                value={draft.labelHi}
+                onChange={(e) => setDraft({ ...draft, labelHi: e.target.value })}
+              />
             </div>
           </div>
           <div className="space-y-1.5">
@@ -395,10 +501,16 @@ function QuestionsManager({
                   type="button"
                   onClick={() => setDraft({ ...draft, type: tp })}
                   className={`flex-1 rounded-lg border px-2 py-2 text-xs ${
-                    draft.type === tp ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card"
+                    draft.type === tp
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-card"
                   }`}
                 >
-                  {tp === "category" ? t("category") : tp === "numeric" ? t("numeric") : t("shortText")}
+                  {tp === "category"
+                    ? t("category")
+                    : tp === "numeric"
+                      ? t("numeric")
+                      : t("shortText")}
                 </button>
               ))}
             </div>
@@ -406,16 +518,25 @@ function QuestionsManager({
           {draft.type === "category" ? (
             <div className="space-y-1.5">
               <Label>{t("options")}</Label>
-              <Input value={draft.options} onChange={(e) => setDraft({ ...draft, options: e.target.value })} />
+              <Input
+                value={draft.options}
+                onChange={(e) => setDraft({ ...draft, options: e.target.value })}
+              />
             </div>
           ) : null}
           <div className="flex flex-wrap gap-4">
             <label className="flex items-center gap-2 text-sm">
-              <Switch checked={draft.required} onCheckedChange={(v) => setDraft({ ...draft, required: v })} />
+              <Switch
+                checked={draft.required}
+                onCheckedChange={(v) => setDraft({ ...draft, required: v })}
+              />
               {t("required")}
             </label>
             <label className="flex items-center gap-2 text-sm">
-              <Switch checked={draft.farmerEditable} onCheckedChange={(v) => setDraft({ ...draft, farmerEditable: v })} />
+              <Switch
+                checked={draft.farmerEditable}
+                onCheckedChange={(v) => setDraft({ ...draft, farmerEditable: v })}
+              />
               {t("farmerEditable")}
             </label>
           </div>
@@ -427,17 +548,33 @@ function QuestionsManager({
 
       <div className="space-y-2">
         {questions.map((q, i) => (
-          <div key={q.id} className="flex items-center gap-2 rounded-xl border border-border bg-card p-3">
+          <div
+            key={q.id}
+            className="flex items-center gap-2 rounded-xl border border-border bg-card p-3"
+          >
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{lang === "hi" ? q.labelHi || q.labelEn : q.labelEn || q.labelHi}</p>
+              <p className="truncate text-sm font-medium">
+                {lang === "hi" ? q.labelHi || q.labelEn : q.labelEn || q.labelHi}
+              </p>
               <p className="truncate text-xs text-muted-foreground">
-                {q.type === "category" ? (q.options ?? []).join(", ") : q.type} · {q.required ? t("required") : t("optional")}
+                {q.type === "category" ? (q.options ?? []).join(", ") : q.type} ·{" "}
+                {q.required ? t("required") : t("optional")}
               </p>
             </div>
-            <Button variant="ghost" size="icon" aria-label={t("moveUp")} onClick={() => move(i, -1)}>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={t("moveUp")}
+              onClick={() => move(i, -1)}
+            >
               <ArrowUp className="size-4" />
             </Button>
-            <Button variant="ghost" size="icon" aria-label={t("moveDown")} onClick={() => move(i, 1)}>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={t("moveDown")}
+              onClick={() => move(i, 1)}
+            >
               <ArrowDown className="size-4" />
             </Button>
             <Button
@@ -474,7 +611,13 @@ function AccountManager({
   onChanged: () => void;
 }) {
   const { t } = useI18n();
-  const [form, setForm] = useState({ name: "", email: "", password: "", phone: "", farmerRecordId: "" });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    phone: "",
+    farmerRecordId: "",
+  });
   const [busy, setBusy] = useState(false);
 
   async function submit() {
@@ -505,19 +648,41 @@ function AccountManager({
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="grid gap-3 sm:grid-cols-2">
-          <Input placeholder={t("name")} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          <Input placeholder={t("email")} type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-          <Input placeholder={t("password")} type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
-          <Input placeholder={t("contactNumber")} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+          <Input
+            placeholder={t("name")}
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+          />
+          <Input
+            placeholder={t("email")}
+            type="email"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+          />
+          <Input
+            placeholder={t("password")}
+            type="password"
+            value={form.password}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+          />
+          <Input
+            placeholder={t("contactNumber")}
+            value={form.phone}
+            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+          />
           {role === "farmer" ? (
             <select
               className="h-9 rounded-lg border border-input bg-card px-2 text-sm sm:col-span-2"
               value={form.farmerRecordId}
               onChange={(e) => setForm({ ...form, farmerRecordId: e.target.value })}
             >
-              <option value="">{t("none")} — {t("myProfile")}</option>
+              <option value="">
+                {t("none")} — {t("myProfile")}
+              </option>
               {records.map((r) => (
-                <option key={r.id} value={r.id}>{r.fullName} — {r.village}</option>
+                <option key={r.id} value={r.id}>
+                  {r.fullName} — {r.village}
+                </option>
               ))}
             </select>
           ) : null}
@@ -527,7 +692,10 @@ function AccountManager({
         </Button>
         <div className="space-y-2 pt-2">
           {users.map((u) => (
-            <div key={u.uid} className="flex items-center gap-2 rounded-lg border border-border p-2.5">
+            <div
+              key={u.uid}
+              className="flex items-center gap-2 rounded-lg border border-border p-2.5"
+            >
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">{u.name}</p>
                 <p className="truncate text-xs text-muted-foreground">{u.email}</p>

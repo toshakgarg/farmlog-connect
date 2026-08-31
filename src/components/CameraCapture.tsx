@@ -91,9 +91,7 @@ export function CameraCapture({ onCaptured }: Props) {
       const fontSize = Math.max(16, Math.round(canvas.width * 0.028));
       ctx.font = `600 ${fontSize}px sans-serif`;
       const lines = [
-        pos
-          ? `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`
-          : "GPS: N/A",
+        pos ? `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}` : "GPS: N/A",
         new Date(timestamp).toLocaleString(),
       ];
       const boxH = fontSize * lines.length * 1.5 + pad;
@@ -126,7 +124,12 @@ export function CameraCapture({ onCaptured }: Props) {
 
   if (!open) {
     return (
-      <Button type="button" variant="secondary" className="w-full touch-row" onClick={() => setOpen(true)}>
+      <Button
+        type="button"
+        variant="secondary"
+        className="w-full touch-row"
+        onClick={() => setOpen(true)}
+      >
         <Camera className="mr-2 size-5" /> {t("openCamera")}
       </Button>
     );
@@ -138,7 +141,12 @@ export function CameraCapture({ onCaptured }: Props) {
         <span className="flex items-center gap-1 text-xs opacity-80">
           <MapPin className="size-4" /> {t("gpsCaptured")}
         </span>
-        <button type="button" onClick={() => setOpen(false)} aria-label={t("closeCamera")} className="p-2">
+        <button
+          type="button"
+          onClick={() => setOpen(false)}
+          aria-label={t("closeCamera")}
+          className="p-2"
+        >
           <X className="size-6 text-white" />
         </button>
       </div>
@@ -167,7 +175,11 @@ export function CameraCapture({ onCaptured }: Props) {
           aria-label={t("capture")}
           className="flex size-20 items-center justify-center rounded-full border-4 border-white bg-white/20"
         >
-          {busy ? <Loader2 className="size-8 animate-spin text-white" /> : <span className="size-14 rounded-full bg-white" />}
+          {busy ? (
+            <Loader2 className="size-8 animate-spin text-white" />
+          ) : (
+            <span className="size-14 rounded-full bg-white" />
+          )}
         </button>
         <span className="size-12" />
       </div>

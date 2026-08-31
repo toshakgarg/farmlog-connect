@@ -17,9 +17,15 @@ export const Route = createFileRoute("/farmer")({
   head: () => ({
     meta: [
       { title: "My Profile — FarmLog" },
-      { name: "description", content: "Farmers can view their survey profile and update their optional answers." },
+      {
+        name: "description",
+        content: "Farmers can view their survey profile and update their optional answers.",
+      },
       { property: "og:title", content: "My Profile — FarmLog" },
-      { property: "og:description", content: "View your farm profile and update your survey answers." },
+      {
+        property: "og:description",
+        content: "View your farm profile and update your survey answers.",
+      },
       { property: "og:type", content: "profile" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -72,7 +78,9 @@ function FarmerPage() {
   }
 
   if (!ready || !profile || loading) {
-    return <div className="flex min-h-screen items-center justify-center text-sm">{t("loading")}</div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center text-sm">{t("loading")}</div>
+    );
   }
 
   const editable = questions.filter((q) => q.farmerEditable);
@@ -110,8 +118,13 @@ function FarmerPage() {
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 {readOnly.map((q) => (
-                  <div key={q.id} className="flex justify-between gap-3 border-b border-border pb-2 last:border-0">
-                    <span className="text-muted-foreground">{lang === "hi" ? q.labelHi : q.labelEn}</span>
+                  <div
+                    key={q.id}
+                    className="flex justify-between gap-3 border-b border-border pb-2 last:border-0"
+                  >
+                    <span className="text-muted-foreground">
+                      {lang === "hi" ? q.labelHi : q.labelEn}
+                    </span>
                     <span className="font-medium">{String(record.answers?.[q.id] ?? "-")}</span>
                   </div>
                 ))}
@@ -145,10 +158,17 @@ function FarmerPage() {
               <CardContent className="grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {record.photos.map((p, i) => (
                   <div key={i} className="overflow-hidden rounded-lg border border-border">
-                    <img src={p.url} alt={`${t("photos")} ${i + 1}`} className="aspect-square w-full object-cover" loading="lazy" />
+                    <img
+                      src={p.url}
+                      alt={`${t("photos")} ${i + 1}`}
+                      className="aspect-square w-full object-cover"
+                      loading="lazy"
+                    />
                     <p className="flex items-center gap-1 p-2 text-[10px] text-muted-foreground">
                       <MapPin className="size-3" />
-                      {p.latitude ? `${p.latitude.toFixed(4)}, ${p.longitude?.toFixed(4)}` : t("gpsUnavailable")}
+                      {p.latitude
+                        ? `${p.latitude.toFixed(4)}, ${p.longitude?.toFixed(4)}`
+                        : t("gpsUnavailable")}
                     </p>
                   </div>
                 ))}

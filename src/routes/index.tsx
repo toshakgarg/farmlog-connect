@@ -82,13 +82,17 @@ function LoginPage() {
 
         {!configured ? (
           <Card className="mb-4 border-warning/40 bg-warning/10">
-            <CardContent className="p-4 text-sm text-warning-foreground">{t("configMissing")}</CardContent>
+            <CardContent className="p-4 text-sm text-warning-foreground">
+              {t("configMissing")}
+            </CardContent>
           </Card>
         ) : null}
 
         {!role ? (
           <div className="space-y-3">
-            <p className="text-center text-sm font-medium text-muted-foreground">{t("selectRole")}</p>
+            <p className="text-center text-sm font-medium text-muted-foreground">
+              {t("selectRole")}
+            </p>
             {roles.map(({ role: r, icon: Icon, key }) => (
               <button
                 key={r}
@@ -146,7 +150,11 @@ function LoginPage() {
                   />
                 </div>
                 {error ? <p className="text-sm text-destructive">{error}</p> : null}
-                <Button type="submit" className="w-full touch-row text-base" disabled={busy || !configured}>
+                <Button
+                  type="submit"
+                  className="w-full touch-row text-base"
+                  disabled={busy || !configured}
+                >
                   {busy ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
                   {t("login")}
                 </Button>

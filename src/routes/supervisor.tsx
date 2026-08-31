@@ -20,9 +20,16 @@ export const Route = createFileRoute("/supervisor")({
   head: () => ({
     meta: [
       { title: "Supervisor — FarmLog Field Collection" },
-      { name: "description", content: "Collect farmer records offline with GPS-stamped photos and dynamic survey questions." },
+      {
+        name: "description",
+        content:
+          "Collect farmer records offline with GPS-stamped photos and dynamic survey questions.",
+      },
       { property: "og:title", content: "Supervisor — FarmLog Field Collection" },
-      { property: "og:description", content: "Offline-first farmer data collection for field supervisors." },
+      {
+        property: "og:description",
+        content: "Offline-first farmer data collection for field supervisors.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -121,7 +128,9 @@ function SupervisorPage() {
   }
 
   if (!ready || !profile) {
-    return <div className="flex min-h-screen items-center justify-center text-sm">{t("loading")}</div>;
+    return (
+      <div className="flex min-h-screen items-center justify-center text-sm">{t("loading")}</div>
+    );
   }
 
   return (
@@ -140,7 +149,10 @@ function SupervisorPage() {
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-2">
             <Stat label={t("myFarmers")} value={records.length} />
-            <Stat label={t("totalKillahs")} value={records.reduce((s, r) => s + (r.killahs ?? 0), 0)} />
+            <Stat
+              label={t("totalKillahs")}
+              value={records.reduce((s, r) => s + (r.killahs ?? 0), 0)}
+            />
             <Stat label={t("pendingSyncs")} value={pendingCount} />
           </div>
 

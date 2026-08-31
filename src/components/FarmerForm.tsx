@@ -72,7 +72,12 @@ export function FarmerForm({
   }
 
   function validate(): boolean {
-    if (!rec.fullName.trim() || !rec.village.trim() || rec.killahs === null || rec.killahs === undefined) {
+    if (
+      !rec.fullName.trim() ||
+      !rec.village.trim() ||
+      rec.killahs === null ||
+      rec.killahs === undefined
+    ) {
       toast.error(t("requiredFieldsMissing"));
       return false;
     }
@@ -208,7 +213,10 @@ export function FarmerForm({
           <CameraCapture onCaptured={addPhoto} />
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             {rec.photos.map((p, i) => (
-              <div key={p.localKey ?? p.url ?? i} className="overflow-hidden rounded-lg border border-border">
+              <div
+                key={p.localKey ?? p.url ?? i}
+                className="overflow-hidden rounded-lg border border-border"
+              >
                 <img
                   src={p.url || previews[p.localKey ?? ""] || ""}
                   alt={`${t("photos")} ${i + 1}`}
@@ -217,7 +225,9 @@ export function FarmerForm({
                 <div className="flex items-center justify-between gap-1 p-2 text-[10px] text-muted-foreground">
                   <span className="flex items-center gap-1 truncate">
                     <MapPin className="size-3 shrink-0" />
-                    {p.latitude ? `${p.latitude.toFixed(4)}, ${p.longitude?.toFixed(4)}` : t("gpsUnavailable")}
+                    {p.latitude
+                      ? `${p.latitude.toFixed(4)}, ${p.longitude?.toFixed(4)}`
+                      : t("gpsUnavailable")}
                   </span>
                   <button type="button" onClick={() => removePhoto(i)} aria-label={t("delete")}>
                     <Trash2 className="size-3.5 text-destructive" />

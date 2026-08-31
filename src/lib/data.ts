@@ -203,7 +203,12 @@ export function recordsToCsv(records: FarmerRecord[], questions: SurveyQuestion[
       r.supervisorID,
       r.status,
       r.photos.length,
-      r.photos.map((p) => `${p.latitude ?? "?"},${p.longitude ?? "?"}@${new Date(p.timestamp).toISOString()}`).join(" | "),
+      r.photos
+        .map(
+          (p) =>
+            `${p.latitude ?? "?"},${p.longitude ?? "?"}@${new Date(p.timestamp).toISOString()}`,
+        )
+        .join(" | "),
       new Date(r.createdAt).toISOString(),
       new Date(r.updatedAt).toISOString(),
       ...questions.map((q) => r.answers?.[q.id] ?? ""),
