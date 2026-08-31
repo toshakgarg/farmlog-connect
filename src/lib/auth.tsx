@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile,
       ready,
       configured,
-      async login(email, password, expectedRole) {
+      async login(email, password, expectedRole): Promise<AppUser> {
         const cred = await signInWithEmailAndPassword(fbAuth(), email, password);
         let p = await getAppUser(cred.user.uid);
         if (!p) {
@@ -67,7 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           p = {
             uid: cred.user.uid,
             email,
-            name: email.split("@")[0],
+            name: email.split("@")[0] ?? email,
             role: expectedRole,
             createdAt: Date.now(),
           };
@@ -80,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(p);
         return p;
       },
+
       async logout() {
         await signOut(fbAuth());
         setProfile(null);

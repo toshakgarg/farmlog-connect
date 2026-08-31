@@ -66,7 +66,8 @@ export function FarmerForm({
 
   async function removePhoto(idx: number) {
     const p = rec.photos[idx];
-    if (p.localKey) await deletePhotoBlob(p.localKey);
+    if (p?.localKey) await deletePhotoBlob(p.localKey);
+
     setRec((r) => ({ ...r, photos: r.photos.filter((_, i) => i !== idx) }));
   }
 
