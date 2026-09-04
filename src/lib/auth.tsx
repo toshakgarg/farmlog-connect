@@ -77,6 +77,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await signOut(fbAuth());
           throw new Error("WRONG_ROLE");
         }
+        if (p.active === false) {
+          await signOut(fbAuth());
+          throw new Error("ACCOUNT_DISABLED");
+        }
         setProfile(p);
         return p;
       },
@@ -96,6 +100,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           phone: phone ?? "",
           farmerRecordId: farmerRecordId ?? null,
           createdAt: Date.now(),
+          createdBy: profile?.uid || "",
+          active: true,
         };
         await saveAppUser(newUser);
         await signOut(sec);

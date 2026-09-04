@@ -20,6 +20,7 @@ import {
   listRecords,
   listUsers,
   recordsToCsv,
+  saveAppUser,
   saveQuestion,
 } from "@/lib/data";
 import { useI18n } from "@/lib/i18n";
@@ -281,18 +282,9 @@ function AdminPage() {
           </TabsContent>
 
           <TabsContent value="users" className="space-y-4">
-            <AccountManager
-              title={t("createSupervisor")}
-              role="supervisor"
-              users={supervisors}
-              records={records}
-              onCreate={createAccount}
-              onChanged={refresh}
-            />
-            <AccountManager
-              title={t("createFarmer")}
-              role="farmer"
-              users={farmerUsers}
+            <UsersManager
+              supervisors={supervisors}
+              farmerUsers={farmerUsers}
               records={records}
               onCreate={createAccount}
               onChanged={refresh}
@@ -595,22 +587,21 @@ function QuestionsManager({
   );
 }
 
-function AccountManager({
-  title,
-  role,
-  users,
+function UsersManager({
+  supervisors,
+  farmerUsers,
   records,
   onCreate,
   onChanged,
 }: {
-  title: string;
-  role: "supervisor" | "farmer";
-  users: AppUser[];
+  supervisors: AppUser[];
+  farmerUsers: AppUser[];
   records: FarmerRecord[];
   onCreate: ReturnType<typeof useAuth>["createAccount"];
   onChanged: () => void;
 }) {
   const { t } = useI18n();
+  const [role, setRole] = useState<"supervisor" | "farmer">("supervisor");
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -641,34 +632,45 @@ function AccountManager({
     }
   }
 
+  const allUsers = [...supervisors, ...farmerUsers].sort((a, b) => b.createdAt - a.createdAt);
+
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base">{title}</CardTitle>
+        <CardTitle className="text-base">Create User</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="grid gap-3 sm:grid-cols-2">
           <Input
-            placeholder={t("name")}
+            placeholder={t("name") || "Full Name"}
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
           />
           <Input
-            placeholder={t("email")}
+            placeholder={t("email") || "Email"}
             type="email"
             value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
           />
           <Input
-            placeholder={t("password")}
+            placeholder={t("password") || "Password"}
             type="password"
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
           />
+          <select
+            className="h-9 rounded-lg border border-input bg-card px-2 text-sm"
+            value={role}
+            onChange={(e) => setRole(e.target.value as "supervisor" | "farmer")}
+          >
+            <option value="supervisor">{t("supervisor") || "Supervisor"}</option>
+            <option value="farmer">{t("farmer") || "Farmer"}</option>
+          </select>
           <Input
-            placeholder={t("contactNumber")}
+            placeholder={t("contactNumber") || "Contact Number"}
             value={form.phone}
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            className="sm:col-span-2"
           />
           {role === "farmer" ? (
             <select
@@ -688,29 +690,41 @@ function AccountManager({
           ) : null}
         </div>
         <Button className="w-full touch-row" onClick={submit} disabled={busy}>
-          <Plus className="mr-2 size-4" /> {title}
+          <Plus className="mr-2 size-4" /> Create {role === "supervisor" ? t("supervisor") : t("farmer")}
         </Button>
         <div className="space-y-2 pt-2">
-          {users.map((u) => (
+          {allUsers.map((u) => (
             <div
               key={u.uid}
               className="flex items-center gap-2 rounded-lg border border-border p-2.5"
             >
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{u.name}</p>
+                <p className="truncate text-sm font-medium">
+                  {u.name} <span className="text-xs text-muted-foreground ml-1">({t(u.role) || u.role})</span>
+                </p>
                 <p className="truncate text-xs text-muted-foreground">{u.email}</p>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={t("delete")}
-                onClick={async () => {
-                  await deleteAppUser(u.uid);
-                  onChanged();
-                }}
-              >
-                <Trash2 className="size-4 text-destructive" />
-              </Button>
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={u.active !== false}
+                  onCheckedChange={async (v) => {
+                    await saveAppUser({ ...u, active: v });
+                    onChanged();
+                  }}
+                  aria-label="Toggle active status"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={t("delete")}
+                  onClick={async () => {
+                    await deleteAppUser(u.uid);
+                    onChanged();
+                  }}
+                >
+                  <Trash2 className="size-4 text-destructive" />
+                </Button>
+              </div>
             </div>
           ))}
         </div>

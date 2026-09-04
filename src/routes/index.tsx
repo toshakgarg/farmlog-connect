@@ -62,7 +62,9 @@ function LoginPage() {
       navigate({ to: `/${p.role}` });
     } catch (err) {
       const msg = (err as Error).message;
-      setError(msg === "WRONG_ROLE" ? t("wrongRole") : msg.replace("Firebase: ", ""));
+      if (msg === "WRONG_ROLE") setError(t("wrongRole"));
+      else if (msg === "ACCOUNT_DISABLED") setError("Account disabled, contact admin");
+      else setError(msg.replace("Firebase: ", ""));
     } finally {
       setBusy(false);
     }

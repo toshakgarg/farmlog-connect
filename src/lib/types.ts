@@ -55,6 +55,8 @@ export interface AppUser {
   farmerRecordId?: string | null;
   phone?: string;
   createdAt: number;
+  createdBy?: string;
+  active?: boolean;
 }
 
 export const emptyFarmer = (supervisorID: string): FarmerRecord => ({
