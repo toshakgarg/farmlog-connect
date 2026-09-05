@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, Download, MapPin, Plus, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, Download, MapPin, Plus, Trash2, X, Home, Users, List, Settings, CheckCircle2, Loader2, Shield, Tractor } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -110,7 +110,7 @@ function AdminPage() {
 
   if (!ready || !profile) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-sm">{t("loading")}</div>
+      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground"><Loader2 className="mr-2 size-5 animate-spin" /> {t("loading") || "Loading..."}</div>
     );
   }
 
@@ -129,56 +129,93 @@ function AdminPage() {
           onClose={() => setDetail(null)}
         />
       ) : (
-        <Tabs defaultValue="dashboard">
-          <TabsList className="mb-4 grid w-full grid-cols-4">
-            <TabsTrigger value="dashboard">{t("dashboard")}</TabsTrigger>
-            <TabsTrigger value="records">{t("records")}</TabsTrigger>
-            <TabsTrigger value="questions">{t("questions")}</TabsTrigger>
-            <TabsTrigger value="users">{t("supervisors")}</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="dashboard" className="space-y-4">
+        <Tabs defaultValue="dashboard" className="pb-24">
+          <TabsContent value="dashboard" className="space-y-4 mt-0">
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              <Stat label={t("totalFarmers")} value={records.length} />
-              <Stat
-                label={t("totalKillahs")}
-                value={records.reduce((s, r) => s + (r.killahs ?? 0), 0)}
-              />
-              <Stat
-                label={t("pendingSyncs")}
-                value={records.filter((r) => r.status !== "synced").length}
-              />
-              <Stat label={t("supervisors")} value={supervisors.length} />
+              <Card className="shadow-sm rounded-xl">
+                <CardContent className="flex items-center gap-3 p-4">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <Users className="size-5" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold leading-none">{farmerUsers.length}</p>
+                    <p className="text-xs font-medium text-muted-foreground mt-1">Total Farmers</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="shadow-sm rounded-xl">
+                <CardContent className="flex items-center gap-3 p-4">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground">
+                    <CheckCircle2 className="size-5" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold leading-none">{supervisors.length}</p>
+                    <p className="text-xs font-medium text-muted-foreground mt-1">Total Supervisors</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="shadow-sm rounded-xl">
+                <CardContent className="flex items-center gap-3 p-4">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground">
+                    <List className="size-5" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold leading-none">{records.length}</p>
+                    <p className="text-xs font-medium text-muted-foreground mt-1">Total Records</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="shadow-sm rounded-xl">
+                <CardContent className="flex items-center gap-3 p-4">
+                  <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-warning/20 text-warning-foreground">
+                    <Refresh className="size-5" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold leading-none">{records.filter((r) => r.status !== "synced").length}</p>
+                    <p className="text-xs font-medium text-muted-foreground mt-1">Pending Sync</p>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">{t("recentSubmissions")}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {[...records]
-                  .sort((a, b) => b.updatedAt - a.updatedAt)
-                  .slice(0, 8)
-                  .map((r) => (
-                    <button
-                      key={r.id}
-                      type="button"
-                      onClick={() => setDetail(r)}
-                      className="flex w-full items-center justify-between gap-2 border-b border-border pb-2 text-left last:border-0"
-                    >
-                      <span className="min-w-0">
-                        <span className="block truncate text-sm font-medium">{r.fullName}</span>
-                        <span className="block truncate text-xs text-muted-foreground">
-                          {r.village} · {supervisorName(r.supervisorID)}
-                        </span>
-                      </span>
-                      <StatusBadge status={r.status} />
-                    </button>
-                  ))}
-                {records.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">{t("noRecords")}</p>
-                ) : null}
-              </CardContent>
-            </Card>
+
+            <h2 className="text-[20px] font-bold mt-8 mb-2">Recent Activity</h2>
+            {records.length === 0 ? (
+              <Card className="shadow-sm rounded-xl border-dashed">
+                <CardContent className="flex flex-col items-center justify-center py-10 text-center">
+                  <div className="flex size-16 items-center justify-center rounded-full bg-muted text-muted-foreground mb-4">
+                    <List className="size-8" />
+                  </div>
+                  <h3 className="text-[16px] font-medium text-foreground">No records yet</h3>
+                  <p className="text-[14px] text-muted-foreground mt-1">Supervisors will add farmers here</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="shadow-sm rounded-xl">
+                <CardContent className="p-0">
+                  <div className="divide-y divide-border">
+                    {[...records]
+                      .sort((a, b) => b.updatedAt - a.updatedAt)
+                      .slice(0, 5)
+                      .map((r) => (
+                        <button
+                          key={r.id}
+                          type="button"
+                          onClick={() => setDetail(r)}
+                          className="flex w-full items-center justify-between gap-3 p-4 text-left transition-colors hover:bg-muted/50 active:bg-muted"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-[16px] font-medium">{r.fullName}</p>
+                            <p className="truncate text-[14px] text-muted-foreground mt-0.5">
+                              {r.village} · {supervisorName(r.supervisorID)} · {new Date(r.updatedAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <StatusBadge status={r.status} />
+                        </button>
+                      ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="records" className="space-y-3">
@@ -281,7 +318,7 @@ function AdminPage() {
             <QuestionsManager questions={questions} onChanged={refresh} lang={lang} />
           </TabsContent>
 
-          <TabsContent value="users" className="space-y-4">
+          <TabsContent value="users" className="space-y-4 mt-0">
             <UsersManager
               supervisors={supervisors}
               farmerUsers={farmerUsers}
@@ -290,6 +327,25 @@ function AdminPage() {
               onChanged={refresh}
             />
           </TabsContent>
+
+          <TabsList className="fixed bottom-0 left-0 right-0 z-50 flex h-[64px] rounded-none border-t border-border bg-card p-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] justify-around pb-safe bg-card text-muted-foreground">
+            <TabsTrigger value="dashboard" className="flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none">
+              <Home className="size-6" />
+              <span className="text-[10px] font-medium leading-none">Home</span>
+            </TabsTrigger>
+            <TabsTrigger value="users" className="flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none">
+              <Users className="size-6" />
+              <span className="text-[10px] font-medium leading-none">Users</span>
+            </TabsTrigger>
+            <TabsTrigger value="records" className="flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none">
+              <List className="size-6" />
+              <span className="text-[10px] font-medium leading-none">List</span>
+            </TabsTrigger>
+            <TabsTrigger value="questions" className="flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none">
+              <Settings className="size-6" />
+              <span className="text-[10px] font-medium leading-none">Settings</span>
+            </TabsTrigger>
+          </TabsList>
         </Tabs>
       )}
     </AppShell>
@@ -610,8 +666,15 @@ function UsersManager({
     farmerRecordId: "",
   });
   const [busy, setBusy] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   async function submit() {
+    setSubmitted(true);
+    if (!form.name || !form.email || !form.password) {
+      toast.error(t("requiredFieldsMissing") || "Please fill in all required fields");
+      return;
+    }
+    
     setBusy(true);
     try {
       await onCreate({
@@ -623,7 +686,8 @@ function UsersManager({
         farmerRecordId: role === "farmer" ? form.farmerRecordId || null : null,
       });
       setForm({ name: "", email: "", password: "", phone: "", farmerRecordId: "" });
-      toast.success(t("saved"));
+      setSubmitted(false);
+      toast.success(`${role === "supervisor" ? "Supervisor" : "Farmer"} created successfully ✓`);
       onChanged();
     } catch (e) {
       toast.error((e as Error).message.replace("Firebase: ", ""));
@@ -635,76 +699,110 @@ function UsersManager({
   const allUsers = [...supervisors, ...farmerUsers].sort((a, b) => b.createdAt - a.createdAt);
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base">Create User</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Input
-            placeholder={t("name") || "Full Name"}
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-          />
-          <Input
-            placeholder={t("email") || "Email"}
-            type="email"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-          />
-          <Input
-            placeholder={t("password") || "Password"}
-            type="password"
-            value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
-          />
-          <select
-            className="h-9 rounded-lg border border-input bg-card px-2 text-sm"
-            value={role}
-            onChange={(e) => setRole(e.target.value as "supervisor" | "farmer")}
-          >
-            <option value="supervisor">{t("supervisor") || "Supervisor"}</option>
-            <option value="farmer">{t("farmer") || "Farmer"}</option>
-          </select>
-          <Input
-            placeholder={t("contactNumber") || "Contact Number"}
-            value={form.phone}
-            onChange={(e) => setForm({ ...form, phone: e.target.value })}
-            className="sm:col-span-2"
-          />
-          {role === "farmer" ? (
-            <select
-              className="h-9 rounded-lg border border-input bg-card px-2 text-sm sm:col-span-2"
-              value={form.farmerRecordId}
-              onChange={(e) => setForm({ ...form, farmerRecordId: e.target.value })}
+    <div className="space-y-6">
+      <Card className="shadow-sm rounded-xl overflow-hidden">
+        <CardHeader className="bg-muted/30 pb-4 border-b border-border">
+          <CardTitle className="text-[18px] font-bold">Create New User</CardTitle>
+        </CardHeader>
+        <CardContent className="p-4 sm:p-6 space-y-5">
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setRole("supervisor")}
+              className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
+                role === "supervisor"
+                  ? "border-primary bg-primary/10 text-primary shadow-sm"
+                  : "border-border bg-card text-muted-foreground hover:bg-muted/50"
+              }`}
             >
-              <option value="">
-                {t("none")} — {t("myProfile")}
-              </option>
-              {records.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.fullName} — {r.village}
+              <Shield className={`size-6 mb-2 ${role === "supervisor" ? "text-primary" : "text-muted-foreground"}`} />
+              <span className="font-semibold text-[14px]">Supervisor</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setRole("farmer")}
+              className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
+                role === "farmer"
+                  ? "border-primary bg-primary/10 text-primary shadow-sm"
+                  : "border-border bg-card text-muted-foreground hover:bg-muted/50"
+              }`}
+            >
+              <Tractor className={`size-6 mb-2 ${role === "farmer" ? "text-primary" : "text-muted-foreground"}`} />
+              <span className="font-semibold text-[14px]">Farmer</span>
+            </button>
+          </div>
+
+          <div className="space-y-4">
+            <Input
+              placeholder="Full Name *"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              className={`h-[52px] rounded-lg ${submitted && !form.name ? "border-destructive ring-1 ring-destructive" : "border-border"}`}
+            />
+            <Input
+              placeholder="Email *"
+              type="email"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              className={`h-[52px] rounded-lg ${submitted && !form.email ? "border-destructive ring-1 ring-destructive" : "border-border"}`}
+            />
+            <Input
+              placeholder="Password *"
+              type="password"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              className={`h-[52px] rounded-lg ${submitted && !form.password ? "border-destructive ring-1 ring-destructive" : "border-border"}`}
+            />
+            <Input
+              placeholder="Contact Number (Optional)"
+              value={form.phone}
+              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              className="h-[52px] rounded-lg border-border"
+            />
+            {role === "farmer" ? (
+              <select
+                className="h-[52px] w-full rounded-lg border border-border bg-card px-3 text-[14px]"
+                value={form.farmerRecordId}
+                onChange={(e) => setForm({ ...form, farmerRecordId: e.target.value })}
+              >
+                <option value="">
+                  None — Select linked farmer record (Optional)
                 </option>
-              ))}
-            </select>
-          ) : null}
-        </div>
-        <Button className="w-full touch-row" onClick={submit} disabled={busy}>
-          <Plus className="mr-2 size-4" /> Create {role === "supervisor" ? t("supervisor") : t("farmer")}
-        </Button>
-        <div className="space-y-2 pt-2">
-          {allUsers.map((u) => (
-            <div
-              key={u.uid}
-              className="flex items-center gap-2 rounded-lg border border-border p-2.5"
-            >
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">
-                  {u.name} <span className="text-xs text-muted-foreground ml-1">({t(u.role) || u.role})</span>
-                </p>
-                <p className="truncate text-xs text-muted-foreground">{u.email}</p>
+                {records.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.fullName} — {r.village}
+                  </option>
+                ))}
+              </select>
+            ) : null}
+          </div>
+          <Button className="w-full h-[52px] rounded-lg text-[16px] font-bold shadow-md active:scale-[0.99] transition-transform" onClick={submit} disabled={busy}>
+            {busy ? <Loader2 className="mr-2 size-5 animate-spin" /> : <Plus className="mr-2 size-5" />} 
+            Create {role === "supervisor" ? "Supervisor" : "Farmer"}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <div className="space-y-3">
+        <h3 className="text-[18px] font-bold mt-8 mb-4">Existing Users</h3>
+        {allUsers.map((u) => (
+          <Card key={u.uid} className="shadow-sm rounded-xl overflow-hidden">
+            <CardContent className="p-4 flex items-center gap-4">
+              <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-muted text-foreground font-bold text-[16px]">
+                {u.name.substring(0, 2).toUpperCase()}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <p className="truncate text-[16px] font-bold">{u.name}</p>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                    u.role === "supervisor" ? "bg-primary/15 text-primary" : "bg-blue-500/15 text-blue-600"
+                  }`}>
+                    {u.role}
+                  </span>
+                </div>
+                <p className="truncate text-[13px] text-muted-foreground">{u.email}</p>
+              </div>
+              <div className="flex flex-col items-end gap-3 shrink-0">
                 <Switch
                   checked={u.active !== false}
                   onCheckedChange={async (v) => {
@@ -712,10 +810,12 @@ function UsersManager({
                     onChanged();
                   }}
                   aria-label="Toggle active status"
+                  className="scale-90"
                 />
                 <Button
                   variant="ghost"
                   size="icon"
+                  className="size-7 hover:bg-destructive/10"
                   aria-label={t("delete")}
                   onClick={async () => {
                     await deleteAppUser(u.uid);
@@ -725,10 +825,13 @@ function UsersManager({
                   <Trash2 className="size-4 text-destructive" />
                 </Button>
               </div>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+            </CardContent>
+          </Card>
+        ))}
+        {allUsers.length === 0 && (
+          <p className="text-center text-sm text-muted-foreground py-8">No users found.</p>
+        )}
+      </div>
+    </div>
   );
 }

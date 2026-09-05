@@ -10,6 +10,8 @@ import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import type { Role } from "@/lib/types";
 
+import { LandingPage } from "@/components/LandingPage";
+
 export const Route = createFileRoute("/")({
   ssr: false,
   head: () => ({
@@ -42,6 +44,7 @@ function LoginPage() {
   const { t } = useI18n();
   const { login, profile, ready, configured } = useAuth();
   const navigate = useNavigate();
+  const [showLanding, setShowLanding] = useState(true);
   const [role, setRole] = useState<Role | null>(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -68,6 +71,10 @@ function LoginPage() {
     } finally {
       setBusy(false);
     }
+  }
+
+  if (showLanding && ready && !profile) {
+    return <LandingPage onLoginClick={() => setShowLanding(false)} />;
   }
 
   return (

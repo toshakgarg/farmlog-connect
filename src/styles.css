@@ -1,6 +1,6 @@
 @import "tailwindcss" source(none);
-@source "../src";
 @import "tw-animate-css";
+@source "../src";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -56,20 +56,20 @@
 }
 
 :root {
-  --radius: 0.875rem;
+  --radius: 0.5rem; /* rounded-lg is usually 0.5rem */
   /* Earthy agricultural palette: deep field green + wheat gold + soil clay */
-  --background: oklch(0.983 0.012 95);
-  --foreground: oklch(0.24 0.032 145);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.24 0.032 145);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.24 0.032 145);
-  --primary: oklch(0.45 0.113 150);
-  --primary-foreground: oklch(0.985 0.014 95);
+  --background: #fafaf8;
+  --foreground: #1a1a1a;
+  --card: #ffffff;
+  --card-foreground: #1a1a1a;
+  --popover: #ffffff;
+  --popover-foreground: #1a1a1a;
+  --primary: #16a34a;
+  --primary-foreground: #ffffff;
   --secondary: oklch(0.945 0.032 95);
   --secondary-foreground: oklch(0.32 0.05 120);
   --muted: oklch(0.955 0.018 100);
-  --muted-foreground: oklch(0.5 0.028 130);
+  --muted-foreground: #6b7280;
   --accent: oklch(0.79 0.135 78);
   --accent-foreground: oklch(0.26 0.05 60);
   --destructive: oklch(0.55 0.208 27);
@@ -78,8 +78,8 @@
   --success-foreground: oklch(0.99 0.01 150);
   --warning: oklch(0.76 0.15 70);
   --warning-foreground: oklch(0.26 0.05 60);
-  --border: oklch(0.9 0.02 105);
-  --input: oklch(0.9 0.02 105);
+  --border: #e5e7eb;
+  --input: #e5e7eb;
   --ring: oklch(0.45 0.113 150);
   --chart-1: oklch(0.45 0.113 150);
   --chart-2: oklch(0.79 0.135 78);
@@ -161,5 +161,5 @@
 }
 
 @utility touch-row {
-  min-height: 3rem;
+  min-height: 52px;
 }
