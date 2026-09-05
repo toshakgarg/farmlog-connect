@@ -32,6 +32,18 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow FarmLog to use your location for GPS-stamped field photos."
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow FarmLog to access your camera for field photos."
+        }
       ]
     ]
   }
