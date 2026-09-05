@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { LogOut, Sprout, Wifi, WifiOff } from "lucide-react";
+import { LogOut, Sprout, Wifi, WifiOff, ArrowLeft } from "lucide-react";
 import type { ReactNode } from "react";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { Button } from "@/components/ui/button";
@@ -12,11 +12,13 @@ export function AppShell({
   subtitle,
   children,
   actions,
+  onBack,
 }: {
   title: string;
   subtitle?: string;
   children: ReactNode;
   actions?: ReactNode;
+  onBack?: () => void;
 }) {
   const { t } = useI18n();
   const { logout } = useAuth();
@@ -27,9 +29,19 @@ export function AppShell({
     <div className="min-h-screen bg-background pb-16">
       <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <Sprout className="size-5" />
-          </div>
+          {onBack ? (
+            <button
+              onClick={onBack}
+              className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground hover:bg-muted/80 transition-colors"
+              aria-label="Go back"
+            >
+              <ArrowLeft className="size-5" />
+            </button>
+          ) : (
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+              <Sprout className="size-5" />
+            </div>
+          )}
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-base font-bold leading-tight">{title}</h1>
             {subtitle ? <p className="truncate text-xs text-muted-foreground">{subtitle}</p> : null}

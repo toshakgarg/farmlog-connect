@@ -1,5 +1,14 @@
 import { useEffect, useState } from "react";
-import { MapPin, Trash2, Camera, Navigation, ArrowRight, ArrowLeft, Check, Save } from "lucide-react";
+import {
+  MapPin,
+  Trash2,
+  Camera,
+  Navigation,
+  ArrowRight,
+  ArrowLeft,
+  Check,
+  Save,
+} from "lucide-react";
 import { toast } from "sonner";
 import { CameraCapture } from "@/components/CameraCapture";
 import { QuestionFields } from "@/components/QuestionFields";
@@ -57,6 +66,12 @@ export function FarmerForm({
     };
   }, [rec.photos.length]);
 
+  useEffect(() => {
+    if (step > 1) {
+      onSaveDraft({ ...rec, status: "draft" });
+    }
+  }, [step]);
+
   const set = <K extends keyof FarmerRecord>(k: K, v: FarmerRecord[K]) =>
     setRec((r) => ({ ...r, [k]: v }));
 
@@ -73,7 +88,12 @@ export function FarmerForm({
   }
 
   function validate(): boolean {
-    if (!rec.fullName.trim() || !rec.village.trim() || rec.killahs === null || rec.killahs === undefined) {
+    if (
+      !rec.fullName.trim() ||
+      !rec.village.trim() ||
+      rec.killahs === null ||
+      rec.killahs === undefined
+    ) {
       toast.error(t("requiredFieldsMissing") || "Please fill in all required fields.");
       return false;
     }
@@ -103,7 +123,9 @@ export function FarmerForm({
           // Simple reverse geocode using nominatim for demo (or just leave coordinates)
           const lat = pos.coords.latitude;
           const lon = pos.coords.longitude;
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`,
+          );
           const data = await res.json();
           if (data && data.address) {
             if (data.address.village || data.address.town || data.address.city) {
@@ -124,11 +146,15 @@ export function FarmerForm({
         }
       },
       () => toast.error("Unable to retrieve your location"),
-      { enableHighAccuracy: true }
+      { enableHighAccuracy: true },
     );
   }
 
-  const text = (key: keyof FarmerRecord, label: string, opts?: { type?: string; required?: boolean }) => (
+  const text = (
+    key: keyof FarmerRecord,
+    label: string,
+    opts?: { type?: string; required?: boolean },
+  ) => (
     <div className="space-y-1.5">
       <Label htmlFor={String(key)} className="text-[14px] font-semibold">
         {label} {opts?.required ? <span className="text-destructive">*</span> : null}
@@ -140,7 +166,14 @@ export function FarmerForm({
         inputMode={opts?.type === "number" ? "numeric" : opts?.type === "tel" ? "tel" : "text"}
         value={rec[key] === null || rec[key] === undefined ? "" : String(rec[key])}
         onChange={(e) =>
-          set(key, (opts?.type === "number" ? (e.target.value === "" ? null : Number(e.target.value)) : e.target.value) as FarmerRecord[typeof key])
+          set(
+            key,
+            (opts?.type === "number"
+              ? e.target.value === ""
+                ? null
+                : Number(e.target.value)
+              : e.target.value) as FarmerRecord[typeof key],
+          )
         }
       />
     </div>
@@ -178,7 +211,12 @@ export function FarmerForm({
       case 2:
         return (
           <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
-            <Button type="button" variant="outline" className="w-full h-[52px] rounded-lg border-primary/30 text-primary font-bold shadow-sm" onClick={getLocation}>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full h-[52px] rounded-lg border-primary/30 text-primary font-bold shadow-sm"
+              onClick={getLocation}
+            >
               <Navigation className="mr-2 size-5" /> Auto-fill from GPS
             </Button>
             {text("village", t("village") || "Village / Location", { required: true })}
@@ -190,17 +228,28 @@ export function FarmerForm({
       case 3:
         return (
           <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
-            {text("killahs", t("killahs") || "Land Size (Killahs/Acres)", { type: "number", required: true })}
+            {text("killahs", t("killahs") || "Land Size (Killahs/Acres)", {
+              type: "number",
+              required: true,
+            })}
             <div className="flex items-center justify-between rounded-xl border border-border p-4 shadow-sm bg-card">
               <div>
                 <Label className="text-[15px] font-bold">{t("leadFarmer") || "Lead Farmer"}</Label>
-                <p className="text-xs text-muted-foreground mt-0.5">{t("isThisLeadFarmer") || "Is this a lead farmer?"}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {t("isThisLeadFarmer") || "Is this a lead farmer?"}
+                </p>
               </div>
-              <Switch checked={rec.isLeadFarmer} onCheckedChange={(v) => set("isLeadFarmer", v)} className="scale-110" />
+              <Switch
+                checked={rec.isLeadFarmer}
+                onCheckedChange={(v) => set("isLeadFarmer", v)}
+                className="scale-110"
+              />
             </div>
             {!rec.isLeadFarmer ? (
               <div className="space-y-1.5">
-                <Label className="text-[14px] font-semibold">{t("linkedLead") || "Linked Lead Farmer"}</Label>
+                <Label className="text-[14px] font-semibold">
+                  {t("linkedLead") || "Linked Lead Farmer"}
+                </Label>
                 <select
                   className="h-[52px] w-full rounded-lg border border-border bg-card px-3 text-[14px]"
                   value={rec.leadFarmerID ?? ""}
@@ -220,7 +269,9 @@ export function FarmerForm({
       case 4:
         return (
           <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
-            <p className="text-sm text-muted-foreground mb-4">Please answer the following survey questions.</p>
+            <p className="text-sm text-muted-foreground mb-4">
+              Please answer the following survey questions.
+            </p>
             <QuestionFields
               questions={questions}
               answers={rec.answers}
@@ -233,14 +284,21 @@ export function FarmerForm({
           <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 p-6 text-center">
               <CameraCapture onCaptured={addPhoto} />
-              <p className="mt-4 text-[14px] font-medium text-primary">Tap to capture field photo</p>
-              <p className="mt-1 text-xs text-muted-foreground">Photos will be GPS-stamped automatically.</p>
+              <p className="mt-4 text-[14px] font-medium text-primary">
+                Tap to capture field photo
+              </p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Photos will be GPS-stamped automatically.
+              </p>
             </div>
-            
+
             {rec.photos.length > 0 && (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 mt-4">
                 {rec.photos.map((p, i) => (
-                  <div key={p.localKey ?? p.url ?? i} className="overflow-hidden rounded-xl border border-border shadow-sm group relative">
+                  <div
+                    key={p.localKey ?? p.url ?? i}
+                    className="overflow-hidden rounded-xl border border-border shadow-sm group relative"
+                  >
                     <img
                       src={p.url || previews[p.localKey ?? ""] || ""}
                       alt={`${t("photos")} ${i + 1}`}
@@ -249,9 +307,16 @@ export function FarmerForm({
                     <div className="absolute inset-x-0 bottom-0 bg-black/60 p-2 backdrop-blur-sm flex justify-between items-center">
                       <span className="flex items-center gap-1 text-[10px] text-white truncate max-w-[80%]">
                         <MapPin className="size-3 shrink-0" />
-                        {p.latitude ? `${p.latitude.toFixed(3)}, ${p.longitude?.toFixed(3)}` : "No GPS"}
+                        {p.latitude
+                          ? `${p.latitude.toFixed(3)}, ${p.longitude?.toFixed(3)}`
+                          : "No GPS"}
                       </span>
-                      <button type="button" onClick={() => removePhoto(i)} aria-label={t("delete")} className="bg-destructive/90 rounded-full p-1.5 active:scale-95 transition-transform">
+                      <button
+                        type="button"
+                        onClick={() => removePhoto(i)}
+                        aria-label={t("delete")}
+                        className="bg-destructive/90 rounded-full p-1.5 active:scale-95 transition-transform"
+                      >
                         <Trash2 className="size-3.5 text-white" />
                       </button>
                     </div>
@@ -269,15 +334,29 @@ export function FarmerForm({
                 <Check className="size-7" />
               </div>
               <h3 className="text-[18px] font-bold text-success-foreground">Review & Submit</h3>
-              <p className="text-sm text-success-foreground/80 mt-1">Please review the details before submitting.</p>
+              <p className="text-sm text-success-foreground/80 mt-1">
+                Please review the details before submitting.
+              </p>
             </div>
-            
+
             <Card className="shadow-sm">
               <CardContent className="p-4 space-y-3 text-sm">
-                <div className="flex justify-between border-b border-border pb-2"><span className="text-muted-foreground">Name:</span> <span className="font-semibold">{rec.fullName || "-"}</span></div>
-                <div className="flex justify-between border-b border-border pb-2"><span className="text-muted-foreground">Village:</span> <span className="font-semibold">{rec.village || "-"}</span></div>
-                <div className="flex justify-between border-b border-border pb-2"><span className="text-muted-foreground">Land:</span> <span className="font-semibold">{rec.killahs ?? "-"} Killahs</span></div>
-                <div className="flex justify-between border-b border-border pb-2"><span className="text-muted-foreground">Photos:</span> <span className="font-semibold">{rec.photos.length} captured</span></div>
+                <div className="flex justify-between border-b border-border pb-2">
+                  <span className="text-muted-foreground">Name:</span>{" "}
+                  <span className="font-semibold">{rec.fullName || "-"}</span>
+                </div>
+                <div className="flex justify-between border-b border-border pb-2">
+                  <span className="text-muted-foreground">Village:</span>{" "}
+                  <span className="font-semibold">{rec.village || "-"}</span>
+                </div>
+                <div className="flex justify-between border-b border-border pb-2">
+                  <span className="text-muted-foreground">Land:</span>{" "}
+                  <span className="font-semibold">{rec.killahs ?? "-"} Killahs</span>
+                </div>
+                <div className="flex justify-between border-b border-border pb-2">
+                  <span className="text-muted-foreground">Photos:</span>{" "}
+                  <span className="font-semibold">{rec.photos.length} captured</span>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -289,7 +368,9 @@ export function FarmerForm({
     <div className="flex flex-col h-full space-y-6 pb-20">
       <div className="sticky top-14 z-20 bg-background/95 backdrop-blur pt-2 pb-4 -mx-4 px-4 border-b border-border">
         <div className="flex items-center justify-between text-sm font-bold text-foreground mb-3">
-          <span>Step {step} of {totalSteps}</span>
+          <span>
+            Step {step} of {totalSteps}
+          </span>
           <span className="text-primary">{Math.round((step / totalSteps) * 100)}%</span>
         </div>
         <Progress value={(step / totalSteps) * 100} className="h-2.5 rounded-full" />
@@ -310,28 +391,55 @@ export function FarmerForm({
       <div className="fixed bottom-0 left-0 right-0 z-30 bg-card/95 backdrop-blur-md border-t border-border p-4 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.1)] pb-safe">
         <div className="max-w-5xl mx-auto flex gap-3">
           {step > 1 ? (
-            <Button type="button" variant="outline" className="h-[52px] w-[60px] shrink-0 rounded-xl" onClick={() => setStep(step - 1)}>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-[52px] w-[60px] shrink-0 rounded-xl"
+              onClick={() => setStep(step - 1)}
+            >
               <ArrowLeft className="size-5" />
             </Button>
           ) : (
-            <Button type="button" variant="ghost" className="h-[52px] w-[80px] shrink-0 rounded-xl text-muted-foreground" onClick={onCancel}>
+            <Button
+              type="button"
+              variant="ghost"
+              className="h-[52px] w-[80px] shrink-0 rounded-xl text-muted-foreground"
+              onClick={onCancel}
+            >
               Cancel
             </Button>
           )}
 
           {step < totalSteps ? (
-            <Button type="button" className="h-[52px] flex-1 rounded-xl font-bold text-[16px] shadow-md" onClick={() => setStep(step + 1)}>
+            <Button
+              type="button"
+              className="h-[52px] flex-1 rounded-xl font-bold text-[16px] shadow-md"
+              onClick={() => setStep(step + 1)}
+            >
               Next <ArrowRight className="ml-2 size-5" />
             </Button>
           ) : (
-            <Button type="button" className="h-[52px] flex-1 rounded-xl font-bold text-[16px] shadow-md" disabled={saving} onClick={() => { if (validate()) onSubmit({ ...rec, status: "submitted" }); }}>
+            <Button
+              type="button"
+              className="h-[52px] flex-1 rounded-xl font-bold text-[16px] shadow-md"
+              disabled={saving}
+              onClick={() => {
+                if (validate()) onSubmit({ ...rec, status: "submitted" });
+              }}
+            >
               <Check className="mr-2 size-5" /> Submit Record
             </Button>
           )}
         </div>
-        
+
         <div className="max-w-5xl mx-auto mt-3">
-          <Button type="button" variant="ghost" className="w-full h-[48px] rounded-xl text-muted-foreground font-semibold hover:bg-muted/50" disabled={saving} onClick={() => onSaveDraft({ ...rec, status: "draft" })}>
+          <Button
+            type="button"
+            variant="ghost"
+            className="w-full h-[48px] rounded-xl text-muted-foreground font-semibold hover:bg-muted/50"
+            disabled={saving}
+            onClick={() => onSaveDraft({ ...rec, status: "draft" })}
+          >
             <Save className="mr-2 size-4" /> Save as Draft for later
           </Button>
         </div>

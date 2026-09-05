@@ -20,17 +20,16 @@ export function LandingPage({ onLoginClick }: Props) {
         <div className="flex size-24 items-center justify-center rounded-3xl bg-primary text-primary-foreground shadow-lg">
           <Sprout className="size-12" />
         </div>
-        
-        <h1 className="mt-6 text-5xl font-extrabold tracking-tight text-foreground">
-          FarmLog
-        </h1>
-        
+
+        <h1 className="mt-6 text-5xl font-extrabold tracking-tight text-foreground">FarmLog</h1>
+
         <p className="mt-2 text-xs font-semibold tracking-widest text-muted-foreground uppercase">
           Field Notes · India
         </p>
 
         <p className="mt-6 text-lg font-medium text-muted-foreground">
-          Khet se record tak<br />
+          Khet se record tak
+          <br />
           From field to record
         </p>
 
@@ -63,9 +62,7 @@ export function LandingPage({ onLoginClick }: Props) {
         >
           Login / लॉगिन करें
         </Button>
-        <p className="mt-4 text-xs font-medium text-muted-foreground">
-          v1.0
-        </p>
+        <p className="mt-4 text-xs font-medium text-muted-foreground">v1.0</p>
       </div>
     </div>
   );

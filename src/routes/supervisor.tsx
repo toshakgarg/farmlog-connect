@@ -90,6 +90,14 @@ function SupervisorPage() {
     };
   }, [online, doSync]);
 
+  if (!ready || !profile) {
+    return (
+      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+        <Loader2 className="mr-2 size-5 animate-spin" /> Loading...
+      </div>
+    );
+  }
+
   const leadFarmers = useMemo(() => records.filter((r) => r.isLeadFarmer), [records]);
   const filtered = useMemo(
     () =>
@@ -114,12 +122,18 @@ function SupervisorPage() {
 
   if (!ready || !profile) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground"><Loader2 className="mr-2 size-5 animate-spin" /> {t("loading") || "Loading..."}</div>
+      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+        <Loader2 className="mr-2 size-5 animate-spin" /> {t("loading") || "Loading..."}
+      </div>
     );
   }
 
   return (
-    <AppShell title={t("appName") || "FarmLog"} subtitle={`${t("supervisor") || "Supervisor"} · ${profile.name}`}>
+    <AppShell
+      title={t("appName") || "FarmLog"}
+      subtitle={`${t("supervisor") || "Supervisor"} · ${profile.name}`}
+      onBack={editing ? () => setEditing(null) : undefined}
+    >
       {editing ? (
         <FarmerForm
           value={editing}
@@ -137,29 +151,50 @@ function SupervisorPage() {
               <Card className="shadow-sm rounded-xl">
                 <CardContent className="p-4 flex flex-col items-center text-center">
                   <p className="text-3xl font-bold leading-none text-primary">{records.length}</p>
-                  <p className="mt-2 text-xs font-semibold text-muted-foreground uppercase">{t("myFarmers") || "My Farmers"}</p>
+                  <p className="mt-2 text-xs font-semibold text-muted-foreground uppercase">
+                    {t("myFarmers") || "My Farmers"}
+                  </p>
                 </CardContent>
               </Card>
-              <Card className="shadow-sm rounded-xl bg-warning/10 border-warning/20">
+              <Card className="shadow-sm rounded-xl bg-primary/10 border-primary/20">
                 <CardContent className="p-4 flex flex-col items-center text-center">
-                  <p className="text-3xl font-bold leading-none text-warning-foreground">{pendingCount}</p>
-                  <p className="mt-2 text-xs font-semibold text-warning-foreground uppercase">{t("pendingSyncs") || "Pending Sync"}</p>
+                  <p className="text-3xl font-bold leading-none text-primary">
+                    {
+                      records.filter((r) => r.updatedAt > Date.now() - 7 * 24 * 60 * 60 * 1000)
+                        .length
+                    }
+                  </p>
+                  <p className="mt-2 text-xs font-semibold text-primary uppercase">
+                    Records This Week
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="shadow-sm rounded-xl bg-warning/10 border-warning/20 col-span-2">
+                <CardContent className="p-4 flex flex-col items-center text-center">
+                  <p className="text-3xl font-bold leading-none text-warning-foreground">
+                    {pendingCount}
+                  </p>
+                  <p className="mt-2 text-xs font-semibold text-warning-foreground uppercase">
+                    {t("pendingSyncs") || "Pending Sync"}
+                  </p>
                 </CardContent>
               </Card>
             </div>
-            
+
             <div className="flex justify-center mt-6 mb-8">
-               <Button
-                  className="h-[52px] w-full rounded-xl text-base font-bold shadow-md"
-                  onClick={() => setEditing({ ...emptyFarmer(profile.uid), id: newLocalId() })}
-                >
-                  <Plus className="mr-2 size-5" /> New Record
-               </Button>
+              <Button
+                className="h-[52px] w-full rounded-xl text-base font-bold shadow-md bg-primary text-primary-foreground hover:bg-primary/90"
+                onClick={() => setEditing({ ...emptyFarmer(profile.uid), id: newLocalId() })}
+              >
+                <Plus className="mr-2 size-5" /> New Farmer Record
+              </Button>
             </div>
 
             <h2 className="text-[20px] font-bold mt-4 mb-2">Recent Farmers</h2>
             {records.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">{t("noRecords") || "No records yet"}</p>
+              <p className="py-6 text-center text-sm text-muted-foreground">
+                {t("noRecords") || "No records yet"}
+              </p>
             ) : (
               <div className="space-y-3">
                 {[...records].slice(0, 3).map((r) => (
@@ -193,13 +228,20 @@ function SupervisorPage() {
                   onChange={(e) => setSearch(e.target.value)}
                 />
               </div>
-              <Button variant="secondary" className="h-[52px] w-[52px] rounded-xl shrink-0" onClick={doSync} disabled={syncing}>
+              <Button
+                variant="secondary"
+                className="h-[52px] w-[52px] rounded-xl shrink-0"
+                onClick={doSync}
+                disabled={syncing}
+              >
                 <RefreshCw className={`size-5 ${syncing ? "animate-spin" : ""}`} />
               </Button>
             </div>
 
             {filtered.length === 0 ? (
-              <p className="py-10 text-center text-sm text-muted-foreground">{t("noRecords") || "No records found"}</p>
+              <p className="py-10 text-center text-sm text-muted-foreground">
+                {t("noRecords") || "No records found"}
+              </p>
             ) : (
               <div className="space-y-3">
                 {filtered.map((r) => (
@@ -212,7 +254,8 @@ function SupervisorPage() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-bold text-[16px]">{r.fullName || t("draft")}</p>
                       <p className="truncate text-[13px] text-muted-foreground mt-0.5">
-                        {r.village} · {r.killahs ?? 0} {t("killahs")?.split(" ")[0] || "Acres"} · {r.photos.length} 📷
+                        {r.village} · {r.killahs ?? 0} {t("killahs")?.split(" ")[0] || "Acres"} ·{" "}
+                        {r.photos.length} 📷
                       </p>
                     </div>
                     <StatusBadge status={r.status} pending={r.dirty} />
@@ -231,7 +274,9 @@ function SupervisorPage() {
                 <div>
                   <h3 className="text-xl font-bold">{profile.name}</h3>
                   <p className="text-muted-foreground">{profile.email}</p>
-                  <p className="text-xs font-semibold uppercase mt-1 text-primary">{profile.role}</p>
+                  <p className="text-xs font-semibold uppercase mt-1 text-primary">
+                    {profile.role}
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -242,8 +287,8 @@ function SupervisorPage() {
                   <span className="font-medium">Language</span>
                   <LanguageToggle />
                 </div>
-                <Button 
-                  variant="destructive" 
+                <Button
+                  variant="destructive"
                   className="w-full h-[52px] rounded-xl font-bold"
                   onClick={async () => {
                     await logout();
@@ -257,11 +302,14 @@ function SupervisorPage() {
           </TabsContent>
 
           <TabsList className="fixed bottom-0 left-0 right-0 z-50 flex h-[64px] rounded-none border-t border-border bg-card p-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] justify-around pb-safe text-muted-foreground">
-            <TabsTrigger value="home" className="flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none">
+            <TabsTrigger
+              value="home"
+              className="flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none"
+            >
               <Home className="size-6" />
               <span className="text-[10px] font-medium leading-none">Home</span>
             </TabsTrigger>
-            <button 
+            <button
               type="button"
               className="flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent text-muted-foreground active:text-primary transition-colors"
               onClick={() => setEditing({ ...emptyFarmer(profile.uid), id: newLocalId() })}
@@ -270,11 +318,17 @@ function SupervisorPage() {
                 <Plus className="size-5" />
               </div>
             </button>
-            <TabsTrigger value="list" className="flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none">
+            <TabsTrigger
+              value="list"
+              className="flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none"
+            >
               <List className="size-6" />
               <span className="text-[10px] font-medium leading-none">Records</span>
             </TabsTrigger>
-            <TabsTrigger value="profile" className="flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none">
+            <TabsTrigger
+              value="profile"
+              className="flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none"
+            >
               <User className="size-6" />
               <span className="text-[10px] font-medium leading-none">Profile</span>
             </TabsTrigger>

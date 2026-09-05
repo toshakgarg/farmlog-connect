@@ -1,6 +1,15 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, ClipboardList, Loader2, Shield, Sprout, Tractor } from "lucide-react";
+import {
+  ArrowLeft,
+  ClipboardList,
+  Loader2,
+  Shield,
+  Sprout,
+  Tractor,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -50,6 +59,7 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (ready && profile) navigate({ to: `/${profile.role}` });
@@ -134,37 +144,72 @@ function LoginPage() {
               </h2>
               <form className="space-y-4" onSubmit={handleLogin}>
                 <div className="space-y-1.5">
-                  <Label htmlFor="email">{t("email")}</Label>
+                  <Label htmlFor="email" className="font-semibold text-[14px]">
+                    Email / ईमेल
+                  </Label>
                   <Input
                     id="email"
                     type="email"
                     inputMode="email"
                     autoComplete="email"
-                    className="touch-row"
+                    className="h-[52px] rounded-xl border-gray-200 focus:border-green-500"
+                    placeholder="Email / ईमेल"
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="password">{t("password")}</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    autoComplete="current-password"
-                    className="touch-row"
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password" className="font-semibold text-[14px]">
+                      Password / पासवर्ड
+                    </Label>
+                  </div>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      autoComplete="current-password"
+                      className="h-[52px] rounded-xl border-gray-200 focus:border-green-500 pr-12"
+                      placeholder="Password / पासवर्ड"
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-0 top-0 flex h-[52px] w-[52px] items-center justify-center text-muted-foreground hover:text-foreground"
+                      onClick={() => setShowPassword(!showPassword)}
+                      tabIndex={-1}
+                    >
+                      {showPassword ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
+                    </button>
+                  </div>
+                  <div className="flex justify-end pt-1">
+                    <button
+                      type="button"
+                      className="text-[14px] font-medium text-primary hover:underline"
+                      onClick={() =>
+                        alert("Please contact your administrator to reset your password.")
+                      }
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
                 </div>
-                {error ? <p className="text-sm text-destructive">{error}</p> : null}
+                {error ? (
+                  <p className="text-sm font-medium text-[#dc2626] bg-[#dc2626]/10 p-3 rounded-lg">
+                    {error === "Firebase: Error (auth/invalid-credential)."
+                      ? "Invalid email or password"
+                      : error}
+                  </p>
+                ) : null}
                 <Button
                   type="submit"
-                  className="w-full touch-row text-base"
+                  className="w-full h-[52px] rounded-xl text-base font-bold shadow-md active:scale-[0.99] transition-transform"
                   disabled={busy || !configured}
                 >
-                  {busy ? <Loader2 className="mr-2 size-4 animate-spin" /> : null}
+                  {busy ? <Loader2 className="mr-2 size-5 animate-spin" /> : null}
                   {t("login")}
                 </Button>
               </form>
