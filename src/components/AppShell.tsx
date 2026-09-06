@@ -18,7 +18,7 @@ export function AppShell({
   subtitle?: string;
   children: ReactNode;
   actions?: ReactNode;
-  onBack?: () => void;
+  onBack?: (() => void) | undefined;
 }) {
   const { t } = useI18n();
   const { logout } = useAuth();
@@ -26,8 +26,8 @@ export function AppShell({
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-background pb-16">
-      <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur">
+    <div className="min-h-screen bg-background pb-20">
+      <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur app-header">
         <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
           {onBack ? (
             <button

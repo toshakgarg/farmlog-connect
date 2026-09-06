@@ -265,6 +265,7 @@ export function FarmerForm({
               </div>
             ) : null}
           </div>
+
         );
       case 4:
         return (
@@ -361,6 +362,8 @@ export function FarmerForm({
             </Card>
           </div>
         );
+      default:
+        return null;
     }
   };
 

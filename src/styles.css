@@ -56,6 +56,7 @@
 }
 
 :root {
+  --safe-area-top: env(safe-area-inset-top, 24px);
   --radius: 0.5rem; /* rounded-lg is usually 0.5rem */
   /* Earthy agricultural palette: deep field green + wheat gold + soil clay */
   --background: #fafaf8;
@@ -145,6 +146,8 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-tap-highlight-color: transparent;
+    max-width: 100vw;
+    overflow-x: hidden;
   }
 
   h1,
@@ -152,6 +155,11 @@
   h3 {
     letter-spacing: -0.01em;
   }
+
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+
 }
 
 @utility field-surface {
@@ -162,4 +170,8 @@
 
 @utility touch-row {
   min-height: 52px;
+
+.app-header {
+  padding-top: var(--safe-area-top);
+}
 }

@@ -1,8 +1,9 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Plus, RefreshCw, Search, Home, List, User, Loader2 } from "lucide-react";
+import { Plus, RefreshCw, Search, Home, List, User, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { FarmerForm } from "@/components/FarmerForm";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
 import { listQuestions, listRecords, saveRecordLocalFirst, syncPending } from "@/lib/data";
 import { useI18n } from "@/lib/i18n";
-import { allLocalRecords, newLocalId, putLocalRecord, type LocalRecord } from "@/lib/offline";
+import { allLocalRecords, newLocalId, putLocalRecord, deleteLocalRecord, type LocalRecord } from "@/lib/offline";
 import { emptyFarmer, type FarmerRecord, type SurveyQuestion } from "@/lib/types";
 import { useOnline } from "@/hooks/useOnline";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -34,6 +35,7 @@ function SupervisorPage() {
   const [syncing, setSyncing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("home");
+  const [deleteDraft, setDeleteDraft] = useState<string | null>(null);
 
   useEffect(() => {
     if (ready && !profile) navigate({ to: "/" });
@@ -134,6 +136,21 @@ function SupervisorPage() {
       subtitle={`${t("supervisor") || "Supervisor"} · ${profile.name}`}
       onBack={editing ? () => setEditing(null) : undefined}
     >
+      <ConfirmDialog
+        isOpen={!!deleteDraft}
+        title="Delete Draft"
+        message="Delete this draft permanently?"
+        confirmLabel="Delete"
+        confirmVariant="danger"
+        onConfirm={async () => {
+          if (deleteDraft) {
+            await deleteLocalRecord(deleteDraft);
+            setDeleteDraft(null);
+            await refresh();
+          }
+        }}
+        onCancel={() => setDeleteDraft(null)}
+      />
       {editing ? (
         <FarmerForm
           value={editing}
@@ -205,12 +222,29 @@ function SupervisorPage() {
                     className="flex w-full items-center gap-3 rounded-xl border border-border bg-card p-4 text-left shadow-[var(--shadow-card)] transition-transform active:scale-[0.98]"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-bold text-[16px]">{r.fullName || t("draft")}</p>
+                      <p className="truncate font-bold text-[16px]">
+                        {r.status === "draft" ? (r.fullName || "Unnamed Farmer") : r.fullName}
+                      </p>
                       <p className="truncate text-[13px] text-muted-foreground mt-0.5">
-                        {r.village} · {r.killahs ?? 0} {t("killahs")?.split(" ")[0] || "Acres"}
+                        {r.village || "Location not set"} · {new Date(r.updatedAt || r.createdAt || Date.now()).toLocaleDateString()}
                       </p>
                     </div>
-                    <StatusBadge status={r.status} pending={r.dirty} />
+                    <div className="flex items-center gap-2">
+                      <StatusBadge status={r.status} pending={r.dirty} />
+                      {r.status === "draft" && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-8 text-destructive"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteDraft(r.id);
+                          }}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      )}
+                    </div>
                   </button>
                 ))}
               </div>
@@ -288,15 +322,16 @@ function SupervisorPage() {
                   <LanguageToggle />
                 </div>
                 <Button
-                  variant="destructive"
-                  className="w-full h-[52px] rounded-xl font-bold"
-                  onClick={async () => {
-                    await logout();
-                    navigate({ to: "/" });
-                  }}
-                >
-                  Log out
-                </Button>
+                    variant="outline"
+                    className="w-full h-[52px] rounded-xl font-bold text-destructive border-destructive"
+                    onClick={async () => {
+                      await logout();
+                      navigate({ to: "/" });
+                    }}
+                  >
+                    Logout / लॉगआउट
+                  </Button>
+                  <p className="text-center text-xs text-muted-foreground mt-4">v1.0</p>
               </CardContent>
             </Card>
           </TabsContent>

@@ -138,16 +138,22 @@ interface Ctx {
 const LangContext = createContext<Ctx>({ lang: "hi", setLang: () => {}, t: (k) => String(k) });
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>("hi");
+  const [lang, setLangState] = useState<Lang>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("farmlog_language");
+      if (stored === "en" || stored === "hi") return stored;
+    }
+    return "hi";
+  });
 
   useEffect(() => {
-    const stored = localStorage.getItem("farmlog-lang");
+    const stored = localStorage.getItem("farmlog_language");
     if (stored === "en" || stored === "hi") setLangState(stored);
   }, []);
 
   const setLang = useCallback((l: Lang) => {
     setLangState(l);
-    localStorage.setItem("farmlog-lang", l);
+    localStorage.setItem("farmlog_language", l);
     document.documentElement.lang = l;
   }, []);
 
