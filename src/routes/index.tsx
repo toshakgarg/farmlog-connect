@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ArrowLeft,
   ClipboardList,
@@ -20,6 +20,7 @@ import { useI18n } from "@/lib/i18n";
 import type { Role } from "@/lib/types";
 
 import { LandingPage } from "@/components/LandingPage";
+import { useBackNavigation } from "@/hooks/use-mobile-gestures";
 
 export const Route = createFileRoute("/")({
   ssr: false,
@@ -60,6 +61,12 @@ function LoginPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+
+  useBackNavigation(
+    useCallback(() => {
+      if (!showLanding) setShowLanding(true);
+    }, [showLanding]),
+  );
 
   useEffect(() => {
     if (ready && profile) navigate({ to: `/${profile.role}` });

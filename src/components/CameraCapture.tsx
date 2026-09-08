@@ -26,6 +26,11 @@ export function CameraCapture({ onCaptured }: Props) {
   const [facing, setFacing] = useState<"environment" | "user">("environment");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState<{
+    photo: PhotoMeta;
+    blob: Blob;
+    previewUrl: string;
+  } | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
@@ -70,6 +75,20 @@ export function CameraCapture({ onCaptured }: Props) {
 
   useEffect(() => () => stop(), [stop]);
 
+  function rejectPending() {
+    if (!pending) return;
+    URL.revokeObjectURL(pending.previewUrl);
+    setPending(null);
+  }
+
+  async function acceptPending() {
+    if (!pending) return;
+    await putPhotoBlob(pending.photo.localKey!, pending.blob);
+    onCaptured(pending.photo, pending.previewUrl);
+    setPending(null);
+    setOpen(false);
+  }
+
   async function capture() {
     const video = videoRef.current;
     if (!video || busy) return;
@@ -107,7 +126,6 @@ export function CameraCapture({ onCaptured }: Props) {
       );
       if (!blob) return;
       const localKey = newLocalId();
-      await putPhotoBlob(localKey, blob);
       const photo: PhotoMeta = {
         url: "",
         localKey,
@@ -116,7 +134,7 @@ export function CameraCapture({ onCaptured }: Props) {
         accuracy: pos?.coords.accuracy ?? null,
         timestamp,
       };
-      onCaptured(photo, URL.createObjectURL(blob));
+      setPending({ photo, blob, previewUrl: URL.createObjectURL(blob) });
     } finally {
       setBusy(false);
     }
@@ -132,6 +150,43 @@ export function CameraCapture({ onCaptured }: Props) {
       >
         <Camera className="mr-2 size-5" /> {t("openCamera")}
       </Button>
+    );
+  }
+
+  if (pending) {
+    return (
+      <div className="fixed inset-0 z-[60] flex flex-col bg-black">
+        <div className="flex items-center justify-between px-4 py-3 text-white camera-topbar">
+          <span className="text-sm font-semibold">Review photo</span>
+          <button type="button" onClick={rejectPending} aria-label="Reject photo" className="p-2">
+            <X className="size-6" />
+          </button>
+        </div>
+        <div className="min-h-0 flex-1 p-3">
+          <img
+            src={pending.previewUrl}
+            alt="Captured field preview"
+            className="size-full object-contain"
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3 bg-black p-4 camera-controls">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-14 rounded-xl"
+            onClick={rejectPending}
+          >
+            Retake
+          </Button>
+          <Button
+            type="button"
+            className="h-14 rounded-xl font-bold"
+            onClick={() => void acceptPending()}
+          >
+            Use photo
+          </Button>
+        </div>
+      </div>
     );
   }
 

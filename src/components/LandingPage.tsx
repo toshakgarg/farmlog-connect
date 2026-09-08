@@ -11,12 +11,12 @@ export function LandingPage({ onLoginClick }: Props) {
   const { t } = useI18n();
 
   return (
-    <div className="flex min-h-screen flex-col items-center bg-background px-6 py-12 text-center text-foreground">
+    <div className="flex min-h-[100dvh] flex-col items-center overflow-y-auto overscroll-y-contain bg-background px-6 py-12 pb-24 text-center text-foreground">
       <div className="flex w-full justify-end">
         <LanguageToggle />
       </div>
 
-      <div className="mt-8 flex flex-col items-center justify-center flex-1 w-full max-w-sm">
+      <div className="mt-8 flex w-full max-w-sm flex-col items-center justify-center">
         <div className="flex size-24 items-center justify-center rounded-3xl bg-primary text-primary-foreground shadow-lg">
           <Sprout className="size-12" />
         </div>

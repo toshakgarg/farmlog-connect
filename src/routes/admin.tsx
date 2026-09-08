@@ -129,6 +129,7 @@ function AdminPage() {
       title={t("adminPanel") || "Admin Panel"}
       subtitle={profile.name}
       onBack={detail ? () => setDetail(null) : showSurvey ? () => setShowSurvey(false) : undefined}
+      onRefresh={refresh}
     >
       {detail ? (
         <RecordDetail

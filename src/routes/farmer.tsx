@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { MapPin, Home, List, User, Loader2, CheckCircle2, Tractor } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
@@ -37,19 +37,22 @@ function FarmerPage() {
     if (ready && profile && profile.role !== "farmer") navigate({ to: `/${profile.role}` });
   }, [ready, profile, navigate]);
 
-  useEffect(() => {
+  const refresh = useCallback(async () => {
     if (!profile?.farmerRecordId) {
       setLoading(false);
       return;
     }
-    (async () => {
-      const [rec, qs] = await Promise.all([getRecord(profile.farmerRecordId!), listQuestions()]);
-      setRecord(rec);
-      setAnswers(rec?.answers ?? {});
-      setQuestions(qs);
-      setLoading(false);
-    })();
+    setLoading(true);
+    const [rec, qs] = await Promise.all([getRecord(profile.farmerRecordId), listQuestions()]);
+    setRecord(rec);
+    setAnswers(rec?.answers ?? {});
+    setQuestions(qs);
+    setLoading(false);
   }, [profile]);
+
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
 
   async function save() {
     if (!record) return;
@@ -65,7 +68,9 @@ function FarmerPage() {
 
   if (!ready || loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground"><Loader2 className="mr-2 size-5 animate-spin" /> {t("loading") || "Loading..."}</div>
+      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+        <Loader2 className="mr-2 size-5 animate-spin" /> {t("loading") || "Loading..."}
+      </div>
     );
   }
 
@@ -81,28 +86,36 @@ function FarmerPage() {
     if (record.district) filledFields++;
     if (record.killahs) filledFields++;
     if (record.contactNumber) filledFields++;
-    questions.forEach(q => {
+    questions.forEach((q) => {
       if (answers[q.id] !== undefined && answers[q.id] !== "") filledFields++;
     });
   }
   const completionPercentage = Math.round((filledFields / totalFields) * 100) || 0;
 
   return (
-    <AppShell title={t("appName") || "FarmLog"} subtitle={`${t("farmer") || "Farmer"} · ${profile?.name}`}>
+    <AppShell
+      title={t("appName") || "FarmLog"}
+      subtitle={`${t("farmer") || "Farmer"} · ${profile?.name}`}
+      onRefresh={refresh}
+    >
       <Tabs value={activeTab} onValueChange={setActiveTab} className="pb-24">
         <TabsContent value="home" className="space-y-4 mt-0">
           {!record ? (
             <Card className="shadow-sm rounded-xl border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                <p className="text-muted-foreground">{t("noProfileLinked") || "No farmer profile linked to your account."}</p>
+                <p className="text-muted-foreground">
+                  {t("noProfileLinked") || "No farmer profile linked to your account."}
+                </p>
               </CardContent>
             </Card>
           ) : (
             <div className="space-y-4 animate-in fade-in duration-300">
               <div className="flex items-center justify-between mb-2">
-                <h2 className="text-2xl font-bold">Welcome, {profile?.name.split(' ')[0]}</h2>
+                <h2 className="text-2xl font-bold">Welcome, {profile?.name.split(" ")[0]}</h2>
                 <div className="flex flex-col items-end">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Completion</span>
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                    Completion
+                  </span>
                   <div className="flex items-center gap-2">
                     <Progress value={completionPercentage} className="h-2 w-16" />
                     <span className="text-xs font-bold text-primary">{completionPercentage}%</span>
@@ -128,15 +141,21 @@ function FarmerPage() {
                 </CardHeader>
                 <CardContent className="grid grid-cols-2 sm:grid-cols-3 gap-4 p-4 text-sm">
                   <div>
-                    <p className="text-[11px] text-muted-foreground uppercase font-semibold">Village</p>
+                    <p className="text-[11px] text-muted-foreground uppercase font-semibold">
+                      Village
+                    </p>
                     <p className="font-bold text-[15px]">{record.village || "-"}</p>
                   </div>
                   <div>
-                    <p className="text-[11px] text-muted-foreground uppercase font-semibold">District</p>
+                    <p className="text-[11px] text-muted-foreground uppercase font-semibold">
+                      District
+                    </p>
                     <p className="font-bold text-[15px]">{record.district || "-"}</p>
                   </div>
                   <div>
-                    <p className="text-[11px] text-muted-foreground uppercase font-semibold">Land Size</p>
+                    <p className="text-[11px] text-muted-foreground uppercase font-semibold">
+                      Land Size
+                    </p>
                     <p className="font-bold text-[15px]">{record.killahs ?? 0} Killahs</p>
                   </div>
                 </CardContent>
@@ -151,7 +170,9 @@ function FarmerPage() {
                     <div className="divide-y divide-border">
                       {questions.map((q) => (
                         <div key={q.id} className="flex justify-between items-center p-3 text-sm">
-                          <span className="text-muted-foreground">{lang === "hi" ? q.labelHi : q.labelEn}</span>
+                          <span className="text-muted-foreground">
+                            {lang === "hi" ? q.labelHi : q.labelEn}
+                          </span>
                           <span className="font-bold">{String(record.answers?.[q.id] ?? "-")}</span>
                         </div>
                       ))}
@@ -167,8 +188,16 @@ function FarmerPage() {
                   </CardHeader>
                   <CardContent className="grid grid-cols-2 gap-3 sm:grid-cols-3 p-4">
                     {record.photos.map((p, i) => (
-                      <div key={i} className="relative overflow-hidden rounded-xl border border-border shadow-sm aspect-square bg-muted">
-                        <img src={p.url} alt="Field" className="size-full object-cover" loading="lazy" />
+                      <div
+                        key={i}
+                        className="relative overflow-hidden rounded-xl border border-border shadow-sm aspect-square bg-muted"
+                      >
+                        <img
+                          src={p.url}
+                          alt="Field"
+                          className="size-full object-cover"
+                          loading="lazy"
+                        />
                       </div>
                     ))}
                   </CardContent>
@@ -194,7 +223,9 @@ function FarmerPage() {
           {record && editable.length > 0 ? (
             <Card className="shadow-sm rounded-xl">
               <CardHeader className="pb-2 bg-muted/20 border-b border-border/50">
-                <CardTitle className="text-[16px] font-bold">{t("updateAnswers") || "Update Answers"}</CardTitle>
+                <CardTitle className="text-[16px] font-bold">
+                  {t("updateAnswers") || "Update Answers"}
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 p-4">
                 <QuestionFields
@@ -202,7 +233,11 @@ function FarmerPage() {
                   answers={answers}
                   onChange={(id, v) => setAnswers((a) => ({ ...a, [id]: v }))}
                 />
-                <Button className="w-full h-[52px] rounded-xl font-bold shadow-md" onClick={save} disabled={saving}>
+                <Button
+                  className="w-full h-[52px] rounded-xl font-bold shadow-md"
+                  onClick={save}
+                  disabled={saving}
+                >
                   {t("save") || "Save Updates"}
                 </Button>
               </CardContent>
@@ -231,11 +266,17 @@ function FarmerPage() {
         </TabsContent>
 
         <TabsList className="fixed bottom-0 left-0 right-0 z-50 flex h-[64px] rounded-none border-t border-border bg-card p-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] justify-around pb-safe text-muted-foreground">
-          <TabsTrigger value="home" className="flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none">
+          <TabsTrigger
+            value="home"
+            className="flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none"
+          >
             <Home className="size-6" />
             <span className="text-[10px] font-medium leading-none">Home</span>
           </TabsTrigger>
-          <TabsTrigger value="profile" className="flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none">
+          <TabsTrigger
+            value="profile"
+            className="flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none"
+          >
             <User className="size-6" />
             <span className="text-[10px] font-medium leading-none">Profile</span>
           </TabsTrigger>

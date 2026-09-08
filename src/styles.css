@@ -182,6 +182,23 @@
   padding-top: var(--safe-area-top);
 }
 
+.pull-refresh-indicator {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  display: flex;
+  min-width: 132px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  overflow: hidden;
+  transform: translateX(-50%);
+  color: var(--primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .app-main {
   padding-top: calc(var(--safe-area-top) + 70px);
   padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));

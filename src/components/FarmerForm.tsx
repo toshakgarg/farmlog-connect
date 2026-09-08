@@ -8,6 +8,8 @@ import {
   ArrowLeft,
   Check,
   Save,
+  Eye,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { CameraCapture } from "@/components/CameraCapture";
@@ -44,11 +46,15 @@ export function FarmerForm({
   const { t } = useI18n();
   const [rec, setRec] = useState<FarmerRecord>(value);
   const [previews, setPreviews] = useState<Record<string, string>>({});
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(value.photos.length > 0 ? 5 : 1);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [viewPhoto, setViewPhoto] = useState<string | null>(null);
   const totalSteps = 6;
 
-  useEffect(() => setRec(value), [value]);
+  useEffect(() => {
+    setRec(value);
+    setStep(value.photos.length > 0 ? 5 : 1);
+  }, [value]);
 
   useEffect(() => {
     let cancelled = false;
@@ -365,17 +371,42 @@ export function FarmerForm({
                       </span>
                       <button
                         type="button"
-                        onClick={() => removePhoto(i)}
-                        aria-label={t("delete")}
-                        className="bg-destructive/90 rounded-full p-1.5 active:scale-95 transition-transform"
+                        onClick={() => setViewPhoto(p.url || previews[p.localKey ?? ""] || null)}
+                        aria-label="View photo"
+                        className="rounded-full bg-black/70 p-1.5 text-white active:scale-95 transition-transform"
                       >
-                        <Trash2 className="size-3.5 text-white" />
+                        <Eye className="size-3.5" />
                       </button>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => removePhoto(i)}
+                      className="absolute right-2 top-2 rounded-full bg-destructive/90 p-1.5 text-white"
+                      aria-label={t("delete")}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
                   </div>
                 ))}
               </div>
             )}
+            {viewPhoto ? (
+              <div className="fixed inset-0 z-[55] flex items-center justify-center bg-black/90 p-4">
+                <button
+                  type="button"
+                  onClick={() => setViewPhoto(null)}
+                  aria-label="Close photo"
+                  className="absolute right-4 top-4 rounded-full bg-white/15 p-2 text-white"
+                >
+                  <X className="size-6" />
+                </button>
+                <img
+                  src={viewPhoto}
+                  alt="Field photo"
+                  className="max-h-full max-w-full object-contain"
+                />
+              </div>
+            ) : null}
           </div>
         );
       case 6:

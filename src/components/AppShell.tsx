@@ -1,11 +1,12 @@
 import { useNavigate } from "@tanstack/react-router";
 import { LogOut, Sprout, Wifi, WifiOff, ArrowLeft } from "lucide-react";
-import type { ReactNode } from "react";
+import { useCallback, type ReactNode } from "react";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
 import { useI18n } from "@/lib/i18n";
 import { useOnline } from "@/hooks/useOnline";
+import { useBackNavigation, usePullToRefresh } from "@/hooks/use-mobile-gestures";
 
 export function AppShell({
   title,
@@ -13,21 +14,35 @@ export function AppShell({
   children,
   actions,
   onBack,
+  onRefresh,
 }: {
   title: string;
   subtitle?: string;
   children: ReactNode;
   actions?: ReactNode;
   onBack?: (() => void) | undefined;
+  onRefresh?: (() => Promise<void> | void) | undefined;
 }) {
   const { t } = useI18n();
   const { logout } = useAuth();
   const online = useOnline();
   const navigate = useNavigate();
+  const { refreshing, distance } = usePullToRefresh(onRefresh);
+  const handleBack = useCallback(() => {
+    if (onBack) onBack();
+    else navigate({ to: "/" });
+  }, [navigate, onBack]);
+  useBackNavigation(handleBack);
 
   return (
     <div className="min-h-screen bg-background app-shell">
       <header className="fixed top-0 left-0 right-0 z-50 border-b bg-white app-header">
+        {onRefresh && (refreshing || distance > 0) ? (
+          <div className="pull-refresh-indicator" style={{ height: `${Math.max(0, distance)}px` }}>
+            <Wifi className={`size-4 ${refreshing ? "animate-spin" : ""}`} />
+            <span>{refreshing ? "Refreshing..." : "Pull to refresh"}</span>
+          </div>
+        ) : null}
         <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
           {onBack ? (
             <button

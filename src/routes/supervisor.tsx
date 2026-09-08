@@ -147,6 +147,7 @@ function SupervisorPage() {
       title={t("appName") || "FarmLog"}
       subtitle={`${t("supervisor") || "Supervisor"} · ${profile.name}`}
       onBack={editing ? () => setEditing(null) : undefined}
+      onRefresh={refresh}
     >
       <ConfirmDialog
         isOpen={!!deleteDraft}
