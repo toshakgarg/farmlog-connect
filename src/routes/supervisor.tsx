@@ -10,9 +10,21 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
-import { listQuestions, listRecords, saveRecordLocalFirst, syncPending } from "@/lib/data";
+import {
+  deleteRecord,
+  listQuestions,
+  listRecords,
+  saveRecordLocalFirst,
+  syncPending,
+} from "@/lib/data";
 import { useI18n } from "@/lib/i18n";
-import { allLocalRecords, newLocalId, putLocalRecord, deleteLocalRecord, type LocalRecord } from "@/lib/offline";
+import {
+  allLocalRecords,
+  newLocalId,
+  putLocalRecord,
+  deleteLocalRecord,
+  type LocalRecord,
+} from "@/lib/offline";
 import { emptyFarmer, type FarmerRecord, type SurveyQuestion } from "@/lib/types";
 import { useOnline } from "@/hooks/useOnline";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -92,14 +104,6 @@ function SupervisorPage() {
     };
   }, [online, doSync]);
 
-  if (!ready || !profile) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
-        <Loader2 className="mr-2 size-5 animate-spin" /> Loading...
-      </div>
-    );
-  }
-
   const leadFarmers = useMemo(() => records.filter((r) => r.isLeadFarmer), [records]);
   const filtered = useMemo(
     () =>
@@ -109,6 +113,14 @@ function SupervisorPage() {
     [records, search],
   );
   const pendingCount = records.filter((r) => r.dirty).length;
+
+  if (!ready || !profile) {
+    return (
+      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+        <Loader2 className="mr-2 size-5 animate-spin" /> Loading...
+      </div>
+    );
+  }
 
   async function persist(rec: FarmerRecord) {
     setSaving(true);
@@ -144,9 +156,17 @@ function SupervisorPage() {
         confirmVariant="danger"
         onConfirm={async () => {
           if (deleteDraft) {
+            console.log("Deleting draft:", deleteDraft);
             await deleteLocalRecord(deleteDraft);
+            try {
+              if (navigator.onLine) {
+                await deleteRecord(deleteDraft);
+              }
+            } catch (e) {
+              console.error("Failed to delete remote record:", e);
+            }
+            setRecords((prev) => prev.filter((r) => r.id !== deleteDraft));
             setDeleteDraft(null);
-            await refresh();
           }
         }}
         onCancel={() => setDeleteDraft(null)}
@@ -223,10 +243,11 @@ function SupervisorPage() {
                   >
                     <div className="min-w-0 flex-1">
                       <p className="truncate font-bold text-[16px]">
-                        {r.status === "draft" ? (r.fullName || "Unnamed Farmer") : r.fullName}
+                        {r.status === "draft" ? r.fullName || "Unnamed Farmer" : r.fullName}
                       </p>
                       <p className="truncate text-[13px] text-muted-foreground mt-0.5">
-                        {r.village || "Location not set"} · {new Date(r.updatedAt || r.createdAt || Date.now()).toLocaleDateString()}
+                        {r.village || "Location not set"} ·{" "}
+                        {new Date(r.updatedAt || r.createdAt || Date.now()).toLocaleDateString()}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -322,16 +343,16 @@ function SupervisorPage() {
                   <LanguageToggle />
                 </div>
                 <Button
-                    variant="outline"
-                    className="w-full h-[52px] rounded-xl font-bold text-destructive border-destructive"
-                    onClick={async () => {
-                      await logout();
-                      navigate({ to: "/" });
-                    }}
-                  >
-                    Logout / लॉगआउट
-                  </Button>
-                  <p className="text-center text-xs text-muted-foreground mt-4">v1.0</p>
+                  variant="outline"
+                  className="w-full h-[52px] rounded-xl font-bold text-destructive border-destructive"
+                  onClick={async () => {
+                    await logout();
+                    navigate({ to: "/" });
+                  }}
+                >
+                  Logout / लॉगआउट
+                </Button>
+                <p className="text-center text-xs text-muted-foreground mt-4">v1.0</p>
               </CardContent>
             </Card>
           </TabsContent>

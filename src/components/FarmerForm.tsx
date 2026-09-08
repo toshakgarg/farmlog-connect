@@ -45,6 +45,7 @@ export function FarmerForm({
   const [rec, setRec] = useState<FarmerRecord>(value);
   const [previews, setPreviews] = useState<Record<string, string>>({});
   const [step, setStep] = useState(1);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const totalSteps = 6;
 
   useEffect(() => setRec(value), [value]);
@@ -64,16 +65,57 @@ export function FarmerForm({
     return () => {
       cancelled = true;
     };
-  }, [rec.photos.length]);
+  }, [rec.photos]);
 
+  // Auto-save locally on every change - silent, no parent callback
   useEffect(() => {
-    if (step > 1) {
-      onSaveDraft({ ...rec, status: "draft" });
-    }
-  }, [step]);
+    localStorage.setItem("farmlog_current_draft", JSON.stringify(rec));
+  }, [rec]);
 
-  const set = <K extends keyof FarmerRecord>(k: K, v: FarmerRecord[K]) =>
+  const validateStep1 = (): boolean => {
+    const newErrors: Record<string, string> = {};
+
+    if (!rec.fullName || rec.fullName.trim().length < 2 || /[^a-zA-Z\s]/.test(rec.fullName)) {
+      newErrors["fullName"] = "Please enter a valid full name";
+    }
+
+    if (!rec.contactNumber || !/^\d{10}$/.test(rec.contactNumber)) {
+      newErrors["contactNumber"] = "Please enter a valid 10-digit mobile number";
+    }
+
+    if (rec.age === undefined || rec.age === null || rec.age < 18 || rec.age > 100) {
+      newErrors["age"] = "Age must be between 18 and 100";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateStep3 = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    if (
+      rec.killahs === null ||
+      rec.killahs === undefined ||
+      rec.killahs <= 0 ||
+      rec.killahs > 9999
+    ) {
+      newErrors["killahs"] = "Please enter a valid land size";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const set = <K extends keyof FarmerRecord>(k: K, v: FarmerRecord[K]) => {
     setRec((r) => ({ ...r, [k]: v }));
+    // Clear error when typing
+    if (errors[k as string]) {
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[k as string];
+        return next;
+      });
+    }
+  };
 
   function addPhoto(photo: PhotoMeta, previewUrl: string) {
     setPreviews((p) => ({ ...p, [photo.localKey!]: previewUrl }));
@@ -153,31 +195,37 @@ export function FarmerForm({
   const text = (
     key: keyof FarmerRecord,
     label: string,
-    opts?: { type?: string; required?: boolean },
-  ) => (
-    <div className="space-y-1.5">
-      <Label htmlFor={String(key)} className="text-[14px] font-semibold">
-        {label} {opts?.required ? <span className="text-destructive">*</span> : null}
-      </Label>
-      <Input
-        id={String(key)}
-        className="h-[52px] rounded-lg border-border"
-        type={opts?.type ?? "text"}
-        inputMode={opts?.type === "number" ? "numeric" : opts?.type === "tel" ? "tel" : "text"}
-        value={rec[key] === null || rec[key] === undefined ? "" : String(rec[key])}
-        onChange={(e) =>
-          set(
-            key,
-            (opts?.type === "number"
-              ? e.target.value === ""
-                ? null
-                : Number(e.target.value)
-              : e.target.value) as FarmerRecord[typeof key],
-          )
-        }
-      />
-    </div>
-  );
+    opts?: { type?: string; required?: boolean; maxLength?: number; pattern?: string },
+  ) => {
+    const error = errors[key as string];
+    return (
+      <div className="space-y-1.5">
+        <Label htmlFor={String(key)} className="text-[14px] font-semibold">
+          {label} {opts?.required ? <span className="text-destructive">*</span> : null}
+        </Label>
+        <Input
+          id={String(key)}
+          className={`h-[52px] rounded-lg ${error ? "border-red-500" : "border-border"}`}
+          type={opts?.type ?? "text"}
+          inputMode={opts?.type === "number" ? "numeric" : opts?.type === "tel" ? "tel" : "text"}
+          maxLength={opts?.maxLength}
+          pattern={opts?.pattern}
+          value={rec[key] === null || rec[key] === undefined ? "" : String(rec[key])}
+          onChange={(e) =>
+            set(
+              key,
+              (opts?.type === "number"
+                ? e.target.value === ""
+                  ? null
+                  : Number(e.target.value)
+                : e.target.value) as FarmerRecord[typeof key],
+            )
+          }
+        />
+        {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+      </div>
+    );
+  };
 
   const renderStepContent = () => {
     switch (step) {
@@ -205,7 +253,11 @@ export function FarmerForm({
                 ))}
               </div>
             </div>
-            {text("contactNumber", t("contactNumber") || "Contact Number", { type: "tel" })}
+            {text("contactNumber", t("contactNumber") || "Contact Number", {
+              type: "tel",
+              maxLength: 10,
+              pattern: "[0-9]{10}",
+            })}
           </div>
         );
       case 2:
@@ -265,7 +317,6 @@ export function FarmerForm({
               </div>
             ) : null}
           </div>
-
         );
       case 4:
         return (
@@ -417,7 +468,11 @@ export function FarmerForm({
             <Button
               type="button"
               className="h-[52px] flex-1 rounded-xl font-bold text-[16px] shadow-md"
-              onClick={() => setStep(step + 1)}
+              onClick={() => {
+                if (step === 1 && !validateStep1()) return;
+                if (step === 3 && !validateStep3()) return;
+                setStep(step + 1);
+              }}
             >
               Next <ArrowRight className="ml-2 size-5" />
             </Button>

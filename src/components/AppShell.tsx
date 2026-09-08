@@ -27,7 +27,10 @@ export function AppShell({
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur app-header">
+      <header
+        style={{ paddingTop: "env(safe-area-inset-top, 28px)" }}
+        className="fixed top-0 left-0 right-0 z-50 bg-white border-b app-header"
+      >
         <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
           {onBack ? (
             <button
@@ -69,7 +72,12 @@ export function AppShell({
         </div>
         {actions ? <div className="mx-auto max-w-5xl px-4 pb-3">{actions}</div> : null}
       </header>
-      <main className="mx-auto max-w-5xl px-4 py-4">{children}</main>
+      <main
+        style={{ paddingTop: "calc(env(safe-area-inset-top, 28px) + 70px)" }}
+        className="mx-auto max-w-5xl px-4 py-4"
+      >
+        {children}
+      </main>
     </div>
   );
 }

@@ -1,6 +1,24 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Camera, ArrowDown, ArrowUp, Download, MapPin, Plus, Trash2, X, Home, Users, List, Settings, CheckCircle2, Loader2, Shield, Tractor, UserPlus } from "lucide-react";
+import {
+  Camera,
+  ArrowDown,
+  ArrowUp,
+  Download,
+  MapPin,
+  Plus,
+  Trash2,
+  X,
+  Home,
+  Users,
+  List,
+  Settings,
+  CheckCircle2,
+  Loader2,
+  Shield,
+  Tractor,
+  UserPlus,
+} from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -27,14 +45,12 @@ import {
 } from "@/lib/data";
 import { useI18n } from "@/lib/i18n";
 import { newLocalId } from "@/lib/offline";
-import type { AppUser, FarmerRecord, QuestionType, SurveyQuestion } from "@/lib/types";
+import type { AppUser, FarmerRecord, QuestionType, Role, SurveyQuestion } from "@/lib/types";
 
 export const Route = createFileRoute("/admin")({
   ssr: false,
   head: () => ({
-    meta: [
-      { title: "Admin Panel — FarmLog Survey Management" },
-    ],
+    meta: [{ title: "Admin Panel — FarmLog Survey Management" }],
   }),
   component: AdminPage,
 });
@@ -85,14 +101,6 @@ function AdminPage() {
     if (profile?.role === "admin") void refresh();
   }, [profile, refresh]);
 
-  if (!ready || !profile) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
-        <Loader2 className="mr-2 size-5 animate-spin" /> Loading...
-      </div>
-    );
-  }
-
   const filtered = useMemo(
     () =>
       records.filter((r) => {
@@ -103,8 +111,16 @@ function AdminPage() {
         if (filters.to && r.createdAt > new Date(filters.to).getTime() + 86400000) return false;
         return true;
       }),
-    [records, filters]
+    [records, filters],
   );
+
+  if (!ready || !profile) {
+    return (
+      <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
+        <Loader2 className="mr-2 size-5 animate-spin" /> Loading...
+      </div>
+    );
+  }
   const supervisorName = (id: string) =>
     supervisors.find((s) => s.uid === id)?.name ?? "Unknown Supervisor";
 
@@ -122,12 +138,19 @@ function AdminPage() {
           onClose={() => setDetail(null)}
         />
       ) : showSurvey ? (
-        <QuestionManagement questions={questions} onChanged={refresh} onClose={() => setShowSurvey(false)} />
+        <QuestionManagement
+          questions={questions}
+          onChanged={refresh}
+          onClose={() => setShowSurvey(false)}
+        />
       ) : (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="pb-24">
           <TabsContent value="dashboard" className="space-y-6 mt-0">
             <h2 className="text-xl font-bold">Dashboard</h2>
-            <Card className="shadow-sm rounded-xl border-border bg-card hover:bg-muted/50 cursor-pointer transition-colors" onClick={() => setShowSurvey(true)}>
+            <Card
+              className="shadow-sm rounded-xl border-border bg-card hover:bg-muted/50 cursor-pointer transition-colors"
+              onClick={() => setShowSurvey(true)}
+            >
               <CardContent className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-primary/10 rounded-lg text-primary">
@@ -142,10 +165,29 @@ function AdminPage() {
               </CardContent>
             </Card>
             <div className="grid grid-cols-2 gap-4">
-              <Stat label="Total Farmers" value={farmerUsers.length} icon={<Tractor className="size-5 text-primary" />} />
-              <Stat label="Total Supervisors" value={supervisors.length} icon={<Shield className="size-5 text-primary" />} />
-              <Stat label="Total Records" value={records.length} icon={<List className="size-5 text-primary" />} />
-              <Stat label="Records This Month" value={records.filter(r => new Date(r.createdAt).getMonth() === new Date().getMonth()).length} icon={<CheckCircle2 className="size-5 text-primary" />} />
+              <Stat
+                label="Total Farmers"
+                value={farmerUsers.length}
+                icon={<Tractor className="size-5 text-primary" />}
+              />
+              <Stat
+                label="Total Supervisors"
+                value={supervisors.length}
+                icon={<Shield className="size-5 text-primary" />}
+              />
+              <Stat
+                label="Total Records"
+                value={records.length}
+                icon={<List className="size-5 text-primary" />}
+              />
+              <Stat
+                label="Records This Month"
+                value={
+                  records.filter((r) => new Date(r.createdAt).getMonth() === new Date().getMonth())
+                    .length
+                }
+                icon={<CheckCircle2 className="size-5 text-primary" />}
+              />
             </div>
 
             <Card className="shadow-sm rounded-xl overflow-hidden">
@@ -154,7 +196,9 @@ function AdminPage() {
               </CardHeader>
               <CardContent className="p-0">
                 <div className="divide-y divide-border">
-                  {records.length === 0 && <div className="p-8 text-center text-muted-foreground">No records yet.</div>}
+                  {records.length === 0 && (
+                    <div className="p-8 text-center text-muted-foreground">No records yet.</div>
+                  )}
                   {records
                     .sort((a, b) => b.updatedAt - a.updatedAt)
                     .slice(0, 5)
@@ -166,9 +210,12 @@ function AdminPage() {
                         className="flex w-full items-center justify-between gap-3 p-4 text-left transition-colors hover:bg-muted/50 active:bg-muted"
                       >
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-[16px] font-bold text-foreground">{r.fullName}</p>
+                          <p className="truncate text-[16px] font-bold text-foreground">
+                            {r.fullName}
+                          </p>
                           <p className="truncate text-[13px] text-muted-foreground mt-0.5">
-                            {r.village} · {supervisorName(r.supervisorID)} · {new Date(r.updatedAt).toLocaleDateString()}
+                            {r.village} · {supervisorName(r.supervisorID)} ·{" "}
+                            {new Date(r.updatedAt).toLocaleDateString()}
                           </p>
                         </div>
                         <StatusBadge status={r.status} />
@@ -238,10 +285,12 @@ function AdminPage() {
             >
               <Download className="mr-2 size-5" /> Export All (CSV)
             </Button>
-            
+
             <div className="space-y-3">
               {filtered.length === 0 && (
-                <div className="text-center p-8 text-muted-foreground bg-muted/30 rounded-xl">No records match your filters.</div>
+                <div className="text-center p-8 text-muted-foreground bg-muted/30 rounded-xl">
+                  No records match your filters.
+                </div>
               )}
               {filtered.map((r) => (
                 <Card key={r.id} className="shadow-sm rounded-xl overflow-hidden">
@@ -274,63 +323,72 @@ function AdminPage() {
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-4 mt-0">
-              <h2 className="text-xl font-bold">Settings</h2>
-              <Card className="shadow-sm rounded-xl">
-                <CardContent className="p-6 flex items-center gap-4">
-                  <div className="flex items-center justify-center size-14 rounded-full bg-primary/10 text-primary font-bold text-2xl">
-                    {profile.name.substring(0, 2).toUpperCase()}
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold">{profile.name}</h3>
-                    <p className="text-muted-foreground">{profile.email}</p>
-                    <p className="text-xs font-semibold uppercase mt-1 text-primary">
-                      {profile.role}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+            <h2 className="text-xl font-bold">Settings</h2>
+            <Card className="shadow-sm rounded-xl">
+              <CardContent className="p-6 flex items-center gap-4">
+                <div className="flex items-center justify-center size-14 rounded-full bg-primary/10 text-primary font-bold text-2xl">
+                  {profile.name.substring(0, 2).toUpperCase()}
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold">{profile.name}</h3>
+                  <p className="text-muted-foreground">{profile.email}</p>
+                  <p className="text-xs font-semibold uppercase mt-1 text-primary">
+                    {profile.role}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
 
-              <Card className="shadow-sm rounded-xl">
-                <CardContent className="p-4 space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">Language</span>
-                    <LanguageToggle />
-                  </div>
-                  <Button
-                    variant="outline"
-                    className="w-full h-[52px] rounded-xl font-bold text-destructive border-destructive"
-                    onClick={async () => {
-                      await logout();
-                      navigate({ to: "/" });
-                    }}
-                  >
-                    Logout / लॉगआउट
-                  </Button>
-                  <p className="text-center text-xs text-muted-foreground mt-4">v1.0</p>
-                </CardContent>
-              </Card>
-            </TabsContent>
+            <Card className="shadow-sm rounded-xl">
+              <CardContent className="p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Language</span>
+                  <LanguageToggle />
+                </div>
+                <Button
+                  variant="outline"
+                  className="w-full h-[52px] rounded-xl font-bold text-destructive border-destructive"
+                  onClick={async () => {
+                    await logout();
+                    navigate({ to: "/" });
+                  }}
+                >
+                  Logout / लॉगआउट
+                </Button>
+                <p className="text-center text-xs text-muted-foreground mt-4">v1.0</p>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           <TabsList className="fixed bottom-0 left-0 right-0 z-50 flex h-[64px] rounded-none border-t border-border bg-card p-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] justify-around pb-safe text-muted-foreground">
-            <TabsTrigger value="dashboard" className="flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none">
+            <TabsTrigger
+              value="dashboard"
+              className="flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none"
+            >
               <Home className="size-6" />
               <span className="text-[10px] font-medium leading-none">Home</span>
             </TabsTrigger>
-            <TabsTrigger value="users" className="flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none">
+            <TabsTrigger
+              value="users"
+              className="flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none"
+            >
               <Users className="size-6" />
               <span className="text-[10px] font-medium leading-none">Users</span>
             </TabsTrigger>
-            <TabsTrigger value="records" className="flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none">
+            <TabsTrigger
+              value="records"
+              className="flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none"
+            >
               <List className="size-6" />
               <span className="text-[10px] font-medium leading-none">Records</span>
             </TabsTrigger>
             <TabsTrigger
-                value="settings"
-                className="flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none"
-              >
-                <Settings className="size-6" />
-                <span className="text-[10px] font-medium leading-none">Settings</span>
-              </TabsTrigger>
+              value="settings"
+              className="flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none"
+            >
+              <Settings className="size-6" />
+              <span className="text-[10px] font-medium leading-none">Settings</span>
+            </TabsTrigger>
           </TabsList>
         </Tabs>
       )}
@@ -366,95 +424,113 @@ function RecordDetail({
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300 pb-8">
       <div className="flex flex-col gap-1">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold">{record.fullName || "Unnamed Farmer"}</h2>
-            <StatusBadge status={record.status} pending={(record as any).dirty} />
-          </div>
-          <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-muted-foreground font-medium">
-            <span>Added {new Date(record.createdAt || Date.now()).toLocaleDateString()}</span>
-            <span>•</span>
-            <span>By {supervisorName}</span>
-          </div>
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">{record.fullName || "Unnamed Farmer"}</h2>
+          <StatusBadge status={record.status} pending={record.dirty} />
         </div>
-
-        <Card className="shadow-sm rounded-xl overflow-hidden">
-          <CardHeader className="bg-muted/30 pb-3 border-b border-border/50">
-            <CardTitle className="text-[16px] font-bold">Farmer Information</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-3 p-4">
-            {[
-              ["Age", record.age],
-              ["Gender", record.gender],
-              ["Contact", record.contactNumber],
-              ["Village", record.village],
-              ["Tehsil", record.tehsil],
-              ["District", record.district],
-              ["State", record.state],
-              ["Killahs", record.killahs],
-              ["Lead Farmer?", record.isLeadFarmer ? "Yes" : "No"],
-              ["Linked Lead", record.leadFarmerID],
-            ].map(([l, v]) => {
-              const val = v === null || v === undefined || v === "" ? null : String(v);
-              return (
-                <div key={String(l)} className="space-y-1">
-                  <p className="text-[12px] font-medium text-muted-foreground uppercase">{l}</p>
-                  {val ? (
-                    <p className="font-bold text-[14px]">{val}</p>
-                  ) : (
-                    <p className="text-[14px] text-muted-foreground italic">Not provided</p>
-                  )}
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-muted-foreground font-medium">
+          <span>Added {new Date(record.createdAt || Date.now()).toLocaleDateString()}</span>
+          <span>•</span>
+          <span>By {supervisorName}</span>
+        </div>
+      </div>
 
       <Card className="shadow-sm rounded-xl overflow-hidden">
-          <CardHeader className="bg-muted/30 pb-3 border-b border-border/50">
-            <CardTitle className="text-[16px] font-bold">Survey Answers</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            {questions.length === 0 ? (
-              <div className="p-6 text-center text-muted-foreground flex flex-col items-center">
-                <List className="size-8 opacity-20 mb-2" />
-                <p className="text-sm">No survey responses recorded</p>
+        <CardHeader className="bg-muted/30 pb-3 border-b border-border/50">
+          <CardTitle className="text-[16px] font-bold">Farmer Information</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-2 gap-4 text-sm sm:grid-cols-3 p-4">
+          {[
+            ["Age", record.age],
+            ["Gender", record.gender],
+            ["Contact", record.contactNumber],
+            ["Village", record.village],
+            ["Tehsil", record.tehsil],
+            ["District", record.district],
+            ["State", record.state],
+            ["Killahs", record.killahs],
+            ["Lead Farmer?", record.isLeadFarmer ? "Yes" : "No"],
+            ["Linked Lead", record.leadFarmerID],
+          ].map(([l, v]) => {
+            const val = v === null || v === undefined || v === "" ? null : String(v);
+            return (
+              <div key={String(l)} className="space-y-1">
+                <p className="text-[12px] font-medium text-muted-foreground uppercase">{l}</p>
+                {val ? (
+                  <p className="font-bold text-[14px]">{val}</p>
+                ) : (
+                  <p className="text-[14px] text-muted-foreground italic">Not provided</p>
+                )}
               </div>
-            ) : (
-              <div className="divide-y divide-border">
-                {questions.map((q) => {
-                  const ans = record.answers?.[q.id];
-                  const hasAns = ans !== null && ans !== undefined && ans !== "";
-                  return (
-                    <div key={q.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-4">
-                      <span className="text-[14px] text-muted-foreground font-medium">{lang === "hi" ? q.labelHi : q.labelEn}</span>
-                      {hasAns ? (
-                        <span className="font-bold text-[15px] text-right break-words max-w-[60%]">{String(ans)}</span>
-                      ) : (
-                        <span className="text-[14px] text-muted-foreground italic text-right">Not provided</span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+            );
+          })}
+        </CardContent>
+      </Card>
 
-        <Card className="shadow-sm rounded-xl overflow-hidden">
-          <CardHeader className="bg-muted/30 pb-3 border-b border-border/50">
-            <CardTitle className="text-[16px] font-bold">Field Photos ({record.photos.length})</CardTitle>
-          </CardHeader>
-          <CardContent className={record.photos.length === 0 ? "p-0" : "grid grid-cols-2 gap-3 sm:grid-cols-3 p-4"}>
-            {record.photos.length === 0 && (
-              <div className="py-8 text-center text-muted-foreground flex flex-col items-center w-full col-span-full">
-                <div className="bg-muted rounded-full p-4 mb-3">
-                  <Camera className="size-8 opacity-40" />
-                </div>
-                <p className="text-sm font-medium">No field photos captured</p>
+      <Card className="shadow-sm rounded-xl overflow-hidden">
+        <CardHeader className="bg-muted/30 pb-3 border-b border-border/50">
+          <CardTitle className="text-[16px] font-bold">Survey Answers</CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          {questions.length === 0 ? (
+            <div className="p-6 text-center text-muted-foreground flex flex-col items-center">
+              <List className="size-8 opacity-20 mb-2" />
+              <p className="text-sm">No survey responses recorded</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {questions.map((q) => {
+                const ans = record.answers?.[q.id];
+                const hasAns = ans !== null && ans !== undefined && ans !== "";
+                return (
+                  <div
+                    key={q.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-4"
+                  >
+                    <span className="text-[14px] text-muted-foreground font-medium">
+                      {lang === "hi" ? q.labelHi : q.labelEn}
+                    </span>
+                    {hasAns ? (
+                      <span className="font-bold text-[15px] text-right break-words max-w-[60%]">
+                        {String(ans)}
+                      </span>
+                    ) : (
+                      <span className="text-[14px] text-muted-foreground italic text-right">
+                        Not provided
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-sm rounded-xl overflow-hidden">
+        <CardHeader className="bg-muted/30 pb-3 border-b border-border/50">
+          <CardTitle className="text-[16px] font-bold">
+            Field Photos ({record.photos.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent
+          className={
+            record.photos.length === 0 ? "p-0" : "grid grid-cols-2 gap-3 sm:grid-cols-3 p-4"
+          }
+        >
+          {record.photos.length === 0 && (
+            <div className="py-8 text-center text-muted-foreground flex flex-col items-center w-full col-span-full">
+              <div className="bg-muted rounded-full p-4 mb-3">
+                <Camera className="size-8 opacity-40" />
               </div>
-            )}
+              <p className="text-sm font-medium">No field photos captured</p>
+            </div>
+          )}
           {record.photos.map((p, i) => (
-            <div key={i} className="relative overflow-hidden rounded-xl border border-border shadow-sm aspect-square bg-muted">
+            <div
+              key={i}
+              className="relative overflow-hidden rounded-xl border border-border shadow-sm aspect-square bg-muted"
+            >
               <img src={p.url} alt="Field" className="size-full object-cover" />
               {p.timestamp && (
                 <div className="absolute bottom-0 inset-x-0 bg-black/60 p-2 backdrop-blur-sm">
@@ -472,8 +548,8 @@ function RecordDetail({
           ))}
         </CardContent>
       </Card>
-      
-            <Button
+
+      <Button
         variant="destructive"
         className="w-full h-[52px] rounded-xl font-bold mt-4"
         onClick={() => setDeleteOpen(true)}
@@ -504,25 +580,52 @@ function UserManagement({
 }: {
   allUsers: AppUser[];
   records: FarmerRecord[];
-  createAccount: any;
+  createAccount: (input: {
+    email: string;
+    password: string;
+    name: string;
+    role: Role;
+    phone?: string;
+    farmerRecordId?: string | null;
+  }) => Promise<AppUser>;
   onChanged: () => void;
 }) {
   const [role, setRole] = useState<"supervisor" | "farmer">("supervisor");
-  const [form, setForm] = useState({ name: "", email: "", password: "", phone: "", farmerRecordId: "" });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    phone: "",
+    farmerRecordId: "",
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [deleteUser, setDeleteUser] = useState<string | null>(null);
   const { t } = useI18n();
 
   async function submit() {
-    if (!form.name || !form.email || !form.password) {
-      toast.error("Please fill all required fields");
+    const newErrors: Record<string, string> = {};
+    if (!form.name || form.name.trim().length < 2 || /[^a-zA-Z\s]/.test(form.name)) {
+      newErrors["name"] = "Please enter a valid full name";
+    }
+    if (!form.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      newErrors["email"] = "Please enter a valid email address";
+    }
+    if (!form.password || form.password.length < 6) {
+      newErrors["password"] = "Password must be at least 6 characters";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
+
     setBusy(true);
     try {
       await createAccount({ ...form, role });
       toast.success(role === "supervisor" ? "Supervisor created" : "Farmer created");
       setForm({ name: "", email: "", password: "", phone: "", farmerRecordId: "" });
+      setErrors({});
       onChanged();
     } catch (e) {
       toast.error((e as Error).message);
@@ -551,53 +654,87 @@ function UserManagement({
         <button
           onClick={() => setRole("supervisor")}
           className={`flex flex-col items-center justify-center p-6 rounded-2xl border-2 transition-all ${
-            role === "supervisor" 
-              ? "border-primary bg-primary/10 shadow-sm" 
+            role === "supervisor"
+              ? "border-primary bg-primary/10 shadow-sm"
               : "border-border bg-card hover:bg-muted"
           }`}
         >
-          <Shield className={`size-8 mb-2 ${role === "supervisor" ? "text-primary" : "text-muted-foreground"}`} />
-          <span className={`font-bold ${role === "supervisor" ? "text-primary" : "text-muted-foreground"}`}>Supervisor 🛡</span>
+          <Shield
+            className={`size-8 mb-2 ${role === "supervisor" ? "text-primary" : "text-muted-foreground"}`}
+          />
+          <span
+            className={`font-bold ${role === "supervisor" ? "text-primary" : "text-muted-foreground"}`}
+          >
+            Supervisor 🛡
+          </span>
         </button>
         <button
           onClick={() => setRole("farmer")}
           className={`flex flex-col items-center justify-center p-6 rounded-2xl border-2 transition-all ${
-            role === "farmer" 
-              ? "border-primary bg-primary/10 shadow-sm" 
+            role === "farmer"
+              ? "border-primary bg-primary/10 shadow-sm"
               : "border-border bg-card hover:bg-muted"
           }`}
         >
-          <Tractor className={`size-8 mb-2 ${role === "farmer" ? "text-primary" : "text-muted-foreground"}`} />
-          <span className={`font-bold ${role === "farmer" ? "text-primary" : "text-muted-foreground"}`}>Farmer 🚜</span>
+          <Tractor
+            className={`size-8 mb-2 ${role === "farmer" ? "text-primary" : "text-muted-foreground"}`}
+          />
+          <span
+            className={`font-bold ${role === "farmer" ? "text-primary" : "text-muted-foreground"}`}
+          >
+            Farmer 🚜
+          </span>
         </button>
       </div>
 
       <Card className="shadow-sm rounded-xl">
         <CardHeader className="pb-4">
-          <CardTitle className="text-[18px]">Create New {role === "supervisor" ? "Supervisor" : "Farmer"}</CardTitle>
+          <CardTitle className="text-[18px]">
+            Create New {role === "supervisor" ? "Supervisor" : "Farmer"}
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-3">
-            <Input
-              placeholder="Full Name / पूरा नाम *"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              className="h-[52px] rounded-xl"
-            />
-            <Input
-              placeholder="Email / ईमेल *"
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              className="h-[52px] rounded-xl"
-            />
-            <Input
-              placeholder="Password / पासवर्ड *"
-              type="password"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              className="h-[52px] rounded-xl"
-            />
+            <div>
+              <Input
+                placeholder="Full Name / पूरा नाम *"
+                value={form.name}
+                onChange={(e) => {
+                  setForm({ ...form, name: e.target.value });
+                  if (errors["name"]) setErrors({ ...errors, name: "" });
+                }}
+                className={`h-[52px] rounded-xl ${errors["name"] ? "border-red-500" : ""}`}
+              />
+              {errors["name"] && <p className="text-red-500 text-xs mt-1">{errors["name"]}</p>}
+            </div>
+            <div>
+              <Input
+                placeholder="Email / ईमेल *"
+                type="email"
+                value={form.email}
+                onChange={(e) => {
+                  setForm({ ...form, email: e.target.value });
+                  if (errors["email"]) setErrors({ ...errors, email: "" });
+                }}
+                className={`h-[52px] rounded-xl ${errors["email"] ? "border-red-500" : ""}`}
+              />
+              {errors["email"] && <p className="text-red-500 text-xs mt-1">{errors["email"]}</p>}
+            </div>
+            <div>
+              <Input
+                placeholder="Password / पासवर्ड *"
+                type="password"
+                value={form.password}
+                onChange={(e) => {
+                  setForm({ ...form, password: e.target.value });
+                  if (errors["password"]) setErrors({ ...errors, password: "" });
+                }}
+                className={`h-[52px] rounded-xl ${errors["password"] ? "border-red-500" : ""}`}
+              />
+              {errors["password"] && (
+                <p className="text-red-500 text-xs mt-1">{errors["password"]}</p>
+              )}
+            </div>
             <Input
               placeholder="Contact / संपर्क (Optional)"
               value={form.phone}
@@ -619,8 +756,16 @@ function UserManagement({
               </select>
             ) : null}
           </div>
-          <Button className="w-full h-[52px] rounded-xl text-base font-bold" onClick={submit} disabled={busy}>
-            {busy ? <Loader2 className="mr-2 size-5 animate-spin" /> : <UserPlus className="mr-2 size-5" />}
+          <Button
+            className="w-full h-[52px] rounded-xl text-base font-bold"
+            onClick={submit}
+            disabled={busy}
+          >
+            {busy ? (
+              <Loader2 className="mr-2 size-5 animate-spin" />
+            ) : (
+              <UserPlus className="mr-2 size-5" />
+            )}
             Create {role === "supervisor" ? "Supervisor" : "Farmer"}
           </Button>
         </CardContent>
@@ -638,9 +783,13 @@ function UserManagement({
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 mb-0.5">
                   <p className="truncate text-[16px] font-bold">{u.name}</p>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                    u.role === "supervisor" ? "bg-primary/15 text-primary" : "bg-blue-500/15 text-blue-600"
-                  }`}>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                      u.role === "supervisor"
+                        ? "bg-primary/15 text-primary"
+                        : "bg-blue-500/15 text-blue-600"
+                    }`}
+                  >
                     {u.role}
                   </span>
                 </div>
@@ -695,17 +844,17 @@ function QuestionManagement({
   const [deleteQuestionId, setDeleteQuestionId] = useState<string | null>(null);
 
   const move = async (index: number, dir: -1 | 1) => {
-      if (index + dir < 0 || index + dir >= questions.length) return;
-      const a = questions[index];
-      const b = questions[index + dir];
-      if (!a || !b) return;
-      const t = a.order;
-      a.order = b.order;
-      b.order = t;
-      await saveQuestion(a);
-      await saveQuestion(b);
-      onChanged();
-    };
+    if (index + dir < 0 || index + dir >= questions.length) return;
+    const a = questions[index];
+    const b = questions[index + dir];
+    if (!a || !b) return;
+    const t = a.order;
+    a.order = b.order;
+    b.order = t;
+    await saveQuestion(a);
+    await saveQuestion(b);
+    onChanged();
+  };
 
   const submit = async () => {
     if (!form.labelEn || !form.labelHi) {
@@ -758,9 +907,13 @@ function QuestionManagement({
       />
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold">Survey Questions</h2>
-        {onClose && <Button variant="ghost" onClick={onClose}>Close</Button>}
+        {onClose && (
+          <Button variant="ghost" onClick={onClose}>
+            Close
+          </Button>
+        )}
       </div>
-      
+
       <Card className="shadow-sm rounded-xl">
         <CardHeader className="pb-4">
           <CardTitle className="text-[18px]">Add New Question</CardTitle>
@@ -778,7 +931,7 @@ function QuestionManagement({
             onChange={(e) => setForm({ ...form, labelHi: e.target.value })}
             className="h-[52px] rounded-xl"
           />
-          
+
           <div className="flex flex-col space-y-4">
             <div className="space-y-1.5 w-full">
               <Label className="text-xs text-muted-foreground">Answer Type</Label>
@@ -792,7 +945,7 @@ function QuestionManagement({
                 <option value="category">Category (Dropdown)</option>
               </select>
             </div>
-            
+
             <label className="flex items-center justify-between w-full h-[52px] px-3 bg-muted/20 border border-border rounded-xl">
               <span className="text-sm font-medium">Required Question</span>
               <Switch
@@ -800,7 +953,7 @@ function QuestionManagement({
                 onCheckedChange={(v) => setForm({ ...form, required: v })}
               />
             </label>
-            
+
             <label className="flex items-center justify-between w-full h-[52px] px-3 bg-muted/20 border border-border rounded-xl">
               <span className="text-sm font-medium">Farmer Editable</span>
               <Switch
@@ -826,10 +979,13 @@ function QuestionManagement({
                   value={tempOptHi}
                   onChange={(e) => setTempOptHi(e.target.value)}
                 />
-                <Button 
+                <Button
                   onClick={() => {
-                    if(tempOptEn && tempOptHi) {
-                      setForm({...form, options: [...(form.options||[]), `${tempOptEn}|${tempOptHi}`]});
+                    if (tempOptEn && tempOptHi) {
+                      setForm({
+                        ...form,
+                        options: [...(form.options || []), `${tempOptEn}|${tempOptHi}`],
+                      });
                       setTempOptEn("");
                       setTempOptHi("");
                     }
@@ -839,82 +995,101 @@ function QuestionManagement({
                   Add Option
                 </Button>
               </div>
-              
+
               {form.options && form.options.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-4">
                   {form.options.map((opt, i) => {
                     const [en, hi] = opt.split("|");
                     return (
-                    <div key={i} className="flex items-center gap-2 text-sm pl-3 pr-2 py-1.5 bg-background rounded-full border border-border shadow-sm">
-                      <span className="font-medium">{en} <span className="text-muted-foreground font-normal">({hi})</span></span>
-                      <button className="flex items-center justify-center size-5 rounded-full bg-muted hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors" onClick={() => {
-                        setForm({
-                          ...form, 
-                          options: form.options?.filter((_, idx) => idx !== i) || [],
-                        });
-                      }}>
-                        <X className="size-3" />
-                      </button>
-                    </div>
-                  )})}
+                      <div
+                        key={i}
+                        className="flex items-center gap-2 text-sm pl-3 pr-2 py-1.5 bg-background rounded-full border border-border shadow-sm"
+                      >
+                        <span className="font-medium">
+                          {en} <span className="text-muted-foreground font-normal">({hi})</span>
+                        </span>
+                        <button
+                          className="flex items-center justify-center size-5 rounded-full bg-muted hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                          onClick={() => {
+                            setForm({
+                              ...form,
+                              options: form.options?.filter((_, idx) => idx !== i) || [],
+                            });
+                          }}
+                        >
+                          <X className="size-3" />
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
           )}
-          
+
           <Button className="w-full h-[52px] rounded-xl font-bold" onClick={submit} disabled={busy}>
-            {busy ? <Loader2 className="mr-2 size-5 animate-spin" /> : <Plus className="mr-2 size-5" />}
+            {busy ? (
+              <Loader2 className="mr-2 size-5 animate-spin" />
+            ) : (
+              <Plus className="mr-2 size-5" />
+            )}
             Add Question
           </Button>
         </CardContent>
       </Card>
 
       <div className="space-y-3 pt-4">
-        {questions.sort((a,b) => a.order - b.order).map((q, i) => (
-          <Card key={q.id} className="shadow-sm rounded-xl overflow-hidden">
-            <CardContent className="p-4 flex gap-4">
-              <div className="flex flex-col justify-center gap-1">
-                <button
-                  className="p-1 hover:bg-muted rounded"
-                  onClick={() => move(i, -1)}
-                  disabled={i === 0}
-                >
-                  <ArrowUp className="size-4 text-muted-foreground" />
-                </button>
-                <button
-                  className="p-1 hover:bg-muted rounded"
-                  onClick={() => move(i, 1)}
-                  disabled={i === questions.length - 1}
-                >
-                  <ArrowDown className="size-4 text-muted-foreground" />
-                </button>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <p className="font-bold text-[16px]">{q.labelEn}</p>
-                  <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">
-                    {q.type}
-                  </span>
-                  {q.required && <span className="px-2 py-0.5 rounded-full bg-destructive/10 text-destructive text-[10px] font-bold uppercase">Required</span>}
+        {questions
+          .sort((a, b) => a.order - b.order)
+          .map((q, i) => (
+            <Card key={q.id} className="shadow-sm rounded-xl overflow-hidden">
+              <CardContent className="p-4 flex gap-4">
+                <div className="flex flex-col justify-center gap-1">
+                  <button
+                    className="p-1 hover:bg-muted rounded"
+                    onClick={() => move(i, -1)}
+                    disabled={i === 0}
+                  >
+                    <ArrowUp className="size-4 text-muted-foreground" />
+                  </button>
+                  <button
+                    className="p-1 hover:bg-muted rounded"
+                    onClick={() => move(i, 1)}
+                    disabled={i === questions.length - 1}
+                  >
+                    <ArrowDown className="size-4 text-muted-foreground" />
+                  </button>
                 </div>
-                <p className="text-[14px] text-muted-foreground">{q.labelHi}</p>
-                {q.type === "category" && q.options && (
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="font-bold text-[16px]">{q.labelEn}</p>
+                    <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">
+                      {q.type}
+                    </span>
+                    {q.required && (
+                      <span className="px-2 py-0.5 rounded-full bg-destructive/10 text-destructive text-[10px] font-bold uppercase">
+                        Required
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[14px] text-muted-foreground">{q.labelHi}</p>
+                  {q.type === "category" && q.options && (
                     <p className="text-[12px] text-muted-foreground mt-2 bg-muted/50 p-2 rounded-lg truncate">
-                      {q.options.map(o => o.split("|")[0]).join(", ")}
+                      {q.options.map((o) => o.split("|")[0]).join(", ")}
                     </p>
                   )}
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-8 self-center text-destructive hover:bg-destructive/10 shrink-0"
-                onClick={() => setDeleteQuestionId(q.id)}
-              >
-                <Trash2 className="size-4" />
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-8 self-center text-destructive hover:bg-destructive/10 shrink-0"
+                  onClick={() => setDeleteQuestionId(q.id)}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
       </div>
     </div>
   );
