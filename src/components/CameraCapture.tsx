@@ -159,7 +159,7 @@ export function CameraCapture({ onCaptured }: Props) {
           <video ref={videoRef} playsInline muted className="size-full object-cover" />
         )}
       </div>
-      <div className="flex items-center justify-around bg-black p-6">
+      <div className="camera-controls flex items-center justify-around bg-black p-6">
         <button
           type="button"
           onClick={() => setFacing((f) => (f === "environment" ? "user" : "environment"))}

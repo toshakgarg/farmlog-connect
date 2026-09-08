@@ -148,13 +148,11 @@
     -webkit-tap-highlight-color: transparent;
     max-width: 100vw;
     overflow-x: hidden;
-    padding-top: constant(safe-area-inset-top);
-    padding-top: env(safe-area-inset-top);
   }
 
   html,
   body {
-    padding-top: env(safe-area-inset-top, 0px);
+    padding-top: 0;
   }
 
   h1,
@@ -178,8 +176,17 @@
 
 @utility touch-row {
   min-height: 52px;
+}
 
-  .app-header {
-    padding-top: var(--safe-area-top);
-  }
+.app-header {
+  padding-top: var(--safe-area-top);
+}
+
+.app-main {
+  padding-top: calc(var(--safe-area-top) + 70px);
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+}
+
+.camera-controls {
+  padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
 }

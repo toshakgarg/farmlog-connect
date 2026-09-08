@@ -26,11 +26,8 @@ export function AppShell({
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <header
-        style={{ paddingTop: "env(safe-area-inset-top, 28px)" }}
-        className="fixed top-0 left-0 right-0 z-50 bg-white border-b app-header"
-      >
+    <div className="min-h-screen bg-background app-shell">
+      <header className="fixed top-0 left-0 right-0 z-50 border-b bg-white app-header">
         <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
           {onBack ? (
             <button
@@ -72,12 +69,7 @@ export function AppShell({
         </div>
         {actions ? <div className="mx-auto max-w-5xl px-4 pb-3">{actions}</div> : null}
       </header>
-      <main
-        style={{ paddingTop: "calc(env(safe-area-inset-top, 28px) + 70px)" }}
-        className="mx-auto max-w-5xl px-4 py-4"
-      >
-        {children}
-      </main>
+      <main className="mx-auto max-w-5xl px-4 py-4 app-main">{children}</main>
     </div>
   );
 }
