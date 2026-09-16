@@ -12,6 +12,7 @@ import {
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { fbDb, fbStorage } from "./firebase";
 import type { AppUser, FarmerRecord, SurveyQuestion } from "./types";
+import type { JOITAPerforma } from "./types";
 import {
   allLocalRecords,
   cacheMeta,
@@ -227,4 +228,39 @@ export function downloadCsv(filename: string, csv: string) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+/* ------------------------ JOITA Performa ------------------------- */
+
+export async function saveJOITAPerforma(data: Partial<JOITAPerforma>): Promise<string> {
+  const collectionRef = collection(fbDb(), "joita_performas");
+  const id = data.id || doc(collectionRef).id;
+  const now = new Date().toISOString();
+  const cleanData = {
+    ...data,
+    id,
+    updatedAt: now,
+    createdAt: data.createdAt || now,
+  };
+  
+  // Note: if photos are present, this will save photo metadata. If you need to handle photo blob upload, 
+  // you might need a separate pushJOITAPerforma logic. For now, matching the requested signature.
+  await setDoc(doc(fbDb(), "joita_performas", id), cleanData, { merge: true });
+  return id;
+}
+
+export async function getJOITAPerformasBySupervisor(supervisorId: string): Promise<JOITAPerforma[]> {
+  const snap = await getDocs(
+    query(collection(fbDb(), "joita_performas"), where("supervisorId", "==", supervisorId))
+  );
+  return snap.docs.map((d) => d.data() as JOITAPerforma);
+}
+
+export async function getAllJOITAPerformas(): Promise<JOITAPerforma[]> {
+  const snap = await getDocs(collection(fbDb(), "joita_performas"));
+  return snap.docs.map((d) => d.data() as JOITAPerforma);
+}
+
+export async function deleteJOITAPerforma(id: string): Promise<void> {
+  await deleteDoc(doc(fbDb(), "joita_performas", id));
 }

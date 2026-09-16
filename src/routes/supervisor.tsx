@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { FarmerForm } from "@/components/FarmerForm";
+import { JOITAForm } from "@/components/JOITAForm";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +17,9 @@ import {
   listRecords,
   saveRecordLocalFirst,
   syncPending,
+  getJOITAPerformasBySupervisor,
+  saveJOITAPerforma,
+  deleteJOITAPerforma,
 } from "@/lib/data";
 import { useI18n } from "@/lib/i18n";
 import {
@@ -25,7 +29,7 @@ import {
   deleteLocalRecord,
   type LocalRecord,
 } from "@/lib/offline";
-import { emptyFarmer, type FarmerRecord, type SurveyQuestion } from "@/lib/types";
+import { emptyFarmer, emptyJOITAPerforma, type FarmerRecord, type SurveyQuestion, type JOITAPerforma } from "@/lib/types";
 import { useOnline } from "@/hooks/useOnline";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { LanguageToggle } from "@/components/LanguageToggle";
@@ -41,13 +45,16 @@ function SupervisorPage() {
   const navigate = useNavigate();
   const online = useOnline();
   const [records, setRecords] = useState<LocalRecord[]>([]);
+  const [joitaRecords, setJoitaRecords] = useState<JOITAPerforma[]>([]);
   const [questions, setQuestions] = useState<SurveyQuestion[]>([]);
   const [editing, setEditing] = useState<FarmerRecord | null>(null);
+  const [editingJoita, setEditingJoita] = useState<JOITAPerforma | null>(null);
   const [search, setSearch] = useState("");
   const [syncing, setSyncing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState("home");
   const [deleteDraft, setDeleteDraft] = useState<string | null>(null);
+  const [deleteJoitaId, setDeleteJoitaId] = useState<string | null>(null);
 
   useEffect(() => {
     if (ready && !profile) navigate({ to: "/" });
@@ -72,6 +79,16 @@ function SupervisorPage() {
     }
     merged.sort((a, b) => b.updatedAt - a.updatedAt);
     setRecords(merged);
+
+    if (navigator.onLine) {
+      try {
+        const joita = await getJOITAPerformasBySupervisor(profile.uid);
+        joita.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+        setJoitaRecords(joita);
+      } catch {
+        // offline safe
+      }
+    }
   }, [profile]);
 
   useEffect(() => {
@@ -134,6 +151,24 @@ function SupervisorPage() {
     }
   }
 
+  async function persistJoita(rec: Partial<JOITAPerforma>) {
+    if (!navigator.onLine) {
+      toast.error("You must be online to save JOITA forms");
+      return;
+    }
+    setSaving(true);
+    try {
+      await saveJOITAPerforma(rec);
+      toast.success(rec.status === "draft" ? "Draft Saved" : "Submitted Successfully");
+      setEditingJoita(null);
+      await refresh();
+    } catch (e) {
+      toast.error("Failed to save JOITA form");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   if (!ready || !profile) {
     return (
       <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">
@@ -146,7 +181,7 @@ function SupervisorPage() {
     <AppShell
       title={t("appName") || "FarmLog"}
       subtitle={`${t("supervisor") || "Supervisor"} · ${profile.name}`}
-      onBack={editing ? () => setEditing(null) : undefined}
+      onBack={editing ? () => setEditing(null) : editingJoita ? () => setEditingJoita(null) : undefined}
       onRefresh={refresh}
     >
       <ConfirmDialog
@@ -172,7 +207,36 @@ function SupervisorPage() {
         }}
         onCancel={() => setDeleteDraft(null)}
       />
-      {editing ? (
+      <ConfirmDialog
+        isOpen={!!deleteJoitaId}
+        title="Delete JOITA Form"
+        message="Delete this JOITA form permanently?"
+        confirmLabel="Delete"
+        confirmVariant="danger"
+        onConfirm={async () => {
+          if (deleteJoitaId) {
+            try {
+              await deleteJOITAPerforma(deleteJoitaId);
+              setJoitaRecords((prev) => prev.filter((r) => r.id !== deleteJoitaId));
+              toast.success("Deleted");
+            } catch (e) {
+              toast.error("Failed to delete");
+            }
+            setDeleteJoitaId(null);
+          }
+        }}
+        onCancel={() => setDeleteJoitaId(null)}
+      />
+      {editingJoita ? (
+        <JOITAForm
+          value={editingJoita}
+          farmers={records}
+          onSaveDraft={persistJoita}
+          onSubmit={persistJoita}
+          onCancel={() => setEditingJoita(null)}
+          saving={saving}
+        />
+      ) : editing ? (
         <FarmerForm
           value={editing}
           questions={questions}
@@ -192,7 +256,7 @@ function SupervisorPage() {
                   <p className="mt-2 text-xs font-semibold text-muted-foreground uppercase">
                     {t("myFarmers") || "My Farmers"}
                   </p>
-                </CardContent>
+                </CardContent>Microsoft.QuickAction.Bluetooth
               </Card>
               <Card className="shadow-sm rounded-xl bg-primary/10 border-primary/20">
                 <CardContent className="p-4 flex flex-col items-center text-center">
@@ -226,6 +290,12 @@ function SupervisorPage() {
               >
                 <Plus className="mr-2 size-5" /> New Farmer Record
               </Button>
+                <Button
+                  className="h-[52px] w-full rounded-xl text-base font-bold shadow-sm border-2 border-[#15803d] text-[#15803d] bg-transparent hover:bg-primary/5 mt-3"
+                  onClick={() => setEditingJoita(emptyJOITAPerforma(profile.uid))}
+                >
+                  📋 JOITA प्रपत्र / JOITA Form
+                </Button>
             </div>
 
             <h2 className="text-[20px] font-bold mt-4 mb-2">Recent Farmers</h2>
@@ -294,6 +364,7 @@ function SupervisorPage() {
               </Button>
             </div>
 
+            <h3 className="font-bold text-lg mt-6">Farmer Records</h3>
             {filtered.length === 0 ? (
               <p className="py-10 text-center text-sm text-muted-foreground">
                 {t("noRecords") || "No records found"}
@@ -316,6 +387,45 @@ function SupervisorPage() {
                     </div>
                     <StatusBadge status={r.status} pending={r.dirty} />
                   </button>
+                ))}
+              </div>
+            )}
+
+            <h3 className="font-bold text-lg mt-8 text-[#15803d]">JOITA Forms</h3>
+            {joitaRecords.filter(r => `${r.farmerName} ${r.village} ${r.cluster}`.toLowerCase().includes(search.toLowerCase())).length === 0 ? (
+              <p className="py-10 text-center text-sm text-muted-foreground">
+                No JOITA forms found
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {joitaRecords.filter(r => `${r.farmerName} ${r.village} ${r.cluster}`.toLowerCase().includes(search.toLowerCase())).map((r) => (
+                  <div
+                    key={r.id}
+                    className="flex w-full items-center gap-3 rounded-xl border border-border bg-card p-4 text-left shadow-[var(--shadow-card)] transition-transform"
+                  >
+                    <div 
+                      className="min-w-0 flex-1 cursor-pointer"
+                      onClick={() => setEditingJoita(r)}
+                    >
+                      <p className="truncate font-bold text-[16px] text-[#15803d]">{r.farmerName || "Unnamed"}</p>
+                      <p className="truncate text-[13px] text-muted-foreground mt-0.5">
+                        {r.village} · {r.cluster} · {new Date(r.updatedAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <StatusBadge status={r.status} pending={false} />
+                    {r.status === "draft" && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteJoitaId(r.id);
+                        }}
+                        className="flex items-center justify-center p-2 text-red-500 hover:bg-red-50 rounded-full"
+                      >
+                        <Trash2 className="size-5" />
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
             )}

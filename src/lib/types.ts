@@ -79,3 +79,150 @@ export const emptyFarmer = (supervisorID: string): FarmerRecord => ({
   createdAt: Date.now(),
   updatedAt: Date.now(),
 });
+
+export interface JOITAPerforma {
+  id: string;
+  farmerId: string;
+  supervisorId: string;
+  createdAt: string;
+  updatedAt: string;
+  status: "draft" | "submitted";
+
+  // Section 1 — Farmer ID & Location
+  farmerIdCode: string;
+  cluster: "Taragarh" | "Jaswant" | "Siwan" | "Cheeka" | "Other" | "";
+  farmerName: string;
+  fatherHusbandName: string;
+  mobile: string;
+  village: string;
+  block: string;
+  district: string; // default: "Kaithal"
+  gender: "Male" | "Female" | "Other" | "";
+  totalLandAcres: number | null;
+  ccfMonitoringAreaAcres: number | null;
+  fieldIdMark: string;
+  gpsLat: number | null;
+  gpsLng: number | null;
+  farmerCategory: "Marginal_lt1ha" | "Small_1to2ha" | "Other" | "";
+  hasFarmerCompanion: boolean;
+
+  // Section 2 — Rice Crop Baseline
+  riceVariety: string;
+  sowingDate: string;
+  cropStage: string;
+  firstVisitDate: string;
+  irrigationSource: ("Tubwell" | "Canal" | "Other")[];
+  irrigationCountSoFar: number | null;
+  lastIrrigationDate: string;
+  currentMoisture: "Low" | "Medium" | "High" | "";
+  fertilizerDetails: string;
+  pesticideDetails: string;
+  currentProblems: string;
+  farmerMainNeed: string;
+
+  // Section 3 — Soil Saathi 8 Parameter Reading
+  soilBaseline: {
+    ph: string;
+    ec: string;
+    salinity: string;
+    moisture: string;
+    temperature: string;
+    nitrogen: string;
+    phosphorus: string;
+    potassium: string;
+  };
+  soilFollowup: {
+    ph: string;
+    ec: string;
+    salinity: string;
+    moisture: string;
+    temperature: string;
+    nitrogen: string;
+    phosphorus: string;
+    potassium: string;
+  };
+  spadChlorophyll: string;
+  labSampleCode: string;
+
+  // Section 4 — Technical Intervention
+  farmAssistAdvice: string;
+  adviceType: ("Nutrition" | "Irrigation" | "PestDisease" | "Other")[];
+  biosynthNanoDemo: boolean;
+  biosynthNanoDemoDate: string;
+  treatmentAreaAcres: string;
+  controlAreaAcres: string;
+
+  // Section 5 — Harvest Results
+  harvestDate: string;
+  productionQuintalPerAcre: string;
+  cropStatus: "Better" | "Same" | "Worse" | "";
+  satisfactionLevel: "High" | "Medium" | "Low" | "";
+  nextCropAdvice: string;
+  mainResultsFarmerFeedback: string;
+
+  // Consent
+  farmerConsentGiven: boolean;
+
+  // Photos
+  photos: { url: string; lat: number | null; lng: number | null; timestamp: string; localKey?: string }[];
+}
+
+export const emptyJOITAPerforma = (supervisorId: string): JOITAPerforma => ({
+  id: "",
+  farmerId: "",
+  supervisorId,
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+  status: "draft",
+  farmerIdCode: "",
+  cluster: "",
+  farmerName: "",
+  fatherHusbandName: "",
+  mobile: "",
+  village: "",
+  block: "",
+  district: "Kaithal",
+  gender: "",
+  totalLandAcres: null,
+  ccfMonitoringAreaAcres: null,
+  fieldIdMark: "",
+  gpsLat: null,
+  gpsLng: null,
+  farmerCategory: "",
+  hasFarmerCompanion: false,
+  riceVariety: "",
+  sowingDate: "",
+  cropStage: "",
+  firstVisitDate: new Date().toISOString().split("T")[0] || "",
+  irrigationSource: [],
+  irrigationCountSoFar: null,
+  lastIrrigationDate: "",
+  currentMoisture: "",
+  fertilizerDetails: "",
+  pesticideDetails: "",
+  currentProblems: "",
+  farmerMainNeed: "",
+  soilBaseline: {
+    ph: "", ec: "", salinity: "", moisture: "", temperature: "", nitrogen: "", phosphorus: "", potassium: ""
+  },
+  soilFollowup: {
+    ph: "", ec: "", salinity: "", moisture: "", temperature: "", nitrogen: "", phosphorus: "", potassium: ""
+  },
+  spadChlorophyll: "",
+  labSampleCode: "",
+  farmAssistAdvice: "",
+  adviceType: [],
+  biosynthNanoDemo: false,
+  biosynthNanoDemoDate: "",
+  treatmentAreaAcres: "",
+  controlAreaAcres: "",
+  harvestDate: "",
+  productionQuintalPerAcre: "",
+  cropStatus: "",
+  satisfactionLevel: "",
+  nextCropAdvice: "",
+  mainResultsFarmerFeedback: "",
+  farmerConsentGiven: false,
+  photos: [],
+});
+

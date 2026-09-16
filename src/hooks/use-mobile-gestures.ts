@@ -37,7 +37,7 @@ export function usePullToRefresh(onRefresh?: () => Promise<void> | void) {
       if (shouldRefresh) {
         refreshingRef.current = true;
         setRefreshing(true);
-        Promise.resolve(onRefresh()).finally(() => {
+        Promise.resolve(onRefresh!()).finally(() => {
           refreshingRef.current = false;
           setRefreshing(false);
         });

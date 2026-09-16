@@ -42,10 +42,11 @@ import {
   recordsToCsv,
   saveAppUser,
   saveQuestion,
+  getAllJOITAPerformas,
 } from "@/lib/data";
 import { useI18n } from "@/lib/i18n";
 import { newLocalId } from "@/lib/offline";
-import type { AppUser, FarmerRecord, QuestionType, Role, SurveyQuestion } from "@/lib/types";
+import type { AppUser, FarmerRecord, QuestionType, Role, SurveyQuestion, JOITAPerforma } from "@/lib/types";
 
 export const Route = createFileRoute("/admin")({
   ssr: false,
@@ -60,11 +61,14 @@ function AdminPage() {
   const { profile, ready, createAccount, logout } = useAuth();
   const navigate = useNavigate();
   const [records, setRecords] = useState<FarmerRecord[]>([]);
+  const [joitaRecords, setJoitaRecords] = useState<JOITAPerforma[]>([]);
   const [questions, setQuestions] = useState<SurveyQuestion[]>([]);
   const [supervisors, setSupervisors] = useState<AppUser[]>([]);
   const [farmerUsers, setFarmerUsers] = useState<AppUser[]>([]);
   const [detail, setDetail] = useState<FarmerRecord | null>(null);
+  const [joitaDetail, setJoitaDetail] = useState<JOITAPerforma | null>(null);
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [recordsTab, setRecordsTab] = useState("farmer_records");
   const [showSurvey, setShowSurvey] = useState(false);
   const [filters, setFilters] = useState({
     village: "",
@@ -77,16 +81,18 @@ function AdminPage() {
 
   const refresh = useCallback(async () => {
     try {
-      const [recs, qs, sup, far] = await Promise.all([
+      const [recs, qs, sup, far, jrecs] = await Promise.all([
         listRecords(),
         listQuestions(),
         listUsers("supervisor"),
         listUsers("farmer"),
+        getAllJOITAPerformas(),
       ]);
       setRecords(recs);
       setQuestions(qs);
       setSupervisors(sup);
       setFarmerUsers(far);
+      setJoitaRecords(jrecs);
     } catch (e) {
       toast.error((e as Error).message);
     }
@@ -128,10 +134,77 @@ function AdminPage() {
     <AppShell
       title={t("adminPanel") || "Admin Panel"}
       subtitle={profile.name}
-      onBack={detail ? () => setDetail(null) : showSurvey ? () => setShowSurvey(false) : undefined}
+      onBack={detail ? () => setDetail(null) : joitaDetail ? () => setJoitaDetail(null) : showSurvey ? () => setShowSurvey(false) : undefined}
       onRefresh={refresh}
     >
-      {detail ? (
+      {joitaDetail ? (
+        <div className="flex flex-col h-full bg-[#fafaf8] pb-20">
+          <div className="bg-white border-b border-border p-4 sticky top-0 z-20 shadow-sm">
+            <div className="flex justify-between items-start">
+              <h1 className="font-extrabold text-[#15803d] text-lg leading-tight">JOITA Form</h1>
+              <StatusBadge status={joitaDetail.status} pending={false} />
+            </div>
+            <h2 className="font-bold text-[15px] mt-1">{joitaDetail.farmerName}</h2>
+            <p className="text-[13px] text-muted-foreground">{joitaDetail.village} · {joitaDetail.cluster}</p>
+          </div>
+          <div className="p-4 space-y-4">
+            <Card className="rounded-xl shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-[16px] text-[#15803d]">Farmer & Location</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="text-muted-foreground">ID Code</div><div className="font-medium text-right">{joitaDetail.farmerIdCode || "-"}</div>
+                  <div className="text-muted-foreground">Cluster</div><div className="font-medium text-right">{joitaDetail.cluster || "-"}</div>
+                  <div className="text-muted-foreground">Mobile</div><div className="font-medium text-right">{joitaDetail.mobile || "-"}</div>
+                  <div className="text-muted-foreground">District</div><div className="font-medium text-right">{joitaDetail.district || "-"}</div>
+                  <div className="text-muted-foreground">Block</div><div className="font-medium text-right">{joitaDetail.block || "-"}</div>
+                  <div className="text-muted-foreground">Gender</div><div className="font-medium text-right">{joitaDetail.gender || "-"}</div>
+                  <div className="text-muted-foreground">Total Land</div><div className="font-medium text-right">{joitaDetail.totalLandAcres ?? "-"} Acres</div>
+                  <div className="text-muted-foreground">CCF Area</div><div className="font-medium text-right">{joitaDetail.ccfMonitoringAreaAcres ?? "-"} Acres</div>
+                  <div className="text-muted-foreground">Farmer Category</div><div className="font-medium text-right">{joitaDetail.farmerCategory || "-"}</div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="rounded-xl shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-[16px] text-[#15803d]">Rice Crop Baseline</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="text-muted-foreground">Variety</div><div className="font-medium text-right">{joitaDetail.riceVariety || "-"}</div>
+                  <div className="text-muted-foreground">Sowing Date</div><div className="font-medium text-right">{joitaDetail.sowingDate || "-"}</div>
+                  <div className="text-muted-foreground">Stage</div><div className="font-medium text-right">{joitaDetail.cropStage || "-"}</div>
+                  <div className="text-muted-foreground">Irrigations</div><div className="font-medium text-right">{joitaDetail.irrigationCountSoFar ?? "-"}</div>
+                  <div className="text-muted-foreground">Moisture</div><div className="font-medium text-right">{joitaDetail.currentMoisture || "-"}</div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {joitaDetail.photos.length > 0 && (
+              <Card className="rounded-xl shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-[16px] text-[#15803d]">Photos</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-2">
+                    {joitaDetail.photos.map((p, i) => (
+                      <div key={i} className="relative aspect-square rounded-lg overflow-hidden border">
+                        <img src={p.url} className="object-cover w-full h-full" alt="Field" />
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+          
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur border-t pb-safe z-30">
+            <Button onClick={() => setJoitaDetail(null)} className="w-full h-12 rounded-xl" variant="outline">Close</Button>
+          </div>
+        </div>
+      ) : detail ? (
         <RecordDetail
           record={detail}
           questions={questions}
@@ -237,7 +310,13 @@ function AdminPage() {
           </TabsContent>
 
           <TabsContent value="records" className="space-y-4 mt-0">
-            <h2 className="text-xl font-bold">Farmer Records</h2>
+            <Tabs value={recordsTab} onValueChange={setRecordsTab}>
+              <TabsList className="grid w-full grid-cols-2 mb-4 bg-muted/50 p-1 rounded-xl">
+                <TabsTrigger value="farmer_records" className="rounded-lg">Farmer Records</TabsTrigger>
+                <TabsTrigger value="joita_forms" className="rounded-lg">JOITA Forms</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="farmer_records" className="space-y-4 mt-0">
             <Card className="shadow-sm rounded-xl">
               <CardHeader className="pb-2">
                 <CardTitle className="text-[16px]">Filters</CardTitle>
@@ -321,6 +400,75 @@ function AdminPage() {
                 </Card>
               ))}
             </div>
+            </TabsContent>
+
+            <TabsContent value="joita_forms" className="space-y-4 mt-0">
+              <Button
+                variant="secondary"
+                className="w-full h-[52px] rounded-xl shadow-sm text-base font-bold bg-[#15803d]/10 text-[#15803d] hover:bg-[#15803d]/20"
+                onClick={() => {
+                  const headers = [
+                    "id", "farmerIdCode", "cluster", "farmerName", "fatherHusbandName", "mobile", 
+                    "village", "block", "district", "gender", "totalLandAcres", "ccfMonitoringAreaAcres",
+                    "fieldIdMark", "gpsLat", "gpsLng", "farmerCategory", "hasFarmerCompanion", "riceVariety",
+                    "sowingDate", "cropStage", "firstVisitDate", "irrigationSource", "irrigationCountSoFar",
+                    "lastIrrigationDate", "currentMoisture", "fertilizerDetails", "pesticideDetails", "currentProblems",
+                    "farmerMainNeed", "spadChlorophyll", "labSampleCode", "farmAssistAdvice", "adviceType", 
+                    "biosynthNanoDemo", "biosynthNanoDemoDate", "treatmentAreaAcres", "controlAreaAcres",
+                    "harvestDate", "productionQuintalPerAcre", "cropStatus", "satisfactionLevel", "nextCropAdvice",
+                    "mainResultsFarmerFeedback", "farmerConsentGiven", "status", "createdAt", "updatedAt"
+                  ];
+                  const rows = joitaRecords.map(r => [
+                    r.id, r.farmerIdCode, r.cluster, r.farmerName, r.fatherHusbandName, r.mobile,
+                    r.village, r.block, r.district, r.gender, r.totalLandAcres, r.ccfMonitoringAreaAcres,
+                    r.fieldIdMark, r.gpsLat, r.gpsLng, r.farmerCategory, r.hasFarmerCompanion, r.riceVariety,
+                    r.sowingDate, r.cropStage, r.firstVisitDate, (r.irrigationSource || []).join("|"), r.irrigationCountSoFar,
+                    r.lastIrrigationDate, r.currentMoisture, r.fertilizerDetails, r.pesticideDetails, r.currentProblems,
+                    r.farmerMainNeed, r.spadChlorophyll, r.labSampleCode, r.farmAssistAdvice, (r.adviceType || []).join("|"),
+                    r.biosynthNanoDemo, r.biosynthNanoDemoDate, r.treatmentAreaAcres, r.controlAreaAcres,
+                    r.harvestDate, r.productionQuintalPerAcre, r.cropStatus, r.satisfactionLevel, r.nextCropAdvice,
+                    r.mainResultsFarmerFeedback, r.farmerConsentGiven, r.status, r.createdAt, r.updatedAt
+                  ].map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(","));
+                  
+                  const csv = [headers.join(","), ...rows].join("\n");
+                  downloadCsv(`joita-forms-${Date.now()}.csv`, csv);
+                }}
+              >
+                <Download className="mr-2 size-5" /> Export JOITA Forms (CSV)
+              </Button>
+
+              <div className="space-y-3">
+                {joitaRecords.length === 0 && (
+                  <div className="text-center p-8 text-muted-foreground bg-muted/30 rounded-xl">
+                    No JOITA records found.
+                  </div>
+                )}
+                {joitaRecords.map((r) => (
+                  <Card key={r.id} className="shadow-sm rounded-xl overflow-hidden">
+                    <button
+                      type="button"
+                      className="flex w-full flex-col p-4 text-left transition-colors hover:bg-muted/30 active:bg-muted/50"
+                      onClick={() => setJoitaDetail(r)}
+                    >
+                      <div className="flex justify-between items-start mb-2 w-full">
+                        <p className="font-bold text-[18px] text-[#15803d]">{r.farmerName}</p>
+                        <StatusBadge status={r.status} pending={false} />
+                      </div>
+                      <p className="text-[14px] text-muted-foreground flex items-center gap-1.5 mb-1">
+                        <MapPin className="size-4" /> {r.village} ({r.cluster})
+                      </p>
+                      <p className="text-[13px] text-muted-foreground flex items-center gap-1.5">
+                        <Shield className="size-4" /> {supervisorName(r.supervisorId)}
+                      </p>
+                      <div className="flex items-center gap-3 mt-3 pt-3 border-t border-border/50 text-[12px] font-medium">
+                        <span>{new Date(r.updatedAt).toLocaleDateString()}</span>
+                      </div>
+                    </button>
+                  </Card>
+                ))}
+              </div>
+            </TabsContent>
+            </Tabs>
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-4 mt-0">
@@ -427,7 +575,7 @@ function RecordDetail({
       <div className="flex flex-col gap-1">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold">{record.fullName || "Unnamed Farmer"}</h2>
-          <StatusBadge status={record.status} pending={record.dirty} />
+          <StatusBadge status={record.status} pending={false} />
         </div>
         <div className="flex flex-wrap gap-x-3 gap-y-1 text-sm text-muted-foreground font-medium">
           <span>Added {new Date(record.createdAt || Date.now()).toLocaleDateString()}</span>
