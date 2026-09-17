@@ -1,12 +1,12 @@
-# FarmLog
+# FarmLog Connect
 
-**FarmLog** is an agricultural field survey collection web application. It enables offline-first data entry for farmers, supervisors, and administrators, providing seamless data synchronization to a centralized Firebase database.
+FarmLog Connect is an offline-first agricultural field survey application for field teams, supervisors, and administrators. It captures farmer records, crop observations, GPS-tagged photos, and follow-up data, then synchronizes them with Firebase when connectivity is available.
 
 ## Key Features
 
 - **Offline-First Data Collection:** Submits survey records and photos offline, queuing them for automatic sync when internet connectivity is restored.
 - **Role-Based Access Control:** Dedicated views for Farmers, Supervisors, and Administrators.
-- **Dynamic Survey Engine:** Administrators can configure custom survey questions (text, numerical, categorical) that instantly sync to all field devices.
+- **Dynamic Survey Engine:** Administrators can configure custom survey questions that sync to field devices.
 - **Photo & GPS Capture:** Integrated camera tools with embedded GPS geolocation tagging for field authenticity.
 - **Bilingual Support:** Full English and Hindi interface toggle.
 - **Admin Dashboard & CSV Export:** Comprehensive overview of all collected records, killahs (land size), pending syncs, and one-click CSV exporting.
@@ -22,11 +22,20 @@
 
 ## Project Structure
 
-- `src/components/`: Reusable UI components (buttons, dialogs, inputs, camera tools).
-- `src/routes/`: File-based page routes (`admin.tsx`, `farmer.tsx`, `supervisor.tsx`, etc.).
-- `src/lib/`: Core utilities including Firebase initialization, data fetching, offline syncing logic, i18n, and types.
-- `src/hooks/`: Custom React hooks (e.g., `useOnline`).
-- `public/`: Static assets like icons and robots.txt.
+```text
+src/
+   components/  Feature components and reusable UI primitives
+   hooks/       Browser and device hooks
+   lib/         Firebase, offline storage, i18n, domain types, and utilities
+   routes/      TanStack Router route modules
+native/        Expo entry point for native builds
+public/        Static web assets
+assets/        Expo and web branding assets
+firestore.rules
+storage.rules
+```
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the main data and offline-sync boundaries.
 
 ## Prerequisites
 
@@ -34,7 +43,7 @@
 - npm
 - A Firebase project with Authentication (Email/Password), Firestore, and Storage enabled.
 
-## Local Installation
+## Local Development
 
 1. Clone the repository and install dependencies:
 
@@ -43,7 +52,7 @@
    ```
 
 2. Setup Environment Variables:
-   Copy `.env.example` to `.env` and fill in your Firebase configuration values.
+   Copy `.env.example` to `.env` and fill in your Firebase configuration values. Never commit `.env`.
 
    ```bash
    cp .env.example .env
@@ -57,10 +66,17 @@
    - `VITE_FIREBASE_MESSAGING_SENDER_ID`
    - `VITE_FIREBASE_APP_ID`
 
-3. Start the Development Server:
+3. Start the web development server:
    ```bash
    npm run dev
    ```
+
+4. Run the developer checks:
+   ```bash
+   npm run check
+   ```
+
+Use `npm run start` for the Expo development workflow and `npm run android` to launch the Android target.
 
 ## Production Build
 
@@ -70,13 +86,13 @@ To build the application for production:
 npm run build
 ```
 
-This command generates the optimized static assets and server output in the `.output/` directory.
+This command generates optimized static assets and server output in `.output/`.
 
 ## Environment & Security Notes
 
 - The `.env` file must never be committed to version control.
 - Ensure Firestore and Storage security rules are properly configured in your Firebase Console (see `firestore.rules` and `storage.rules`).
 
-## Current Status
+## Contributing
 
-- Production ready. Recent patches resolve runtime errors for missing relational records on the Admin dashboard.
+Before opening a pull request, run `npm run check` and describe any manual UI or offline-device verification. Review [CONTRIBUTING.md](CONTRIBUTING.md) for the expected workflow.

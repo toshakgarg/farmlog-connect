@@ -1,3 +1,6 @@
+// Domain contracts shared by routes, forms, persistence, and authentication.
+// Keep changes here deliberate: these types define the Firebase/local-store
+// boundary used by the whole application.
 export type Role = "admin" | "supervisor" | "farmer";
 
 export type RecordStatus = "draft" | "submitted" | "synced";

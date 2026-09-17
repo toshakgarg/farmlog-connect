@@ -9,19 +9,21 @@ import {
   setDoc,
   where,
 } from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { fbDb, fbStorage } from "./firebase";
+import { fbDb } from "./firebase";
 import type { AppUser, FarmerRecord, SurveyQuestion } from "./types";
 import type { JOITAPerforma } from "./types";
 import {
-  allLocalRecords,
   cacheMeta,
-  deletePhotoBlob,
-  getPhotoBlob,
-  putLocalRecord,
   readMeta,
-  type LocalRecord,
 } from "./offline";
+export {
+  pushRecord,
+  saveRecordLocalFirst,
+  syncPending,
+} from "./record-sync";
+
+// This module owns Firestore CRUD, question caching, CSV export, and the
+// JOITA collection API. Record upload/sync lives in ./record-sync.
 
 /* ----------------------------- users ----------------------------- */
 
@@ -83,83 +85,6 @@ export async function getRecord(id: string): Promise<FarmerRecord | null> {
 
 export async function deleteRecord(id: string) {
   await deleteDoc(doc(fbDb(), "farmers", id));
-}
-
-export async function pushRecord(record: FarmerRecord): Promise<FarmerRecord> {
-  const photos = [];
-  for (const p of record.photos) {
-    if (p.localKey && !p.url.startsWith("http")) {
-      const blob = await getPhotoBlob(p.localKey);
-      if (blob) {
-        const path = `farmer-photos/${record.id}/${p.localKey}.jpg`;
-        const storageRef = ref(fbStorage(), path);
-        await uploadBytes(storageRef, blob, {
-          customMetadata: {
-            latitude: String(p.latitude ?? ""),
-            longitude: String(p.longitude ?? ""),
-            timestamp: String(p.timestamp),
-          },
-        });
-        const url = await getDownloadURL(storageRef);
-        await deletePhotoBlob(p.localKey);
-        photos.push({ ...p, url, localKey: undefined });
-        continue;
-      }
-    }
-    photos.push(p);
-  }
-
-  const clean: FarmerRecord = {
-    ...record,
-    photos: photos.map((p) => ({
-      url: p.url,
-      latitude: p.latitude ?? null,
-      longitude: p.longitude ?? null,
-      accuracy: p.accuracy ?? null,
-      timestamp: p.timestamp,
-    })),
-    status: record.status === "draft" ? "draft" : "synced",
-    updatedAt: Date.now(),
-  };
-
-  const { id, ...rest } = clean;
-  await setDoc(doc(fbDb(), "farmers", id), rest, { merge: true });
-  return clean;
-}
-
-/* ------------------------- offline syncing ------------------------ */
-
-export async function saveRecordLocalFirst(record: FarmerRecord): Promise<LocalRecord> {
-  const local: LocalRecord = { ...record, dirty: true, updatedAt: Date.now() };
-  await putLocalRecord(local);
-  if (navigator.onLine) {
-    try {
-      const pushed = await pushRecord(local);
-      const clean: LocalRecord = { ...pushed, dirty: false };
-      await putLocalRecord(clean);
-      return clean;
-    } catch {
-      /* stays queued */
-    }
-  }
-  return local;
-}
-
-export async function syncPending(): Promise<{ synced: number; failed: number }> {
-  if (!navigator.onLine) return { synced: 0, failed: 0 };
-  const records = await allLocalRecords();
-  let synced = 0;
-  let failed = 0;
-  for (const r of records.filter((x) => x.dirty)) {
-    try {
-      const pushed = await pushRecord(r);
-      await putLocalRecord({ ...pushed, dirty: false });
-      synced++;
-    } catch {
-      failed++;
-    }
-  }
-  return { synced, failed };
 }
 
 /* ------------------------------ csv ------------------------------ */

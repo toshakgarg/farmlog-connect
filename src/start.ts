@@ -2,6 +2,9 @@ import { createStart, createCsrfMiddleware, createMiddleware } from "@tanstack/r
 
 import { renderErrorPage } from "./lib/error-page";
 
+// Server entry: installs request protection and converts unexpected server
+// failures into the app's HTML error page.
+
 const errorMiddleware = createMiddleware().server(async ({ next }) => {
   try {
     return await next();

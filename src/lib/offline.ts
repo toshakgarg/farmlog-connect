@@ -1,6 +1,9 @@
 import { openDB, type IDBPDatabase } from "idb";
 import type { FarmerRecord } from "./types";
 
+// IndexedDB is the local queue and cache. Firebase synchronization is kept in
+// record-sync.ts so persistence and network responsibilities stay separate.
+
 const DB_NAME = "farmlog";
 const STORE_RECORDS = "records";
 const STORE_PHOTOS = "photos";

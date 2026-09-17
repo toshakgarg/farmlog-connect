@@ -15,6 +15,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { Progress } from "@/components/ui/progress";
 
+// Farmer workflow: load the signed-in farmer record, collect dynamic answers,
+// and persist changes through the shared record APIs.
+
 export const Route = createFileRoute("/farmer")({
   ssr: false,
   component: FarmerPage,

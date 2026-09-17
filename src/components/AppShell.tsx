@@ -8,6 +8,9 @@ import { useI18n } from "@/lib/i18n";
 import { useOnline } from "@/hooks/useOnline";
 import { useBackNavigation, usePullToRefresh } from "@/hooks/use-mobile-gestures";
 
+// Shared authenticated shell for role routes: header, connectivity state,
+// language switcher, logout, and mobile navigation.
+
 export function AppShell({
   title,
   subtitle,

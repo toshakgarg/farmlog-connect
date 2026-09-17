@@ -22,6 +22,8 @@ import type { Role } from "@/lib/types";
 import { LandingPage } from "@/components/LandingPage";
 import { useBackNavigation } from "@/hooks/use-mobile-gestures";
 
+// Public entry route: landing page, role selection, and Firebase login.
+
 export const Route = createFileRoute("/")({
   ssr: false,
   head: () => ({

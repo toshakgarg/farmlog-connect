@@ -33,3 +33,9 @@ dist-ssr
 *.sw?
 
 .env
+
+# Local investigation and generated patch artifacts
+dumped_*.txt
+joita_part_*.txt
+joita_ui.txt
+fix_joita.cjs

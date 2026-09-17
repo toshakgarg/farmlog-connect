@@ -45,6 +45,10 @@ import {
   getAllJOITAPerformas,
 } from "@/lib/data";
 import { useI18n } from "@/lib/i18n";
+
+// Admin workflow: manage users, survey questions, farmer records, exports,
+// and JOITA performas. Shared persistence details stay in lib/data and
+// lib/record-sync so this route remains focused on UI orchestration.
 import { newLocalId } from "@/lib/offline";
 import type { AppUser, FarmerRecord, QuestionType, Role, SurveyQuestion, JOITAPerforma } from "@/lib/types";
 

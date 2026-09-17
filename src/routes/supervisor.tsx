@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import React from "react";
 import { Plus, RefreshCw, Search, Home, List, User, Loader2, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
@@ -22,6 +23,10 @@ import {
   deleteJOITAPerforma,
 } from "@/lib/data";
 import { useI18n } from "@/lib/i18n";
+
+// Supervisor workflow: review assigned farmers, edit records, and create or
+// update JOITA performas. Forms own field editing; this route owns selection
+// and save/cancel orchestration.
 import {
   allLocalRecords,
   newLocalId,
@@ -29,10 +34,48 @@ import {
   deleteLocalRecord,
   type LocalRecord,
 } from "@/lib/offline";
-import { emptyFarmer, emptyJOITAPerforma, type FarmerRecord, type SurveyQuestion, type JOITAPerforma } from "@/lib/types";
+import {
+  emptyFarmer,
+  emptyJOITAPerforma,
+  type FarmerRecord,
+  type SurveyQuestion,
+  type JOITAPerforma,
+} from "@/lib/types";
 import { useOnline } from "@/hooks/useOnline";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { LanguageToggle } from "@/components/LanguageToggle";
+
+class JOITAErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { error: string | null }
+> {
+  constructor(props: any) {
+    super(props);
+    this.state = { error: null };
+  }
+  static getDerivedStateFromError(e: Error) {
+    return { error: e.message };
+  }
+  override render() {
+    if (this.state.error) {
+      return (
+        <div className="p-6 m-4 bg-red-50 border border-red-200 rounded-2xl">
+          <h3 className="text-red-700 font-bold text-lg mb-2">Form Error</h3>
+          <p className="text-red-600 text-sm">{this.state.error}</p>
+          <button
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg text-sm"
+            onClick={() => this.setState({ error: null })}
+          >
+            Try Again
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+export const ssr = false;
 
 export const Route = createFileRoute("/supervisor")({
   ssr: false,
@@ -80,13 +123,15 @@ function SupervisorPage() {
     merged.sort((a, b) => b.updatedAt - a.updatedAt);
     setRecords(merged);
 
-    if (navigator.onLine) {
+    if (navigator.onLine && profile?.uid) {
       try {
         const joita = await getJOITAPerformasBySupervisor(profile.uid);
-        joita.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+        joita.sort(
+          (a, b) => new Date(b.updatedAt || 0).getTime() - new Date(a.updatedAt || 0).getTime(),
+        );
         setJoitaRecords(joita);
-      } catch {
-        // offline safe
+      } catch (err) {
+        console.error("JOITA load error:", err);
       }
     }
   }, [profile]);
@@ -181,7 +226,9 @@ function SupervisorPage() {
     <AppShell
       title={t("appName") || "FarmLog"}
       subtitle={`${t("supervisor") || "Supervisor"} · ${profile.name}`}
-      onBack={editing ? () => setEditing(null) : editingJoita ? () => setEditingJoita(null) : undefined}
+      onBack={
+        editing ? () => setEditing(null) : editingJoita ? () => setEditingJoita(null) : undefined
+      }
       onRefresh={refresh}
     >
       <ConfirmDialog
@@ -227,15 +274,17 @@ function SupervisorPage() {
         }}
         onCancel={() => setDeleteJoitaId(null)}
       />
-      {editingJoita ? (
-        <JOITAForm
-          value={editingJoita}
-          farmers={records}
-          onSaveDraft={persistJoita}
-          onSubmit={persistJoita}
-          onCancel={() => setEditingJoita(null)}
-          saving={saving}
-        />
+      {editingJoita !== null ? (
+        <JOITAErrorBoundary>
+          <JOITAForm
+            value={editingJoita}
+            farmers={records ?? []}
+            onSaveDraft={persistJoita}
+            onSubmit={persistJoita}
+            onCancel={() => setEditingJoita(null)}
+            saving={saving}
+          />
+        </JOITAErrorBoundary>
       ) : editing ? (
         <FarmerForm
           value={editing}
@@ -256,7 +305,8 @@ function SupervisorPage() {
                   <p className="mt-2 text-xs font-semibold text-muted-foreground uppercase">
                     {t("myFarmers") || "My Farmers"}
                   </p>
-                </CardContent>Microsoft.QuickAction.Bluetooth
+                </CardContent>
+                Microsoft.QuickAction.Bluetooth
               </Card>
               <Card className="shadow-sm rounded-xl bg-primary/10 border-primary/20">
                 <CardContent className="p-4 flex flex-col items-center text-center">
@@ -290,12 +340,12 @@ function SupervisorPage() {
               >
                 <Plus className="mr-2 size-5" /> New Farmer Record
               </Button>
-                <Button
-                  className="h-[52px] w-full rounded-xl text-base font-bold shadow-sm border-2 border-[#15803d] text-[#15803d] bg-transparent hover:bg-primary/5 mt-3"
-                  onClick={() => setEditingJoita(emptyJOITAPerforma(profile.uid))}
-                >
-                  📋 JOITA प्रपत्र / JOITA Form
-                </Button>
+              <Button
+                className="h-[52px] w-full rounded-xl text-base font-bold shadow-sm border-2 border-[#15803d] text-[#15803d] bg-transparent hover:bg-primary/5 mt-3"
+                onClick={() => setEditingJoita(emptyJOITAPerforma(profile.uid))}
+              >
+                📋 JOITA प्रपत्र / JOITA Form
+              </Button>
             </div>
 
             <h2 className="text-[20px] font-bold mt-4 mb-2">Recent Farmers</h2>
@@ -392,41 +442,53 @@ function SupervisorPage() {
             )}
 
             <h3 className="font-bold text-lg mt-8 text-[#15803d]">JOITA Forms</h3>
-            {joitaRecords.filter(r => `${r.farmerName} ${r.village} ${r.cluster}`.toLowerCase().includes(search.toLowerCase())).length === 0 ? (
+            {(joitaRecords || []).filter((r) =>
+              `${r.farmerName || ""} ${r.village || ""} ${r.cluster || ""}`
+                .toLowerCase()
+                .includes(search.toLowerCase()),
+            ).length === 0 ? (
               <p className="py-10 text-center text-sm text-muted-foreground">
                 No JOITA forms found
               </p>
             ) : (
               <div className="space-y-3">
-                {joitaRecords.filter(r => `${r.farmerName} ${r.village} ${r.cluster}`.toLowerCase().includes(search.toLowerCase())).map((r) => (
-                  <div
-                    key={r.id}
-                    className="flex w-full items-center gap-3 rounded-xl border border-border bg-card p-4 text-left shadow-[var(--shadow-card)] transition-transform"
-                  >
-                    <div 
-                      className="min-w-0 flex-1 cursor-pointer"
-                      onClick={() => setEditingJoita(r)}
+                {(joitaRecords || [])
+                  .filter((r) =>
+                    `${r.farmerName || ""} ${r.village || ""} ${r.cluster || ""}`
+                      .toLowerCase()
+                      .includes(search.toLowerCase()),
+                  )
+                  .map((r) => (
+                    <div
+                      key={r.id}
+                      className="flex w-full items-center gap-3 rounded-xl border border-border bg-card p-4 text-left shadow-[var(--shadow-card)] transition-transform"
                     >
-                      <p className="truncate font-bold text-[16px] text-[#15803d]">{r.farmerName || "Unnamed"}</p>
-                      <p className="truncate text-[13px] text-muted-foreground mt-0.5">
-                        {r.village} · {r.cluster} · {new Date(r.updatedAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <StatusBadge status={r.status} pending={false} />
-                    {r.status === "draft" && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteJoitaId(r.id);
-                        }}
-                        className="flex items-center justify-center p-2 text-red-500 hover:bg-red-50 rounded-full"
+                      <div
+                        className="min-w-0 flex-1 cursor-pointer"
+                        onClick={() => setEditingJoita(r)}
                       >
-                        <Trash2 className="size-5" />
-                      </button>
-                    )}
-                  </div>
-                ))}
+                        <p className="truncate font-bold text-[16px] text-[#15803d]">
+                          {r.farmerName || "Unnamed"}
+                        </p>
+                        <p className="truncate text-[13px] text-muted-foreground mt-0.5">
+                          {r.village} · {r.cluster} · {new Date(r.updatedAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <StatusBadge status={r.status} pending={false} />
+                      {r.status === "draft" && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteJoitaId(r.id);
+                          }}
+                          className="flex items-center justify-center p-2 text-red-500 hover:bg-red-50 rounded-full"
+                        >
+                          <Trash2 className="size-5" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
               </div>
             )}
           </TabsContent>

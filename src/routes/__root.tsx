@@ -15,6 +15,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { LanguageProvider } from "@/lib/i18n";
 
+// Root composition: document shell -> providers -> auth gate -> child route.
+
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">

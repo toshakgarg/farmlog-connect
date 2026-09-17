@@ -10,6 +10,9 @@ import { fbAuth, isFirebaseConfigured, secondaryAuth } from "./firebase";
 import { getAppUser, saveAppUser } from "./data";
 import type { AppUser, Role } from "./types";
 
+// AuthProvider is the single session boundary. Routes consume useAuth instead
+// of accessing Firebase Auth directly.
+
 interface AuthCtx {
   user: User | null;
   profile: AppUser | null;

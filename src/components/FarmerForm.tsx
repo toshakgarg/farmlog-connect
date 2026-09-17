@@ -24,6 +24,9 @@ import { useI18n } from "@/lib/i18n";
 import { deletePhotoBlob, getPhotoBlob } from "@/lib/offline";
 import type { FarmerRecord, PhotoMeta, SurveyQuestion } from "@/lib/types";
 
+// Controlled farmer-record editor. Dynamic survey fields are rendered by
+// QuestionFields while this component handles record metadata and photos.
+
 interface Props {
   value: FarmerRecord;
   questions: SurveyQuestion[];
