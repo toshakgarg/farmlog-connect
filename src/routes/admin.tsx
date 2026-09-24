@@ -513,34 +513,38 @@ function AdminPage() {
             </Card>
           </TabsContent>
 
-          <TabsList className="fixed bottom-0 left-0 right-0 z-50 flex h-[64px] rounded-none border-t border-border bg-card p-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] justify-around pb-safe text-muted-foreground">
+          <TabsList className="fixed bottom-0 left-0 right-0 z-50 flex h-[72px] rounded-none border-t border-gray-200 bg-white p-0 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)] justify-around pb-safe">
             <TabsTrigger
               value="dashboard"
-              className="flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none"
+              className="relative flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-green-600 data-[state=inactive]:text-gray-400 data-[state=active]:shadow-none"
             >
+              {activeTab === 'dashboard' && <div className="absolute top-0 w-10 h-1 bg-green-600 rounded-b-full" />}
               <Home className="size-6" />
-              <span className="text-[10px] font-medium leading-none">Home</span>
+              <span className="text-[10px] font-bold leading-none uppercase mt-1">Home</span>
             </TabsTrigger>
             <TabsTrigger
               value="users"
-              className="flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none"
+              className="relative flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-green-600 data-[state=inactive]:text-gray-400 data-[state=active]:shadow-none"
             >
+              {activeTab === 'users' && <div className="absolute top-0 w-10 h-1 bg-green-600 rounded-b-full" />}
               <Users className="size-6" />
-              <span className="text-[10px] font-medium leading-none">Users</span>
+              <span className="text-[10px] font-bold leading-none uppercase mt-1">Users</span>
             </TabsTrigger>
             <TabsTrigger
               value="records"
-              className="flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none"
+              className="relative flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-green-600 data-[state=inactive]:text-gray-400 data-[state=active]:shadow-none"
             >
+              {activeTab === 'records' && <div className="absolute top-0 w-10 h-1 bg-green-600 rounded-b-full" />}
               <List className="size-6" />
-              <span className="text-[10px] font-medium leading-none">Records</span>
+              <span className="text-[10px] font-bold leading-none uppercase mt-1">Records</span>
             </TabsTrigger>
             <TabsTrigger
               value="settings"
-              className="flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none"
+              className="relative flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-green-600 data-[state=inactive]:text-gray-400 data-[state=active]:shadow-none"
             >
+              {activeTab === 'settings' && <div className="absolute top-0 w-10 h-1 bg-green-600 rounded-b-full" />}
               <Settings className="size-6" />
-              <span className="text-[10px] font-medium leading-none">Settings</span>
+              <span className="text-[10px] font-bold leading-none uppercase mt-1">Settings</span>
             </TabsTrigger>
           </TabsList>
         </Tabs>

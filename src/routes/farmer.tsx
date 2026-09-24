@@ -268,20 +268,22 @@ function FarmerPage() {
           </Card>
         </TabsContent>
 
-        <TabsList className="fixed bottom-0 left-0 right-0 z-50 flex h-[64px] rounded-none border-t border-border bg-card p-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] justify-around pb-safe text-muted-foreground">
+        <TabsList className="fixed bottom-0 left-0 right-0 z-50 flex h-[72px] rounded-none border-t border-gray-200 bg-white p-0 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)] justify-around pb-safe">
           <TabsTrigger
             value="home"
-            className="flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none"
+            className="relative flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-green-600 data-[state=inactive]:text-gray-400 data-[state=active]:shadow-none"
           >
+            {activeTab === 'home' && <div className="absolute top-0 w-10 h-1 bg-green-600 rounded-b-full" />}
             <Home className="size-6" />
-            <span className="text-[10px] font-medium leading-none">Home</span>
+            <span className="text-[10px] font-bold leading-none uppercase mt-1">Home</span>
           </TabsTrigger>
           <TabsTrigger
             value="profile"
-            className="flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none"
+            className="relative flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-green-600 data-[state=inactive]:text-gray-400 data-[state=active]:shadow-none"
           >
+            {activeTab === 'profile' && <div className="absolute top-0 w-10 h-1 bg-green-600 rounded-b-full" />}
             <User className="size-6" />
-            <span className="text-[10px] font-medium leading-none">Profile</span>
+            <span className="text-[10px] font-bold leading-none uppercase mt-1">Profile</span>
           </TabsTrigger>
         </TabsList>
       </Tabs>

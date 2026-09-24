@@ -110,7 +110,7 @@ export default function App() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
-      {/* @ts-expect-error React 19 typing compatibility for react-native-webview */}
+      {/* ts-expect-error React 19 typing compatibility for react-native-webview */}
       <WebView
         ref={webViewRef}
         source={{ uri: WEB_APP_URL }}
@@ -130,7 +130,7 @@ export default function App() {
             <ActivityIndicator size="large" color="#22c55e" />
           </View>
         )}
-        renderError={(errorDomain: string, errorCode: number, errorDesc: string) => (
+        renderError={(errorDomain: string | undefined, errorCode: number, errorDesc: string) => (
           <View style={styles.center}>
             <Text style={styles.errorTitle}>Connection Error</Text>
             <Text style={styles.errorText}>{errorDesc}</Text>

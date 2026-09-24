@@ -8,14 +8,14 @@ export function StatusBadge({ status, pending }: { status: RecordStatus; pending
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-semibold",
+        "inline-flex items-center px-3 py-1 rounded-full text-[12px] font-semibold",
         pending
-          ? "bg-warning/20 text-warning-foreground"
+          ? "bg-amber-100 text-amber-700"
           : status === "synced"
-            ? "bg-success/15 text-success"
+            ? "bg-green-100 text-green-700"
             : status === "submitted"
-              ? "bg-primary/12 text-primary"
-              : "bg-muted text-muted-foreground",
+              ? "bg-blue-100 text-blue-700"
+              : "bg-gray-100 text-gray-600",
       )}
     >
       {label}

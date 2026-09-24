@@ -1,29 +1,76 @@
 import { useEffect, useState } from "react";
-import { ChevronDown, ChevronUp, MapPin, Camera, Save, Check, Trash2 } from "lucide-react";
+import { Camera, MapPin, X, ArrowLeft, ArrowRight, Save, Check } from "lucide-react";
 import { toast } from "sonner";
 import { CameraCapture } from "@/components/CameraCapture";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/lib/i18n";
 import { deletePhotoBlob, getPhotoBlob } from "@/lib/offline";
 import type { JOITAPerforma, PhotoMeta, FarmerRecord } from "@/lib/types";
 
-// Controlled six-section JOITA performa editor. The parent route owns the
-// record lifecycle; this component owns field state, validation, GPS, and
-// local photo previews.
+const BilingualLabel = ({
+  hindi,
+  english,
+  required,
+}: {
+  hindi: string;
+  english: string;
+  required?: boolean;
+}) => (
+  <div className="mb-1">
+    <span className="font-semibold text-gray-900 text-[15px]">{hindi}</span>
+    {required && <span className="text-red-500 ml-1">*</span>}
+    <span className="block text-gray-500 text-xs">{english}</span>
+  </div>
+);
 
-interface Props {
-  value: JOITAPerforma;
-  farmers: FarmerRecord[];
-  onSaveDraft: (rec: JOITAPerforma) => void;
-  onSubmit: (rec: JOITAPerforma) => void;
-  onCancel: () => void;
-  saving?: boolean;
+function ChipGroup({
+  options,
+  value,
+  onChange,
+  multi = false,
+}: {
+  options: { labelHi: string; labelEn: string; value: string }[];
+  value: string | string[];
+  onChange: (val: any) => void;
+  multi?: boolean;
+}) {
+  const toggle = (v: string) => {
+    if (multi) {
+      const arr = Array.isArray(value) ? value : [];
+      if (arr.includes(v)) onChange(arr.filter((x) => x !== v));
+      else onChange([...arr, v]);
+    } else {
+      onChange(v === value ? "" : v);
+    }
+  };
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {options.map((opt) => {
+        const isSel = multi
+          ? Array.isArray(value) && value.includes(opt.value)
+          : value === opt.value;
+        return (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={() => toggle(opt.value)}
+            className={`px-4 py-2 rounded-full border text-sm font-semibold transition-colors ${
+              isSel
+                ? "bg-green-100 border-green-600 text-green-700"
+                : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+            }`}
+          >
+            <div className="text-sm">{opt.labelHi}</div>
+            <div className="text-xs font-normal opacity-80">{opt.labelEn}</div>
+          </button>
+        );
+      })}
+    </div>
+  );
 }
-
 const mergeInitialState = (value: Partial<JOITAPerforma>): JOITAPerforma => {
   return {
     ...value,
@@ -100,56 +147,28 @@ const mergeInitialState = (value: Partial<JOITAPerforma>): JOITAPerforma => {
   };
 };
 
-export function JOITAForm({ value, farmers, onSaveDraft, onSubmit, onCancel, saving }: Props) {
-  const { t } = useI18n();
+export function JOITAForm({
+  value,
+  farmers,
+  onSaveDraft,
+  onSubmit,
+  onCancel,
+  saving,
+}: {
+  value: JOITAPerforma;
+  farmers: FarmerRecord[];
+  onSaveDraft: (rec: JOITAPerforma) => void;
+  onSubmit: (rec: JOITAPerforma) => void;
+  onCancel: () => void;
+  saving?: boolean;
+}) {
   const [rec, setRec] = useState<JOITAPerforma>(() => mergeInitialState(value));
-  const [previews, setPreviews] = useState<Record<string, string>>({});
-  const [expanded, setExpanded] = useState<Record<number, boolean>>({
-    1: true,
-    2: true,
-    3: true,
-    4: true,
-    5: true,
-  });
-
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    setRec(mergeInitialState(value));
-  }, [value]);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const next: Record<string, string> = {};
-      if (rec?.photos) {
-        for (const p of rec.photos) {
-          if (p.localKey && !p.url) {
-            const blob = await getPhotoBlob(p.localKey);
-            if (blob) next[p.localKey] = URL.createObjectURL(blob);
-          }
-        }
-      }
-      if (!cancelled) setPreviews((prev) => ({ ...next, ...prev }));
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [rec?.photos]);
-
-  const toggleSection = (sec: number) => {
-    setExpanded((prev) => ({ ...prev, [sec]: !prev[sec] }));
-  };
+  const [step, setStep] = useState(1);
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [selectedFarmerId, setSelectedFarmerId] = useState("");
 
   const updateField = (field: keyof JOITAPerforma, val: any) => {
-    setRec((prev) => ({ ...prev, [field]: val }));
-    if (errors[field as string]) {
-      setErrors((prev) => {
-        const next = { ...prev };
-        delete next[field as string];
-        return next;
-      });
-    }
+    setRec((prev) => ({ ...prev, [field]: val, dirty: true }));
   };
 
   const updateNestedField = (
@@ -159,608 +178,638 @@ export function JOITAForm({ value, farmers, onSaveDraft, onSubmit, onCancel, sav
   ) => {
     setRec((prev) => ({
       ...prev,
-      [parent]: {
-        ...prev[parent],
-        [field]: val,
-      },
+      [parent]: { ...prev[parent], [field]: val },
+      dirty: true,
     }));
   };
-
-  function addPhoto(photo: PhotoMeta, previewUrl: string) {
-    setPreviews((p) => ({ ...p, [photo.localKey!]: previewUrl }));
-    setRec((r) => ({ ...r, photos: [...r.photos, photo as any] }));
-    toast.success(photo.latitude ? "GPS Captured" : "GPS Unavailable");
-  }
-
-  async function removePhoto(idx: number) {
-    if (!rec?.photos) return;
-    const p = rec.photos[idx];
-    if (p?.localKey) await deletePhotoBlob(p.localKey);
-    setRec((r) => ({ ...r, photos: (r.photos || []).filter((_, i) => i !== idx) }));
-  }
-
-  const getGPS = () => {
+  const captureLocation = () => {
     if (!navigator.geolocation) {
-      toast.error("Geolocation is not supported by your browser");
+      toast.error("Geolocation not supported");
       return;
     }
-    toast.info("Fetching GPS...");
+    setLocationLoading(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         updateField("gpsLat", pos.coords.latitude);
         updateField("gpsLng", pos.coords.longitude);
-        toast.success("GPS Location captured!");
+        setLocationLoading(false);
+        toast.success("Location captured");
       },
       (err) => {
-        toast.error("Failed to get location. Please enable GPS.");
+        toast.error("Failed to get location: " + err.message);
+        setLocationLoading(false);
       },
-      { enableHighAccuracy: true },
+      { enableHighAccuracy: true, timeout: 10000 },
     );
   };
 
-  const validate = (): boolean => {
-    const newErrors: Record<string, string> = {};
-    if (!rec.farmerName || rec.farmerName.trim() === "") {
-      newErrors["farmerName"] = "Farmer Name is required";
+  const handleSelectFarmer = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const fid = e.target.value;
+    setSelectedFarmerId(fid);
+    if (!fid) return;
+    const f = farmers.find((x) => x.id === fid);
+    if (f) {
+      setRec((prev) => ({
+        ...prev,
+        farmerId: f.id,
+        farmerName: f.fullName,
+        mobile: f.contactNumber,
+        village: f.village,
+        block: f.tehsil,
+        district: f.district,
+        gpsLat: f.photos?.[0]?.latitude || prev.gpsLat,
+        gpsLng: f.photos?.[0]?.longitude || prev.gpsLng,
+        dirty: true,
+      }));
+      toast.success("✓ Details auto-filled from farmer record");
     }
-    if (rec.mobile && !/^\d{10}$/.test(rec.mobile)) {
-      newErrors["mobile"] = "Please enter a valid 10-digit mobile number";
+  };
+
+  const handlePhotoCapture = (meta: PhotoMeta) => {
+    const updated = [...rec.photos, meta];
+    updateField("photos", updated);
+    if (meta.latitude && meta.longitude && !rec.gpsLat) {
+      updateField("gpsLat", meta.latitude);
+      updateField("gpsLng", meta.longitude);
     }
+  };
+
+  const removePhoto = (idx: number) => {
+    const p = rec.photos[idx];
+    if (p?.localKey) deletePhotoBlob(p.localKey).catch(console.error);
+    const updated = [...rec.photos];
+    updated.splice(idx, 1);
+    updateField("photos", updated);
+  };
+
+  const stepTitles = [
+    { hi: "1. किसान और स्थान विवरण", en: "Farmer ID & Location" },
+    { hi: "2. धान की फसल का आधार रेखा", en: "Rice Crop Baseline" },
+    { hi: "3. मिट्टी की जांच", en: "Soil Saathi Reading" },
+    { hi: "4. तकनीकी हस्तक्षेप", en: "Technical Intervention" },
+    { hi: "5. फॉलो-अप और समीक्षा", en: "Harvest Results & Review" },
+  ];
+
+  const handleNext = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setStep((s) => Math.min(5, s + 1));
+  };
+  const handleSaveDraft = () => onSaveDraft(rec);
+  const handleSubmit = () => {
     if (!rec.farmerConsentGiven) {
-      toast.error("Consent is required to submit");
-      return false;
+      toast.error("कृपया सहमति दें / Please give consent");
+      return;
     }
-
-    setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) {
-      toast.error("Please fix the errors before submitting");
-      setExpanded({ 1: true, 2: true, 3: true, 4: true, 5: true });
-      return false;
-    }
-    return true;
-  };
-
-  const handleLinkFarmer = (farmerId: string) => {
-    if (!farmerId) return;
-    const f = farmers.find((x) => x.id === farmerId);
-    if (!f) return;
-    setRec((prev) => ({
-      ...prev,
-      farmerId: f.id,
-      farmerName: f.fullName,
-      mobile: f.contactNumber,
-      village: f.village,
-      block: f.tehsil,
-      district: f.district || "Kaithal",
-      gpsLat: f.photos[0]?.latitude || null,
-      gpsLng: f.photos[0]?.longitude || null,
-    }));
-    toast.success("Farmer data linked");
-  };
-
-  const SectionHeader = ({
-    num,
-    titleHi,
-    titleEn,
-  }: {
-    num: number;
-    titleHi: string;
-    titleEn: string;
-  }) => (
-    <button
-      type="button"
-      className="w-full h-12 px-4 bg-[#15803d] text-white font-bold flex items-center justify-between"
-      onClick={() => toggleSection(num)}
-    >
-      <div className="flex flex-col items-start leading-tight">
-        <span className="text-[14px]">{titleHi}</span>
-        <span className="text-[11px] text-white/80">{titleEn}</span>
-      </div>
-      {expanded[num] ? <ChevronUp className="size-5" /> : <ChevronDown className="size-5" />}
-    </button>
-  );
-
-  const LabelField = ({
-    labelHi,
-    labelEn,
-    req,
-  }: {
-    labelHi: string;
-    labelEn: string;
-    req?: boolean;
-  }) => (
-    <Label className="block mb-2 font-bold text-[14px]">
-      {labelHi} {req && <span className="text-red-500">*</span>}
-      <br />
-      <span className="text-muted-foreground font-normal text-[12px]">{labelEn}</span>
-    </Label>
-  );
-
-  const ChipGroup = ({
-    options,
-    value,
-    onChange,
-    multi = false,
-  }: {
-    options: { labelHi: string; labelEn: string; value: string }[];
-    value: string | string[];
-    onChange: (val: any) => void;
-    multi?: boolean;
-  }) => {
-    return (
-      <div className="flex flex-wrap gap-2">
-        {options.map((opt) => {
-          const arr = (value as string[]) || [];
-          const selected = multi ? arr.includes(opt.value) : value === opt.value;
-
-          return (
-            <button
-              key={opt.value}
-              type="button"
-              className={`h-11 px-4 rounded-full border text-sm font-medium transition-colors ${
-                selected
-                  ? "bg-primary text-white border-primary"
-                  : "bg-white text-foreground border-border"
-              }`}
-              onClick={() => {
-                if (multi) {
-                  if (arr.includes(opt.value)) {
-                    onChange(arr.filter((x) => x !== opt.value));
-                  } else {
-                    onChange([...arr, opt.value]);
-                  }
-                } else {
-                  onChange(opt.value);
-                }
-              }}
-            >
-              <div className="flex flex-col items-center leading-tight">
-                <span>{opt.labelHi}</span>
-                {opt.labelEn && <span className="text-[10px] opacity-80">{opt.labelEn}</span>}
-              </div>
-            </button>
-          );
-        })}
-      </div>
-    );
+    onSubmit(rec);
   };
 
   return (
-    <div className="flex flex-col h-full space-y-6 pb-24">
-      <div className="flex-1 max-w-3xl mx-auto w-full p-4 space-y-6">
-        {/* Link Farmer */}
-        <Card className="shadow-sm border-primary/20">
-          <CardContent className="p-4 space-y-4">
-            <LabelField labelHi="किसान लिंक करें" labelEn="Link Existing Farmer" />
-            <select
-              className="w-full h-12 px-3 border border-border rounded-xl bg-card text-sm"
-              value={rec.farmerId || ""}
-              onChange={(e) => handleLinkFarmer(e.target.value)}
+    <div className="min-h-screen bg-gray-50 pb-32 flex flex-col">
+      {/* JOITA Branded Header */}
+      <div className="bg-green-700 text-white px-4 py-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+            <span className="text-xl">🌾</span>
+          </div>
+          <div>
+            <h1 className="font-bold text-base">JOITA किसान प्रपत्र</h1>
+            <p className="text-green-200 text-xs">JOITA-CCF-F01 · जलवायु-स्मार्ट धान कार्यक्रम</p>
+          </div>
+          <div className="ml-auto">
+            <span
+              className={`px-2 py-1 rounded-full text-xs font-bold ${
+                rec.status === "submitted" ? "bg-blue-400" : "bg-amber-400 text-amber-900"
+              }`}
             >
-              <option value="">Select Farmer...</option>
-              {(farmers || []).map((f) => (
-                <option key={f.id} value={f.id}>
-                  {f.fullName} - {f.village}
-                </option>
-              ))}
-            </select>
-          </CardContent>
-        </Card>
+              {rec.status === "submitted" ? "Submitted" : "Draft"}
+            </span>
+          </div>
+        </div>
+      </div>
 
-        {/* Section 1 */}
-        <div className="rounded-xl overflow-hidden border border-border bg-card shadow-sm">
-          <SectionHeader
-            num={1}
-            titleHi="1. किसान और स्थान विवरण"
-            titleEn="1. Farmer ID & Location"
+      {/* Progress Bar */}
+      <div className="px-4 pt-4 pb-2 bg-white border-b border-gray-100">
+        <div className="flex justify-between text-sm mb-1">
+          <span className="font-medium">Step {step} of 5</span>
+          <span className="text-green-600 font-bold">{Math.round((step / 5) * 100)}%</span>
+        </div>
+        <div className="h-2 bg-gray-200 rounded-full">
+          <div
+            className="h-2 bg-green-600 rounded-full transition-all"
+            style={{ width: `${(step / 5) * 100}%` }}
           />
-          {expanded[1] && (
-            <div className="p-4 space-y-5">
+        </div>
+      </div>
+
+      {/* Step Title */}
+      <div className="px-4 py-3 bg-green-700 text-white">
+        <h2 className="font-bold text-lg">{stepTitles[step - 1]?.hi}</h2>
+        <p className="text-green-200 text-sm">{stepTitles[step - 1]?.en}</p>
+      </div>
+
+      <div className="p-4 space-y-5 flex-1">
+        {step === 1 && (
+          <div className="space-y-5">
+            <div className="bg-green-50 p-3 rounded-xl border border-green-200">
+              <BilingualLabel hindi="किसान चुनें (वैकल्पिक)" english="Select Farmer (Optional)" />
+              <select
+                className="w-full h-[52px] rounded-xl border-[1.5px] border-gray-200 px-4 text-base bg-white focus:border-green-600 focus:ring-[3px] focus:ring-green-600/10 outline-none"
+                value={selectedFarmerId}
+                onChange={handleSelectFarmer}
+              >
+                <option value="">None — Select linked farmer record</option>
+                {farmers.length === 0 && <option disabled>No farmers yet</option>}
+                {farmers.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.fullName} — {f.village}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <BilingualLabel hindi="क्लस्टर" english="Cluster" required />
+              <select
+                className="w-full h-[52px] rounded-xl border-[1.5px] border-gray-200 px-4 text-base bg-white focus:border-green-600 outline-none"
+                value={rec.cluster}
+                onChange={(e) => updateField("cluster", e.target.value)}
+              >
+                <option value="">Select...</option>
+                <option value="Taragarh">Taragarh</option>
+                <option value="Jaswant">Jaswant</option>
+                <option value="Siwan">Siwan</option>
+                <option value="Cheeka">Cheeka</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div>
+              <BilingualLabel hindi="किसान का नाम" english="Farmer Name" required />
+              <Input
+                value={rec.farmerName}
+                onChange={(e) => updateField("farmerName", e.target.value)}
+              />
+            </div>
+            <div>
+              <BilingualLabel hindi="पिता/पति का नाम" english="Father/Husband Name" />
+              <Input
+                value={rec.fatherHusbandName}
+                onChange={(e) => updateField("fatherHusbandName", e.target.value)}
+              />
+            </div>
+            <div>
+              <BilingualLabel hindi="मोबाइल" english="Mobile" required />
+              <Input
+                type="tel"
+                value={rec.mobile}
+                onChange={(e) => updateField("mobile", e.target.value)}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <LabelField labelHi="किसान का नाम" labelEn="Farmer Name" req />
+                <BilingualLabel hindi="गाँव" english="Village" />
                 <Input
-                  value={rec.farmerName}
-                  onChange={(e) => updateField("farmerName", e.target.value)}
-                  className="h-12 rounded-xl"
+                  value={rec.village}
+                  onChange={(e) => updateField("village", e.target.value)}
                 />
-                {errors["farmerName"] && (
-                  <p className="text-red-500 text-xs mt-1">{errors["farmerName"]}</p>
-                )}
               </div>
               <div>
-                <LabelField labelHi="पिता/पति का नाम" labelEn="Father/Husband Name" />
+                <BilingualLabel hindi="ब्लॉक" english="Block" />
+                <Input value={rec.block} onChange={(e) => updateField("block", e.target.value)} />
+              </div>
+            </div>
+
+            <div>
+              <BilingualLabel hindi="जिला" english="District" />
+              <Input
+                value={rec.district}
+                onChange={(e) => updateField("district", e.target.value)}
+              />
+            </div>
+            <div>
+              <BilingualLabel hindi="लिंग" english="Gender" />
+              <ChipGroup
+                value={rec.gender}
+                onChange={(v) => updateField("gender", v)}
+                options={[
+                  { labelHi: "पुरुष", labelEn: "Male", value: "Male" },
+                  { labelHi: "महिला", labelEn: "Female", value: "Female" },
+                ]}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <BilingualLabel hindi="कुल भूमि (एकड़)" english="Total Land (Acres)" />
                 <Input
-                  value={rec.fatherHusbandName}
-                  onChange={(e) => updateField("fatherHusbandName", e.target.value)}
-                  className="h-12 rounded-xl"
+                  type="number"
+                  value={rec.totalLandAcres || ""}
+                  onChange={(e) =>
+                    updateField("totalLandAcres", e.target.value ? Number(e.target.value) : null)
+                  }
                 />
               </div>
               <div>
-                <LabelField labelHi="मोबाइल नंबर" labelEn="Mobile" req />
+                <BilingualLabel hindi="CCF क्षेत्र (एकड़)" english="CCF Monitoring Area" />
                 <Input
-                  value={rec.mobile}
-                  type="tel"
-                  maxLength={10}
-                  onChange={(e) => updateField("mobile", e.target.value)}
-                  className="h-12 rounded-xl"
-                />
-                {errors["mobile"] && (
-                  <p className="text-red-500 text-xs mt-1">{errors["mobile"]}</p>
-                )}
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <LabelField labelHi="गांव" labelEn="Village" />
-                  <Input
-                    value={rec.village}
-                    onChange={(e) => updateField("village", e.target.value)}
-                    className="h-12 rounded-xl"
-                  />
-                </div>
-                <div>
-                  <LabelField labelHi="ब्लॉक" labelEn="Block" />
-                  <Input
-                    value={rec.block}
-                    onChange={(e) => updateField("block", e.target.value)}
-                    className="h-12 rounded-xl"
-                  />
-                </div>
-              </div>
-              <div>
-                <LabelField labelHi="क्लस्टर" labelEn="Cluster" />
-                <ChipGroup
-                  value={rec.cluster}
-                  onChange={(v) => updateField("cluster", v)}
-                  options={[
-                    { labelHi: "तारागढ़", labelEn: "Taragarh", value: "Taragarh" },
-                    { labelHi: "जसवंत", labelEn: "Jaswant", value: "Jaswant" },
-                    { labelHi: "सीवान", labelEn: "Siwan", value: "Siwan" },
-                    { labelHi: "चीका", labelEn: "Cheeka", value: "Cheeka" },
-                    { labelHi: "अन्य", labelEn: "Other", value: "Other" },
-                  ]}
+                  type="number"
+                  value={rec.ccfMonitoringAreaAcres || ""}
+                  onChange={(e) =>
+                    updateField(
+                      "ccfMonitoringAreaAcres",
+                      e.target.value ? Number(e.target.value) : null,
+                    )
+                  }
                 />
               </div>
-              <div>
-                <LabelField labelHi="लिंग" labelEn="Gender" />
-                <ChipGroup
-                  value={rec.gender}
-                  onChange={(v) => updateField("gender", v)}
-                  options={[
-                    { labelHi: "पुरुष", labelEn: "Male", value: "Male" },
-                    { labelHi: "महिला", labelEn: "Female", value: "Female" },
-                    { labelHi: "अन्य", labelEn: "Other", value: "Other" },
-                  ]}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <LabelField labelHi="कुल भूमि (एकड़)" labelEn="Total Land (Acres)" />
-                  <Input
-                    type="number"
-                    value={rec.totalLandAcres || ""}
-                    onChange={(e) =>
-                      updateField("totalLandAcres", e.target.value ? Number(e.target.value) : null)
-                    }
-                    className="h-12 rounded-xl"
-                  />
-                </div>
-                <div>
-                  <LabelField labelHi="निगरानी क्षेत्र (एकड़)" labelEn="CCF Area (Acres)" />
-                  <Input
-                    type="number"
-                    value={rec.ccfMonitoringAreaAcres || ""}
-                    onChange={(e) =>
-                      updateField(
-                        "ccfMonitoringAreaAcres",
-                        e.target.value ? Number(e.target.value) : null,
-                      )
-                    }
-                    className="h-12 rounded-xl"
-                  />
-                </div>
-              </div>
-              <div>
-                <LabelField labelHi="खेत की पहचान" labelEn="Field ID/Mark" />
-                <Input
-                  value={rec.fieldIdMark}
-                  onChange={(e) => updateField("fieldIdMark", e.target.value)}
-                  className="h-12 rounded-xl"
-                />
-              </div>
-              <div>
-                <LabelField labelHi="खेत का GPS" labelEn="Field GPS Location" />
-                <div className="flex items-center gap-3">
-                  <Button
-                    type="button"
-                    onClick={getGPS}
-                    variant="outline"
-                    className="h-12 rounded-xl border-primary text-primary"
-                  >
-                    <MapPin className="mr-2 size-5" /> Get Location
-                  </Button>
-                  <div className="text-xs text-muted-foreground">
-                    {rec.gpsLat
-                      ? `Lat: ${rec.gpsLat.toFixed(6)}\nLng: ${rec.gpsLng?.toFixed(6)}`
-                      : "Not captured"}
+            </div>
+
+            <div>
+              <BilingualLabel hindi="खेत की पहचान" english="Field ID Mark" />
+              <Input
+                value={rec.fieldIdMark}
+                onChange={(e) => updateField("fieldIdMark", e.target.value)}
+              />
+            </div>
+
+            <div>
+              <BilingualLabel hindi="जीपीएस लोकेशन" english="GPS Location" required />
+              <div className="flex gap-2 items-center">
+                <Button
+                  type="button"
+                  onClick={captureLocation}
+                  disabled={locationLoading}
+                  className="flex-1 bg-blue-50 text-blue-700 hover:bg-blue-100 border-blue-200"
+                  variant="outline"
+                >
+                  <MapPin className="size-4 mr-2" />
+                  {locationLoading
+                    ? "Capturing..."
+                    : rec.gpsLat
+                      ? "Update Location"
+                      : "Capture Location"}
+                </Button>
+                {rec.gpsLat && (
+                  <div className="text-xs text-gray-500 bg-gray-100 p-2 rounded-lg">
+                    {rec.gpsLat.toFixed(4)}, {rec.gpsLng?.toFixed(4)}
                   </div>
-                </div>
-              </div>
-              <div>
-                <LabelField labelHi="किसान श्रेणी" labelEn="Farmer Category" />
-                <ChipGroup
-                  value={rec.farmerCategory}
-                  onChange={(v) => updateField("farmerCategory", v)}
-                  options={[
-                    {
-                      labelHi: "सीमांत (<1 ha)",
-                      labelEn: "Marginal_lt1ha",
-                      value: "Marginal_lt1ha",
-                    },
-                    { labelHi: "छोटा (1-2 ha)", labelEn: "Small_1to2ha", value: "Small_1to2ha" },
-                    { labelHi: "अन्य", labelEn: "Other", value: "Other" },
-                  ]}
-                />
-              </div>
-              <div className="flex items-center justify-between p-3 border rounded-xl">
-                <LabelField
-                  labelHi="क्या किसान के पास स्मार्टफोन है?"
-                  labelEn="Has Farmer Companion App?"
-                />
-                <Switch
-                  checked={rec.hasFarmerCompanion}
-                  onCheckedChange={(c) => updateField("hasFarmerCompanion", c)}
-                />
+                )}
               </div>
             </div>
-          )}
-        </div>
 
-        {/* Section 2 */}
-        <div className="rounded-xl overflow-hidden border border-border bg-card shadow-sm">
-          <SectionHeader
-            num={2}
-            titleHi="2. धान की फसल का आधार रेखा"
-            titleEn="2. Rice Crop Baseline"
-          />
-          {expanded[2] && (
-            <div className="p-4 space-y-5">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <LabelField labelHi="धान की किस्म" labelEn="Rice Variety" />
-                  <Input
-                    value={rec.riceVariety}
-                    onChange={(e) => updateField("riceVariety", e.target.value)}
-                    className="h-12 rounded-xl"
-                  />
-                </div>
-                <div>
-                  <LabelField labelHi="फसल की अवस्था" labelEn="Crop Stage" />
-                  <Input
-                    value={rec.cropStage}
-                    onChange={(e) => updateField("cropStage", e.target.value)}
-                    className="h-12 rounded-xl"
-                  />
-                </div>
+            <div>
+              <BilingualLabel hindi="फोटो" english="Photos" />
+              <div className="mb-3">
+                <CameraCapture onCaptured={handlePhotoCapture} />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <LabelField labelHi="बुवाई की तिथि" labelEn="Sowing Date" />
-                  <Input
-                    type="date"
-                    value={rec.sowingDate}
-                    onChange={(e) => updateField("sowingDate", e.target.value)}
-                    className="h-12 rounded-xl"
-                  />
-                </div>
-                <div>
-                  <LabelField labelHi="पहली यात्रा की तिथि" labelEn="First Visit Date" />
-                  <Input
-                    type="date"
-                    value={rec.firstVisitDate}
-                    onChange={(e) => updateField("firstVisitDate", e.target.value)}
-                    className="h-12 rounded-xl"
-                  />
-                </div>
-              </div>
-              <div>
-                <LabelField labelHi="सिंचाई का स्रोत" labelEn="Irrigation Source" />
-                <ChipGroup
-                  multi
-                  value={rec.irrigationSource}
-                  onChange={(v) => updateField("irrigationSource", v)}
-                  options={[
-                    { labelHi: "ट्यूबवेल", labelEn: "Tubwell", value: "Tubwell" },
-                    { labelHi: "नहर", labelEn: "Canal", value: "Canal" },
-                    { labelHi: "अन्य", labelEn: "Other", value: "Other" },
-                  ]}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <LabelField labelHi="अब तक सिंचाई की संख्या" labelEn="Irrigation Count" />
-                  <Input
-                    type="number"
-                    value={rec.irrigationCountSoFar || ""}
-                    onChange={(e) =>
-                      updateField(
-                        "irrigationCountSoFar",
-                        e.target.value ? Number(e.target.value) : null,
-                      )
-                    }
-                    className="h-12 rounded-xl"
-                  />
-                </div>
-                <div>
-                  <LabelField labelHi="अंतिम सिंचाई तिथि" labelEn="Last Irrigation Date" />
-                  <Input
-                    type="date"
-                    value={rec.lastIrrigationDate}
-                    onChange={(e) => updateField("lastIrrigationDate", e.target.value)}
-                    className="h-12 rounded-xl"
-                  />
-                </div>
-              </div>
-              <div>
-                <LabelField labelHi="वर्तमान नमी" labelEn="Current Moisture" />
-                <ChipGroup
-                  value={rec.currentMoisture}
-                  onChange={(v) => updateField("currentMoisture", v)}
-                  options={[
-                    { labelHi: "कम", labelEn: "Low", value: "Low" },
-                    { labelHi: "मध्यम", labelEn: "Medium", value: "Medium" },
-                    { labelHi: "अधिक", labelEn: "High", value: "High" },
-                  ]}
-                />
-              </div>
-              <div>
-                <LabelField labelHi="उर्वरक विवरण" labelEn="Fertilizer Details" />
-                <Input
-                  value={rec.fertilizerDetails}
-                  onChange={(e) => updateField("fertilizerDetails", e.target.value)}
-                  className="h-12 rounded-xl"
-                />
-              </div>
-              <div>
-                <LabelField labelHi="कीटनाशक विवरण" labelEn="Pesticide Details" />
-                <Input
-                  value={rec.pesticideDetails}
-                  onChange={(e) => updateField("pesticideDetails", e.target.value)}
-                  className="h-12 rounded-xl"
-                />
-              </div>
-              <div>
-                <LabelField labelHi="वर्तमान समस्याएं" labelEn="Current Problems" />
-                <Input
-                  value={rec.currentProblems}
-                  onChange={(e) => updateField("currentProblems", e.target.value)}
-                  className="h-12 rounded-xl"
-                />
-              </div>
-              <div>
-                <LabelField labelHi="किसान की मुख्य आवश्यकता" labelEn="Farmer Main Need" />
-                <Input
-                  value={rec.farmerMainNeed}
-                  onChange={(e) => updateField("farmerMainNeed", e.target.value)}
-                  className="h-12 rounded-xl"
-                />
+              <div className="grid grid-cols-3 gap-2">
+                {rec.photos.map((p, i) => (
+                  <div
+                    key={i}
+                    className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden border"
+                  >
+                    <img src={p.url} className="object-cover w-full h-full" alt="Field" />
+                    <button
+                      type="button"
+                      onClick={() => removePhoto(i)}
+                      className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* Section 3 */}
-        <div className="rounded-xl overflow-hidden border border-border bg-card shadow-sm">
-          <SectionHeader num={3} titleHi="3. मिट्टी की जांच" titleEn="3. Soil Saathi Reading" />
-          {expanded[3] && (
-            <div className="p-4 space-y-6">
-              <div>
-                <h4 className="font-bold text-primary mb-3">Baseline / आधार रेखा</h4>
-                <div className="grid grid-cols-4 gap-2">
-                  {[
-                    "ph",
-                    "ec",
-                    "salinity",
-                    "moisture",
-                    "temperature",
-                    "nitrogen",
-                    "phosphorus",
-                    "potassium",
-                  ].map((k) => (
-                    <div key={"base_" + k}>
-                      <Label className="text-[10px] uppercase text-muted-foreground">{k}</Label>
-                      <Input
-                        value={(rec.soilBaseline as any)[k]}
-                        onChange={(e) =>
-                          updateNestedField("soilBaseline", k as any, e.target.value)
-                        }
-                        className="h-10 px-2 text-center"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <h4 className="font-bold text-primary mb-3">Follow-up / अनुवर्ती</h4>
-                <div className="grid grid-cols-4 gap-2">
-                  {[
-                    "ph",
-                    "ec",
-                    "salinity",
-                    "moisture",
-                    "temperature",
-                    "nitrogen",
-                    "phosphorus",
-                    "potassium",
-                  ].map((k) => (
-                    <div key={"fup_" + k}>
-                      <Label className="text-[10px] uppercase text-muted-foreground">{k}</Label>
-                      <Input
-                        value={(rec.soilFollowup as any)[k]}
-                        onChange={(e) =>
-                          updateNestedField("soilFollowup", k as any, e.target.value)
-                        }
-                        className="h-10 px-2 text-center"
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <LabelField labelHi="SPAD क्लोरोफिल" labelEn="SPAD Chlorophyll" />
-                  <Input
-                    value={rec.spadChlorophyll}
-                    onChange={(e) => updateField("spadChlorophyll", e.target.value)}
-                    className="h-12 rounded-xl"
-                  />
-                </div>
-                <div>
-                  <LabelField labelHi="प्रयोगशाला नमूना कोड" labelEn="Lab Sample Code" />
-                  <Input
-                    value={rec.labSampleCode}
-                    onChange={(e) => updateField("labSampleCode", e.target.value)}
-                    className="h-12 rounded-xl"
-                  />
-                </div>
-              </div>
+        {step === 2 && (
+          <div className="space-y-5">
+            <div>
+              <BilingualLabel hindi="धान की किस्म" english="Rice Variety" />
+              <Input
+                value={rec.riceVariety}
+                onChange={(e) => updateField("riceVariety", e.target.value)}
+              />
             </div>
-          )}
-        </div>
-
-        {/* Section 4 */}
-        <div className="rounded-xl overflow-hidden border border-border bg-card shadow-sm">
-          <SectionHeader
-            num={4}
-            titleHi="4. तकनीकी हस्तक्षेप"
-            titleEn="4. Technical Intervention"
-          />
-          {expanded[4] && (
-            <div className="p-4 space-y-5">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <LabelField labelHi="सलाह" labelEn="Farm Assist Advice" />
+                <BilingualLabel hindi="बुवाई की तारीख" english="Sowing Date" />
                 <Input
-                  value={rec.farmAssistAdvice}
-                  onChange={(e) => updateField("farmAssistAdvice", e.target.value)}
-                  className="h-12 rounded-xl"
+                  type="date"
+                  value={rec.sowingDate}
+                  onChange={(e) => updateField("sowingDate", e.target.value)}
                 />
               </div>
               <div>
-                <LabelField labelHi="सलाह का प्रकार" labelEn="Advice Type" />
-                <ChipGroup
-                  multi
-                  value={rec.adviceType}
-                  onChange={(v) => updateField("adviceType", v)}
-                  options={[
-                    { labelHi: "पोषण", labelEn: "Nutrition", value: "Nutrition" },
-                    { labelHi: "सिंचाई", labelEn: "Irrigation", value: "Irrigation" },
-                    { labelHi: "कीट/रोग", labelEn: "PestDisease", value: "PestDisease" },
-                    { labelHi: "अन्य", labelEn: "Other", value: "Other" },
-                  ]}
+                <BilingualLabel hindi="पहली यात्रा" english="First Visit Date" />
+                <Input
+                  type="date"
+                  value={rec.firstVisitDate}
+                  onChange={(e) => updateField("firstVisitDate", e.target.value)}
                 />
               </div>
             </div>
-          )}
-        </div>
+            <div>
+              <BilingualLabel hindi="फसल की अवस्था" english="Crop Stage" />
+              <Input
+                value={rec.cropStage}
+                onChange={(e) => updateField("cropStage", e.target.value)}
+              />
+            </div>
+            <div>
+              <BilingualLabel hindi="सिंचाई स्रोत" english="Irrigation Source" />
+              <ChipGroup
+                multi
+                value={rec.irrigationSource}
+                onChange={(v) => updateField("irrigationSource", v)}
+                options={[
+                  { labelHi: "ट्यूबवेल", labelEn: "Tubwell", value: "Tubwell" },
+                  { labelHi: "नहर", labelEn: "Canal", value: "Canal" },
+                  { labelHi: "अन्य", labelEn: "Other", value: "Other" },
+                ]}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <BilingualLabel hindi="सिंचाई संख्या" english="Irrigation Count" />
+                <Input
+                  type="number"
+                  value={rec.irrigationCountSoFar || ""}
+                  onChange={(e) =>
+                    updateField(
+                      "irrigationCountSoFar",
+                      e.target.value ? Number(e.target.value) : null,
+                    )
+                  }
+                />
+              </div>
+              <div>
+                <BilingualLabel hindi="अंतिम सिंचाई" english="Last Irrigation" />
+                <Input
+                  type="date"
+                  value={rec.lastIrrigationDate}
+                  onChange={(e) => updateField("lastIrrigationDate", e.target.value)}
+                />
+              </div>
+            </div>
+            <div>
+              <BilingualLabel hindi="वर्तमान नमी" english="Current Moisture" />
+              <ChipGroup
+                value={rec.currentMoisture}
+                onChange={(v) => updateField("currentMoisture", v)}
+                options={[
+                  { labelHi: "कम", labelEn: "Low", value: "Low" },
+                  { labelHi: "मध्यम", labelEn: "Medium", value: "Medium" },
+                  { labelHi: "अधिक", labelEn: "High", value: "High" },
+                ]}
+              />
+            </div>
+            <div>
+              <BilingualLabel hindi="उर्वरक विवरण" english="Fertilizer Details" />
+              <Input
+                value={rec.fertilizerDetails}
+                onChange={(e) => updateField("fertilizerDetails", e.target.value)}
+              />
+            </div>
+            <div>
+              <BilingualLabel hindi="कीटनाशक विवरण" english="Pesticide Details" />
+              <Input
+                value={rec.pesticideDetails}
+                onChange={(e) => updateField("pesticideDetails", e.target.value)}
+              />
+            </div>
+            <div>
+              <BilingualLabel hindi="वर्तमान समस्याएँ" english="Current Problems" />
+              <Input
+                value={rec.currentProblems}
+                onChange={(e) => updateField("currentProblems", e.target.value)}
+              />
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="space-y-5">
+            <div>
+              <h4 className="font-bold text-green-700 mb-3">Baseline / आधार रेखा</h4>
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  "ph",
+                  "ec",
+                  "salinity",
+                  "moisture",
+                  "temperature",
+                  "nitrogen",
+                  "phosphorus",
+                  "potassium",
+                ].map((k) => (
+                  <div key={"base_" + k}>
+                    <label className="text-[10px] uppercase text-gray-500 font-bold">{k}</label>
+                    <Input
+                      value={(rec.soilBaseline as any)[k]}
+                      onChange={(e) => updateNestedField("soilBaseline", k as any, e.target.value)}
+                      className="px-2 text-center"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h4 className="font-bold text-blue-700 mb-3 mt-4">Follow-up / अनुवर्ती</h4>
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  "ph",
+                  "ec",
+                  "salinity",
+                  "moisture",
+                  "temperature",
+                  "nitrogen",
+                  "phosphorus",
+                  "potassium",
+                ].map((k) => (
+                  <div key={"fup_" + k}>
+                    <label className="text-[10px] uppercase text-gray-500 font-bold">{k}</label>
+                    <Input
+                      value={(rec.soilFollowup as any)[k]}
+                      onChange={(e) => updateNestedField("soilFollowup", k as any, e.target.value)}
+                      className="px-2 text-center"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mt-4">
+              <div>
+                <BilingualLabel hindi="SPAD क्लोरोफिल" english="SPAD Chlorophyll" />
+                <Input
+                  value={rec.spadChlorophyll}
+                  onChange={(e) => updateField("spadChlorophyll", e.target.value)}
+                />
+              </div>
+              <div>
+                <BilingualLabel hindi="प्रयोगशाला नमूना कोड" english="Lab Sample Code" />
+                <Input
+                  value={rec.labSampleCode}
+                  onChange={(e) => updateField("labSampleCode", e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {step === 4 && (
+          <div className="space-y-5">
+            <div>
+              <BilingualLabel hindi="सलाह" english="Farm Assist Advice" />
+              <Input
+                value={rec.farmAssistAdvice}
+                onChange={(e) => updateField("farmAssistAdvice", e.target.value)}
+              />
+            </div>
+            <div>
+              <BilingualLabel hindi="सलाह का प्रकार" english="Advice Type" />
+              <ChipGroup
+                multi
+                value={rec.adviceType}
+                onChange={(v) => updateField("adviceType", v)}
+                options={[
+                  { labelHi: "पोषण", labelEn: "Nutrition", value: "Nutrition" },
+                  { labelHi: "सिंचाई", labelEn: "Irrigation", value: "Irrigation" },
+                  { labelHi: "कीट/रोग", labelEn: "PestDisease", value: "PestDisease" },
+                  { labelHi: "अन्य", labelEn: "Other", value: "Other" },
+                ]}
+              />
+            </div>
+          </div>
+        )}
+
+        {step === 5 && (
+          <div className="space-y-5">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <BilingualLabel hindi="कटाई तिथि" english="Harvest Date" />
+                <Input
+                  type="date"
+                  value={rec.harvestDate}
+                  onChange={(e) => updateField("harvestDate", e.target.value)}
+                />
+              </div>
+              <div>
+                <BilingualLabel hindi="उत्पादन" english="Production (Quintal/Acre)" />
+                <Input
+                  type="number"
+                  value={rec.productionQuintalPerAcre}
+                  onChange={(e) => updateField("productionQuintalPerAcre", e.target.value)}
+                />
+              </div>
+            </div>
+            <div>
+              <BilingualLabel hindi="फसल स्थिति" english="Crop Status" />
+              <ChipGroup
+                value={rec.cropStatus}
+                onChange={(v) => updateField("cropStatus", v)}
+                options={[
+                  { labelHi: "बेहतर", labelEn: "Better", value: "Better" },
+                  { labelHi: "समान", labelEn: "Same", value: "Same" },
+                  { labelHi: "कमतर", labelEn: "Worse", value: "Worse" },
+                ]}
+              />
+            </div>
+            <div>
+              <BilingualLabel hindi="संतुष्टि" english="Satisfaction" />
+              <ChipGroup
+                value={rec.satisfactionLevel}
+                onChange={(v) => updateField("satisfactionLevel", v)}
+                options={[
+                  { labelHi: "उच्च", labelEn: "High", value: "High" },
+                  { labelHi: "मध्यम", labelEn: "Medium", value: "Medium" },
+                  { labelHi: "कम", labelEn: "Low", value: "Low" },
+                ]}
+              />
+            </div>
+            <div>
+              <BilingualLabel hindi="अगली फसल हेतु JOITA सलाह" english="Next Crop Advice" />
+              <textarea
+                className="w-full h-24 rounded-xl border-[1.5px] border-gray-200 p-3 text-base bg-white resize-none focus:outline-none focus:border-green-600 focus:ring-[3px] focus:ring-green-600/10"
+                value={rec.nextCropAdvice}
+                onChange={(e) => updateField("nextCropAdvice", e.target.value)}
+              />
+            </div>
+            <div>
+              <BilingualLabel
+                hindi="मुख्य परिणाम और किसान प्रतिक्रिया"
+                english="Main Results & Farmer Feedback"
+              />
+              <textarea
+                className="w-full h-32 rounded-xl border-[1.5px] border-gray-200 p-3 text-base bg-white resize-none focus:outline-none focus:border-green-600 focus:ring-[3px] focus:ring-green-600/10"
+                value={rec.mainResultsFarmerFeedback}
+                onChange={(e) => updateField("mainResultsFarmerFeedback", e.target.value)}
+              />
+            </div>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mt-4">
+              <label className="flex gap-3 items-start cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={rec.farmerConsentGiven ?? false}
+                  onChange={(e) => updateField("farmerConsentGiven", e.target.checked)}
+                  className="mt-1 w-5 h-5 accent-green-600 flex-shrink-0 rounded"
+                />
+                <div>
+                  <p className="text-sm text-gray-800 font-medium">
+                    मैं स्वेच्छा से इस परियोजना में भाग ले रहा/रही हूँ।
+                  </p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    I voluntarily participate in this project. My farm data may be used for project
+                    monitoring and Climate Collective Foundation reporting.
+                  </p>
+                </div>
+              </label>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="px-4 text-center mt-2">
+        <button
+          onClick={handleSaveDraft}
+          className="w-full text-center text-green-700 text-sm py-2 font-medium"
+        >
+          💾 Draft सहेजें / Save as Draft
+        </button>
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 flex gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-40 pb-safe">
+        {step > 1 && (
+          <button
+            onClick={() => {
+              window.scrollTo({ top: 0 });
+              setStep((s) => s - 1);
+            }}
+            className="flex-1 h-[52px] border-2 border-green-600 text-green-600 rounded-xl font-semibold"
+          >
+            ← पिछला / Back
+          </button>
+        )}
+        {step < 5 ? (
+          <button
+            onClick={handleNext}
+            className="flex-1 h-[52px] bg-green-600 text-white rounded-xl font-semibold"
+          >
+            अगला / Next →
+          </button>
+        ) : (
+          <button
+            onClick={handleSubmit}
+            className="flex-1 h-[52px] bg-green-600 text-white rounded-xl font-semibold disabled:opacity-50"
+            disabled={!rec.farmerConsentGiven || saving}
+          >
+            ✅ जमा करें / Submit
+          </button>
+        )}
       </div>
     </div>
   );

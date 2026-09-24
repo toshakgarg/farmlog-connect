@@ -39,7 +39,7 @@ See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the main data and offline-s
 
 ## Prerequisites
 
-- Node.js (v20 or higher recommended)
+- Node.js 24 (the version used by GitHub Actions)
 - npm
 - A Firebase project with Authentication (Email/Password), Firestore, and Storage enabled.
 

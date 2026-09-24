@@ -39,3 +39,12 @@ dumped_*.txt
 joita_part_*.txt
 joita_ui.txt
 fix_joita.cjs
+
+# Temporary reconstruction scripts and split-file outputs
+P4_split.js
+do_replace.js
+fix.js
+joitaform_rewrite.js
+rep.js
+c[1-4].txt
+admin_backup.tsx

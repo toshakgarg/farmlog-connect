@@ -8,9 +8,6 @@ import { useI18n } from "@/lib/i18n";
 import { useOnline } from "@/hooks/useOnline";
 import { useBackNavigation, usePullToRefresh } from "@/hooks/use-mobile-gestures";
 
-// Shared authenticated shell for role routes: header, connectivity state,
-// language switcher, logout, and mobile navigation.
-
 export function AppShell({
   title,
   subtitle,
@@ -27,7 +24,7 @@ export function AppShell({
   onRefresh?: (() => Promise<void> | void) | undefined;
 }) {
   const { t } = useI18n();
-  const { logout } = useAuth();
+  const { logout, profile } = useAuth();
   const online = useOnline();
   const navigate = useNavigate();
   const { refreshing, distance } = usePullToRefresh(onRefresh);
@@ -38,40 +35,34 @@ export function AppShell({
   useBackNavigation(handleBack);
 
   return (
-    <div className="min-h-screen bg-background app-shell">
-      <header className="fixed top-0 left-0 right-0 z-50 border-b bg-white app-header">
+    <div className="min-h-screen bg-gray-50 app-shell flex flex-col">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-[#e5e7eb] h-[64px]">
         {onRefresh && (refreshing || distance > 0) ? (
-          <div className="pull-refresh-indicator" style={{ height: `${Math.max(0, distance)}px` }}>
-            <Wifi className={`size-4 ${refreshing ? "animate-spin" : ""}`} />
-            <span>{refreshing ? "Refreshing..." : "Pull to refresh"}</span>
+          <div className="absolute top-16 left-0 right-0 flex justify-center pull-refresh-indicator bg-white/90 backdrop-blur" style={{ height: `${Math.max(0, distance)}px` }}>
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+              <Wifi className={`size-4 ${refreshing ? "animate-spin" : ""}`} />
+              <span>{refreshing ? "Refreshing..." : "Pull to refresh"}</span>
+            </div>
           </div>
         ) : null}
-        <div className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3">
+        <div className="mx-auto flex h-full max-w-5xl items-center gap-3 px-4">
           {onBack ? (
             <button
               onClick={onBack}
-              className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-muted text-foreground hover:bg-muted/80 transition-colors"
+              className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-gray-100 text-gray-900 hover:bg-gray-200 transition-colors"
               aria-label="Go back"
             >
               <ArrowLeft className="size-5" />
             </button>
           ) : (
-            <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <Sprout className="size-5" />
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-green-600 text-white shadow-sm">
+              <Sprout className="size-6" />
             </div>
           )}
-          <div className="min-w-0 flex-1">
-            <h1 className="truncate text-base font-bold leading-tight">{title}</h1>
-            {subtitle ? <p className="truncate text-xs text-muted-foreground">{subtitle}</p> : null}
+          <div className="min-w-0 flex-1 flex flex-col justify-center">
+            <h1 className="truncate text-[17px] font-bold leading-tight text-gray-900">FarmLog</h1>
+            <p className="truncate text-[11px] text-gray-500 font-medium uppercase tracking-wider">{title}</p>
           </div>
-          <span
-            className={`hidden items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold sm:inline-flex ${
-              online ? "bg-success/15 text-success" : "bg-destructive/15 text-destructive"
-            }`}
-          >
-            {online ? <Wifi className="size-3.5" /> : <WifiOff className="size-3.5" />}
-            {online ? t("online") : t("offline")}
-          </span>
           <LanguageToggle />
           <Button
             variant="ghost"
@@ -81,13 +72,16 @@ export function AppShell({
               await logout();
               navigate({ to: "/" });
             }}
+            className="text-gray-500 hover:text-gray-900"
           >
             <LogOut className="size-5" />
           </Button>
         </div>
-        {actions ? <div className="mx-auto max-w-5xl px-4 pb-3">{actions}</div> : null}
+        {actions ? <div className="absolute top-16 left-0 right-0 mx-auto max-w-5xl px-4 pb-3 bg-white border-b border-[#e5e7eb] shadow-sm">{actions}</div> : null}
       </header>
-      <main className="mx-auto max-w-5xl px-4 py-4 app-main">{children}</main>
+      <main className={`mx-auto max-w-5xl w-full flex-1 px-4 ${actions ? 'pt-[110px]' : 'pt-[80px]'} pb-24 app-main`}>
+        {children}
+      </main>
     </div>
   );
 }
