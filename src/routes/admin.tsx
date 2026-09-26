@@ -117,12 +117,26 @@ function AdminPage() {
 
   const filtered = useMemo(
     () =>
-      records.filter((r) => {
-        if (filters.village && !r.village?.toLowerCase().includes(filters.village.toLowerCase()))
-          return false;
-        if (filters.supervisor && r.supervisorID !== filters.supervisor) return false;
-        if (filters.from && r.createdAt < new Date(filters.from).getTime()) return false;
-        if (filters.to && r.createdAt > new Date(filters.to).getTime() + 86400000) return false;
+      records.filter((record) => {
+        if (filters.village && filters.village.trim() !== '') {
+          const search = filters.village.toLowerCase();
+          const matchesVillage = record.village?.toLowerCase().includes(search);
+          const matchesName = record.fullName?.toLowerCase().includes(search);
+          if (!matchesVillage && !matchesName) return false;
+        }
+        
+        if (filters.supervisor && filters.supervisor !== 'all' && filters.supervisor !== '') {
+          if (record.supervisorID !== filters.supervisor) return false;
+        }
+        
+        if (filters.from && filters.to) {
+          const recordDate = new Date(record.createdAt);
+          const from = new Date(filters.from);
+          const to = new Date(filters.to);
+          to.setHours(23, 59, 59);
+          if (recordDate < from || recordDate > to) return false;
+        }
+        
         return true;
       }),
     [records, filters],
@@ -145,9 +159,11 @@ function AdminPage() {
       onBack={detail ? () => setDetail(null) : joitaDetail ? () => setJoitaDetail(null) : showSurvey ? () => setShowSurvey(false) : undefined}
       onRefresh={refresh}
     >
-      {joitaDetail ? (
-        <div className="flex flex-col h-full bg-[#fafaf8] pb-20">
-          <div className="bg-white border-b border-border p-4 sticky top-0 z-20 shadow-sm">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-full overflow-x-hidden">
+        <div className="pb-20 w-full max-w-full overflow-x-hidden">
+          {joitaDetail ? (
+            <div className="flex flex-col h-full bg-[#fafaf8]">
+              <div className="bg-white border-b border-border p-4 sticky top-0 z-20 shadow-sm">
             <div className="flex justify-between items-start">
               <h1 className="font-extrabold text-[#15803d] text-lg leading-tight">JOITA Form</h1>
               <StatusBadge status={joitaDetail.status} pending={false} />
@@ -208,7 +224,7 @@ function AdminPage() {
             )}
           </div>
           
-          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur border-t pb-safe z-30">
+          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur border-t pb-safe z-30" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}>
             <Button onClick={() => setJoitaDetail(null)} className="w-full h-12 rounded-xl" variant="outline">Close</Button>
           </div>
         </div>
@@ -226,7 +242,7 @@ function AdminPage() {
           onClose={() => setShowSurvey(false)}
         />
       ) : (
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="pb-24">
+        <>
           <TabsContent value="dashboard" className="space-y-6 mt-0">
             <h2 className="text-xl font-bold">Dashboard</h2>
             <Card
@@ -337,7 +353,7 @@ function AdminPage() {
                   onChange={(e) => setFilters({ ...filters, village: e.target.value })}
                 />
                 <select
-                  className="h-[52px] rounded-xl border border-border bg-card px-3 text-[14px]"
+                  className="w-full h-[48px] px-3 rounded-xl border border-gray-200 bg-white text-gray-700 text-sm focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-100"
                   value={filters.supervisor}
                   onChange={(e) => setFilters({ ...filters, supervisor: e.target.value })}
                 >
@@ -349,15 +365,15 @@ function AdminPage() {
                   ))}
                 </select>
                 <div className="flex gap-2">
-                  <Input
+                  <input
                     type="date"
-                    className="h-[52px] rounded-xl flex-1"
+                    className="flex-1 h-[48px] px-3 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:border-green-500"
                     value={filters.from}
                     onChange={(e) => setFilters({ ...filters, from: e.target.value })}
                   />
-                  <Input
+                  <input
                     type="date"
-                    className="h-[52px] rounded-xl flex-1"
+                    className="flex-1 h-[48px] px-3 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:border-green-500"
                     value={filters.to}
                     onChange={(e) => setFilters({ ...filters, to: e.target.value })}
                   />
@@ -573,6 +589,9 @@ function AdminPage() {
               </CardContent>
             </Card>
           </TabsContent>
+        </>
+        )}
+        </div>
 
           <TabsList 
             className="fixed bottom-0 left-0 right-0 z-50 flex h-16 rounded-none border-t border-gray-200 bg-white p-0 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)] justify-around"
@@ -611,8 +630,7 @@ function AdminPage() {
               <span className="text-[10px] font-bold leading-none uppercase mt-1">Settings</span>
             </TabsTrigger>
           </TabsList>
-        </Tabs>
-      )}
+      </Tabs>
     </AppShell>
   );
 }

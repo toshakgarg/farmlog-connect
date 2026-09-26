@@ -101,8 +101,9 @@ function FarmerPage() {
       subtitle={`${t("farmer") || "Farmer"} · ${profile?.name}`}
       onRefresh={refresh}
     >
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="pb-24">
-        <TabsContent value="home" className="space-y-4 mt-0">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-full overflow-x-hidden">
+        <div className="pb-24 w-full max-w-full overflow-x-hidden">
+          <TabsContent value="home" className="space-y-4 mt-0">
           {!record ? (
             <Card className="shadow-sm rounded-xl border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">
@@ -267,6 +268,7 @@ function FarmerPage() {
             </CardContent>
           </Card>
         </TabsContent>
+        </div>
 
         <TabsList className="fixed bottom-0 left-0 right-0 z-50 flex h-[72px] rounded-none border-t border-gray-200 bg-white p-0 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)] justify-around pb-safe">
           <TabsTrigger

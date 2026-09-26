@@ -35,8 +35,6 @@ interface Props {
   onSubmit: (rec: FarmerRecord) => void;
   onCancel: () => void;
   saving?: boolean;
-  joitaRecord?: any;
-  onOpenJoita?: (joita?: any) => void;
 }
 
 export function FarmerForm({
@@ -47,8 +45,6 @@ export function FarmerForm({
   onSubmit,
   onCancel,
   saving,
-  joitaRecord,
-  onOpenJoita,
 }: Props) {
   const { t } = useI18n();
   const [rec, setRec] = useState<FarmerRecord>(value);
@@ -481,29 +477,6 @@ export function FarmerForm({
           {step === 6 && "Ready to Submit"}
         </h2>
         {renderStepContent()}
-
-        {rec.id && (
-          <div className="mt-8 border-t pt-4">
-            <h3 className="font-semibold text-gray-700 mb-2">📋 JOITA प्रपत्र / JOITA Monitoring Form</h3>
-            {joitaRecord ? (
-              <button
-                type="button"
-                onClick={() => onOpenJoita?.(joitaRecord)}
-                className="w-full h-[52px] border-2 border-green-600 text-green-700 rounded-xl font-semibold"
-              >
-                ✏️ JOITA फॉर्म देखें/संपादित करें / View & Edit JOITA Form
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => onOpenJoita?.()}
-                className="w-full h-[52px] bg-green-600 text-white rounded-xl font-semibold"
-              >
-                + JOITA प्रपत्र भरें / Fill JOITA Form
-              </button>
-            )}
-          </div>
-        )}
       </div>
 
       <div 

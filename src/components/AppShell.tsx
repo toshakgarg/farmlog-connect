@@ -35,9 +35,9 @@ export function AppShell({
   useBackNavigation(handleBack);
 
   return (
-    <div className="min-h-screen bg-gray-50 app-shell flex flex-col" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+    <div className="min-h-screen bg-gray-50 app-shell flex flex-col w-full overflow-x-hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
       <header
-        className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100"
+        className="fixed top-0 left-0 right-0 z-50 w-full bg-white border-b border-gray-100"
         style={{ paddingTop: 'env(safe-area-inset-top, 24px)' }}
       >
         {onRefresh && (refreshing || distance > 0) ? (
@@ -87,8 +87,8 @@ export function AppShell({
         {actions ? <div className="mx-auto max-w-5xl px-4 pb-3 bg-white">{actions}</div> : null}
       </header>
       <main
-        className={`mx-auto max-w-5xl w-full flex-1 px-4 pb-24 app-main`}
-        style={{ paddingTop: actions ? 'calc(env(safe-area-inset-top, 24px) + 112px)' : 'calc(env(safe-area-inset-top, 24px) + 64px)' }}
+        className={`mx-auto max-w-5xl w-full flex-1 px-4 app-main overflow-x-hidden`}
+        style={{ paddingTop: actions ? 'calc(env(safe-area-inset-top, 24px) + 112px)' : 'calc(env(safe-area-inset-top, 0px) + 64px)', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 64px)' }}
       >
         {children}
       </main>

@@ -276,38 +276,33 @@ function SupervisorPage() {
       />
       {editingJoita !== null ? (
         <JOITAErrorBoundary>
-          <JOITAForm
-            value={editingJoita}
-            farmers={records ?? []}
-            onSaveDraft={persistJoita}
-            onSubmit={persistJoita}
-            onCancel={() => setEditingJoita(null)}
-            saving={saving}
-          />
+          <div className="pb-20 w-full max-w-full overflow-x-hidden">
+            <JOITAForm
+              value={editingJoita}
+              farmers={records ?? []}
+              onSaveDraft={persistJoita}
+              onSubmit={persistJoita}
+              onCancel={() => setEditingJoita(null)}
+              saving={saving}
+            />
+          </div>
         </JOITAErrorBoundary>
       ) : editing ? (
-        <FarmerForm
-          value={editing}
-          questions={questions}
-          leadFarmers={leadFarmers.filter((f) => f.id !== editing.id)}
-          onSaveDraft={persist}
-          onSubmit={persist}
-          onCancel={() => setEditing(null)}
-          saving={saving}
-          joitaRecord={joitaRecords?.find((j) => j.farmerId === editing.id)}
-          onOpenJoita={(rec) =>
-            setEditingJoita(
-              rec || {
-                ...emptyJOITAPerforma(profile.uid),
-                farmerId: editing.id,
-                farmerName: editing.fullName,
-              }
-            )
-          }
-        />
+        <div className="pb-20 w-full max-w-full overflow-x-hidden">
+          <FarmerForm
+            value={editing}
+            questions={questions}
+            leadFarmers={leadFarmers.filter((f) => f.id !== editing.id)}
+            onSaveDraft={persist}
+            onSubmit={persist}
+            onCancel={() => setEditing(null)}
+            saving={saving}
+          />
+        </div>
       ) : (
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="pb-24">
-          <TabsContent value="home" className="space-y-4 mt-0">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-full overflow-x-hidden">
+          <div className="pb-24 w-full max-w-full overflow-x-hidden">
+            <TabsContent value="home" className="space-y-4 mt-0">
             <div className="grid grid-cols-2 gap-3">
               <Card className="shadow-sm rounded-xl">
                 <CardContent className="p-4 flex flex-col items-center text-center">
@@ -342,13 +337,20 @@ function SupervisorPage() {
               </Card>
             </div>
 
-            <div className="flex flex-col mt-6 mb-8 gap-3">
-              <Button
-                className="h-[52px] w-full rounded-xl text-base font-bold shadow-md bg-primary text-primary-foreground hover:bg-primary/90"
+            <div className="px-4 space-y-3 mt-4 mb-8">
+              <button
                 onClick={() => setEditing({ ...emptyFarmer(profile.uid), id: newLocalId() })}
+                className="w-full h-[56px] bg-green-600 text-white rounded-xl font-bold text-base flex items-center justify-center gap-2"
               >
-                <Plus className="mr-2 size-5" /> New Farmer Record
-              </Button>
+                <Plus className="w-5 h-5" /> New Farmer Record / नया किसान रिकॉर्ड
+              </button>
+
+              <button
+                onClick={() => setEditingJoita({ ...emptyJOITAPerforma(profile.uid) })}
+                className="w-full h-[52px] border-2 border-green-600 text-green-700 rounded-xl font-semibold text-sm flex items-center justify-center gap-2"
+              >
+                <span>📋</span> JOITA प्रपत्र भरें / Fill JOITA Form
+              </button>
             </div>
 
             <h2 className="text-[20px] font-bold mt-4 mb-2">Recent Farmers</h2>
@@ -532,7 +534,7 @@ function SupervisorPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
+          </div>
           <TabsList 
             className="fixed bottom-0 left-0 right-0 z-50 flex h-16 rounded-none border-t border-border bg-card p-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] justify-around text-muted-foreground"
             style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
