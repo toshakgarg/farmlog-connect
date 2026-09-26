@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { FarmerForm } from "@/components/FarmerForm";
+import { FormScanner } from "@/components/FormScanner";
 import { JOITAForm } from "@/components/JOITAForm";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -92,6 +93,7 @@ function SupervisorPage() {
   const [questions, setQuestions] = useState<SurveyQuestion[]>([]);
   const [editing, setEditing] = useState<FarmerRecord | null>(null);
   const [editingJoita, setEditingJoita] = useState<JOITAPerforma | null>(null);
+  const [showScanner, setShowScanner] = useState(false);
   const [search, setSearch] = useState("");
   const [syncing, setSyncing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -274,7 +276,15 @@ function SupervisorPage() {
         }}
         onCancel={() => setDeleteJoitaId(null)}
       />
-      {editingJoita !== null ? (
+      {showScanner ? (
+        <FormScanner
+          onScanned={(data) => {
+            setShowScanner(false);
+            setEditingJoita({ ...emptyJOITAPerforma(profile.uid), ...data, id: newLocalId() });
+          }}
+          onCancel={() => setShowScanner(false)}
+        />
+      ) : editingJoita !== null ? (
         <JOITAErrorBoundary>
           <div className="pb-20 w-full max-w-full overflow-x-hidden">
             <JOITAForm
@@ -350,6 +360,13 @@ function SupervisorPage() {
                 className="w-full h-[52px] border-2 border-green-600 text-green-700 rounded-xl font-semibold text-sm flex items-center justify-center gap-2"
               >
                 <span>📋</span> JOITA प्रपत्र भरें / Fill JOITA Form
+              </button>
+
+              <button
+                onClick={() => setShowScanner(true)}
+                className="w-full h-[52px] border-2 border-blue-500 text-blue-700 rounded-xl font-semibold text-sm flex items-center justify-center gap-2"
+              >
+                <span>📷</span> पेपर फॉर्म स्कैन करें / Scan Paper Form
               </button>
             </div>
 
