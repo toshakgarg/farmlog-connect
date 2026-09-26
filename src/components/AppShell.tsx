@@ -35,8 +35,11 @@ export function AppShell({
   useBackNavigation(handleBack);
 
   return (
-    <div className="min-h-screen bg-gray-50 app-shell flex flex-col">
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-[#e5e7eb] h-[64px]">
+    <div className="min-h-screen bg-gray-50 app-shell flex flex-col" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+      <header
+        className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-100"
+        style={{ paddingTop: 'env(safe-area-inset-top, 24px)' }}
+      >
         {onRefresh && (refreshing || distance > 0) ? (
           <div className="absolute top-16 left-0 right-0 flex justify-center pull-refresh-indicator bg-white/90 backdrop-blur" style={{ height: `${Math.max(0, distance)}px` }}>
             <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -45,7 +48,7 @@ export function AppShell({
             </div>
           </div>
         ) : null}
-        <div className="mx-auto flex h-full max-w-5xl items-center gap-3 px-4">
+        <div className="mx-auto flex items-center justify-between px-4 h-16 max-w-5xl">
           {onBack ? (
             <button
               onClick={onBack}
@@ -59,27 +62,34 @@ export function AppShell({
               <Sprout className="size-6" />
             </div>
           )}
-          <div className="min-w-0 flex-1 flex flex-col justify-center">
-            <h1 className="truncate text-[17px] font-bold leading-tight text-gray-900">FarmLog</h1>
-            <p className="truncate text-[11px] text-gray-500 font-medium uppercase tracking-wider">{title}</p>
+          <div className="flex items-center gap-2 min-w-0 flex-1 px-2">
+            <div className="min-w-0">
+              <p className="font-bold text-gray-900 text-[15px] leading-tight whitespace-nowrap">FarmLog</p>
+              <p className="text-gray-500 text-xs truncate">{subtitle || title}</p>
+            </div>
           </div>
-          <LanguageToggle />
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={t("logout")}
-            onClick={async () => {
-              await logout();
-              navigate({ to: "/" });
-            }}
-            className="text-gray-500 hover:text-gray-900"
-          >
-            <LogOut className="size-5" />
-          </Button>
+          <div className="flex shrink-0 items-center gap-1">
+            <LanguageToggle />
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={t("logout")}
+              onClick={async () => {
+                await logout();
+                navigate({ to: "/" });
+              }}
+              className="text-gray-500 hover:text-gray-900"
+            >
+              <LogOut className="size-5" />
+            </Button>
+          </div>
         </div>
-        {actions ? <div className="absolute top-16 left-0 right-0 mx-auto max-w-5xl px-4 pb-3 bg-white border-b border-[#e5e7eb] shadow-sm">{actions}</div> : null}
+        {actions ? <div className="mx-auto max-w-5xl px-4 pb-3 bg-white">{actions}</div> : null}
       </header>
-      <main className={`mx-auto max-w-5xl w-full flex-1 px-4 ${actions ? 'pt-[110px]' : 'pt-[80px]'} pb-24 app-main`}>
+      <main
+        className={`mx-auto max-w-5xl w-full flex-1 px-4 pb-24 app-main`}
+        style={{ paddingTop: actions ? 'calc(env(safe-area-inset-top, 24px) + 112px)' : 'calc(env(safe-area-inset-top, 24px) + 64px)' }}
+      >
         {children}
       </main>
     </div>

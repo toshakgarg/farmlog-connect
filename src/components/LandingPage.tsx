@@ -12,7 +12,10 @@ export function LandingPage({ onLoginClick }: Props) {
 
   return (
     <div className="flex min-h-[100dvh] flex-col items-center overflow-y-auto overscroll-y-contain bg-background px-6 py-12 pb-24 text-center text-foreground">
-      <div className="flex w-full justify-end">
+      <div
+        className="absolute top-0 right-0 p-4"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top, 16px) + 8px)' }}
+      >
         <LanguageToggle />
       </div>
 

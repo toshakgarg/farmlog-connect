@@ -18,6 +18,7 @@ import {
   Shield,
   Tractor,
   UserPlus,
+  Search,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
@@ -71,6 +72,9 @@ function AdminPage() {
   const [farmerUsers, setFarmerUsers] = useState<AppUser[]>([]);
   const [detail, setDetail] = useState<FarmerRecord | null>(null);
   const [joitaDetail, setJoitaDetail] = useState<JOITAPerforma | null>(null);
+  const [joitaSearch, setJoitaSearch] = useState("");
+  const [joitaStatusFilter, setJoitaStatusFilter] = useState("All");
+  const [joitaClusterFilter, setJoitaClusterFilter] = useState("All Clusters");
   const [activeTab, setActiveTab] = useState("dashboard");
   const [recordsTab, setRecordsTab] = useState("farmer_records");
   const [showSurvey, setShowSurvey] = useState(false);
@@ -136,8 +140,8 @@ function AdminPage() {
 
   return (
     <AppShell
-      title={t("adminPanel") || "Admin Panel"}
-      subtitle={profile.name}
+      title={t("appName") || "FarmLog"}
+      subtitle={`Admin · ${profile.name}`}
       onBack={detail ? () => setDetail(null) : joitaDetail ? () => setJoitaDetail(null) : showSurvey ? () => setShowSurvey(false) : undefined}
       onRefresh={refresh}
     >
@@ -441,13 +445,70 @@ function AdminPage() {
                 <Download className="mr-2 size-5" /> Export JOITA Forms (CSV)
               </Button>
 
+              <div className="px-4 py-3 space-y-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type="text"
+                    placeholder="Search farmer name, village..."
+                    value={joitaSearch}
+                    onChange={e => setJoitaSearch(e.target.value)}
+                    className="w-full h-[48px] pl-10 pr-4 rounded-xl border border-gray-200 text-sm"
+                  />
+                </div>
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {['All', 'Draft', 'Submitted'].map(status => (
+                    <button
+                      key={status}
+                      onClick={() => setJoitaStatusFilter(status)}
+                      className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0 ${
+                        joitaStatusFilter === status
+                          ? 'bg-green-600 text-white'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}
+                    >
+                      {status}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {['All Clusters', 'Taragarh', 'Jaswant', 'Siwan', 'Cheeka'].map(cluster => (
+                    <button
+                      key={cluster}
+                      onClick={() => setJoitaClusterFilter(cluster)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 ${
+                        joitaClusterFilter === cluster
+                          ? 'bg-green-100 text-green-700 border border-green-300'
+                          : 'bg-gray-50 text-gray-500 border border-gray-200'
+                      }`}
+                    >
+                      {cluster}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="space-y-3">
-                {joitaRecords.length === 0 && (
+                {joitaRecords
+                  .filter(r => {
+                    const matchSearch = `${r.farmerName} ${r.village} ${r.cluster}`.toLowerCase().includes(joitaSearch.toLowerCase());
+                    const matchStatus = joitaStatusFilter === 'All' || (joitaStatusFilter === 'Draft' && r.status === 'draft') || (joitaStatusFilter === 'Submitted' && r.status === 'submitted');
+                    const matchCluster = joitaClusterFilter === 'All Clusters' || r.cluster === joitaClusterFilter;
+                    return matchSearch && matchStatus && matchCluster;
+                  })
+                  .length === 0 && (
                   <div className="text-center p-8 text-muted-foreground bg-muted/30 rounded-xl">
                     No JOITA records found.
                   </div>
                 )}
-                {joitaRecords.map((r) => (
+                {joitaRecords
+                  .filter(r => {
+                    const matchSearch = `${r.farmerName} ${r.village} ${r.cluster}`.toLowerCase().includes(joitaSearch.toLowerCase());
+                    const matchStatus = joitaStatusFilter === 'All' || (joitaStatusFilter === 'Draft' && r.status === 'draft') || (joitaStatusFilter === 'Submitted' && r.status === 'submitted');
+                    const matchCluster = joitaClusterFilter === 'All Clusters' || r.cluster === joitaClusterFilter;
+                    return matchSearch && matchStatus && matchCluster;
+                  })
+                  .map((r) => (
                   <Card key={r.id} className="shadow-sm rounded-xl overflow-hidden">
                     <button
                       type="button"
@@ -513,7 +574,10 @@ function AdminPage() {
             </Card>
           </TabsContent>
 
-          <TabsList className="fixed bottom-0 left-0 right-0 z-50 flex h-[72px] rounded-none border-t border-gray-200 bg-white p-0 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)] justify-around pb-safe">
+          <TabsList 
+            className="fixed bottom-0 left-0 right-0 z-50 flex h-16 rounded-none border-t border-gray-200 bg-white p-0 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)] justify-around"
+            style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+          >
             <TabsTrigger
               value="dashboard"
               className="relative flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-green-600 data-[state=inactive]:text-gray-400 data-[state=active]:shadow-none"

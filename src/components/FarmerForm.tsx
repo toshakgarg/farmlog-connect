@@ -35,6 +35,8 @@ interface Props {
   onSubmit: (rec: FarmerRecord) => void;
   onCancel: () => void;
   saving?: boolean;
+  joitaRecord?: any;
+  onOpenJoita?: (joita?: any) => void;
 }
 
 export function FarmerForm({
@@ -45,6 +47,8 @@ export function FarmerForm({
   onSubmit,
   onCancel,
   saving,
+  joitaRecord,
+  onOpenJoita,
 }: Props) {
   const { t } = useI18n();
   const [rec, setRec] = useState<FarmerRecord>(value);
@@ -364,6 +368,9 @@ export function FarmerForm({
                       src={p.url || previews[p.localKey ?? ""] || ""}
                       alt={`${t("photos")} ${i + 1}`}
                       className="aspect-square w-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="%23f3f4f6"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%236b7280" font-size="12">📷 Photo</text></svg>';
+                      }}
                     />
                     <div className="absolute inset-x-0 bottom-0 bg-black/60 p-2 backdrop-blur-sm flex justify-between items-center">
                       <span className="flex items-center gap-1 text-[10px] text-white truncate max-w-[80%]">
@@ -474,9 +481,35 @@ export function FarmerForm({
           {step === 6 && "Ready to Submit"}
         </h2>
         {renderStepContent()}
+
+        {rec.id && (
+          <div className="mt-8 border-t pt-4">
+            <h3 className="font-semibold text-gray-700 mb-2">📋 JOITA प्रपत्र / JOITA Monitoring Form</h3>
+            {joitaRecord ? (
+              <button
+                type="button"
+                onClick={() => onOpenJoita?.(joitaRecord)}
+                className="w-full h-[52px] border-2 border-green-600 text-green-700 rounded-xl font-semibold"
+              >
+                ✏️ JOITA फॉर्म देखें/संपादित करें / View & Edit JOITA Form
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => onOpenJoita?.()}
+                className="w-full h-[52px] bg-green-600 text-white rounded-xl font-semibold"
+              >
+                + JOITA प्रपत्र भरें / Fill JOITA Form
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 z-30 bg-card/95 backdrop-blur-md border-t border-border p-4 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.1)] pb-safe">
+      <div 
+        className="fixed bottom-0 left-0 right-0 z-30 bg-card/95 backdrop-blur-md border-t border-border p-4 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.1)]"
+        style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
+      >
         <div className="max-w-5xl mx-auto flex gap-3">
           {step > 1 ? (
             <Button

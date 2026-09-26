@@ -33,6 +33,7 @@ export async function pushRecord(record: FarmerRecord): Promise<FarmerRecord> {
           },
         });
         const url = await getDownloadURL(storageRef);
+        console.log('Photo URL stored:', url);
         await deletePhotoBlob(photo.localKey);
         photos.push({ ...photo, url, localKey: undefined });
         continue;

@@ -294,6 +294,16 @@ function SupervisorPage() {
           onSubmit={persist}
           onCancel={() => setEditing(null)}
           saving={saving}
+          joitaRecord={joitaRecords?.find((j) => j.farmerId === editing.id)}
+          onOpenJoita={(rec) =>
+            setEditingJoita(
+              rec || {
+                ...emptyJOITAPerforma(profile.uid),
+                farmerId: editing.id,
+                farmerName: editing.fullName,
+              }
+            )
+          }
         />
       ) : (
         <Tabs value={activeTab} onValueChange={setActiveTab} className="pb-24">
@@ -306,7 +316,6 @@ function SupervisorPage() {
                     {t("myFarmers") || "My Farmers"}
                   </p>
                 </CardContent>
-                Microsoft.QuickAction.Bluetooth
               </Card>
               <Card className="shadow-sm rounded-xl bg-primary/10 border-primary/20">
                 <CardContent className="p-4 flex flex-col items-center text-center">
@@ -333,18 +342,12 @@ function SupervisorPage() {
               </Card>
             </div>
 
-            <div className="flex justify-center mt-6 mb-8">
+            <div className="flex flex-col mt-6 mb-8 gap-3">
               <Button
                 className="h-[52px] w-full rounded-xl text-base font-bold shadow-md bg-primary text-primary-foreground hover:bg-primary/90"
                 onClick={() => setEditing({ ...emptyFarmer(profile.uid), id: newLocalId() })}
               >
                 <Plus className="mr-2 size-5" /> New Farmer Record
-              </Button>
-              <Button
-                className="h-[52px] w-full rounded-xl text-base font-bold shadow-sm border-2 border-[#15803d] text-[#15803d] bg-transparent hover:bg-primary/5 mt-3"
-                onClick={() => setEditingJoita(emptyJOITAPerforma(profile.uid))}
-              >
-                📋 JOITA प्रपत्र / JOITA Form
               </Button>
             </div>
 
@@ -441,7 +444,7 @@ function SupervisorPage() {
               </div>
             )}
 
-            <h3 className="font-bold text-lg mt-8 text-[#15803d]">JOITA Forms</h3>
+            <h3 className="font-bold text-lg mt-4 pt-6 border-t border-border text-[#15803d]">JOITA Forms</h3>
             {(joitaRecords || []).filter((r) =>
               `${r.farmerName || ""} ${r.village || ""} ${r.cluster || ""}`
                 .toLowerCase()
@@ -530,7 +533,10 @@ function SupervisorPage() {
             </Card>
           </TabsContent>
 
-          <TabsList className="fixed bottom-0 left-0 right-0 z-50 flex h-[64px] rounded-none border-t border-border bg-card p-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] justify-around pb-safe text-muted-foreground">
+          <TabsList 
+            className="fixed bottom-0 left-0 right-0 z-50 flex h-16 rounded-none border-t border-border bg-card p-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] justify-around text-muted-foreground"
+            style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+          >
             <TabsTrigger
               value="home"
               className="flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=inactive]:text-muted-foreground data-[state=active]:shadow-none"

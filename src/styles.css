@@ -152,7 +152,8 @@
 
   html,
   body {
-    padding-top: 0;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-top: constant(safe-area-inset-top, 0px);
   }
 
   h1,
