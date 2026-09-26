@@ -3,6 +3,7 @@ import { Camera, RefreshCw, Edit2, AlertCircle } from 'lucide-react';
 import { JOITAPerforma } from '../lib/types';
 import { extractTextFromImage } from '../lib/visionApi';
 import { parseJOITAFromText, calculateExtractionConfidence } from '../lib/joitaParser';
+import { useI18n } from '../lib/i18n';
 
 interface Props {
   onScanned: (data: Partial<JOITAPerforma>) => void;
@@ -12,6 +13,7 @@ interface Props {
 type ScanState = 'capture' | 'processing' | 'review' | 'error';
 
 export function FormScanner({ onScanned, onCancel }: Props) {
+  const { t } = useI18n();
   const [scanState, setScanState] = useState<ScanState>('capture');
   const [error, setError] = useState<string>('');
   const [extractedData, setExtractedData] = useState<Partial<JOITAPerforma>>({});
@@ -32,7 +34,7 @@ export function FormScanner({ onScanned, onCancel }: Props) {
           onClick={onCancel}
           className="mt-4 px-4 py-2 border rounded-lg font-medium text-gray-600 hover:bg-gray-50"
         >
-          Cancel / वापस जाएँ
+          {t("cancel")}
         </button>
       </div>
     );
@@ -92,15 +94,14 @@ export function FormScanner({ onScanned, onCancel }: Props) {
           </div>
           
           <div>
-            <h2 className="text-xl font-bold text-gray-900 mb-2">📋 पेपर फॉर्म स्कैन करें</h2>
-            <h3 className="text-lg font-medium text-gray-600">Scan Paper Form</h3>
+            <h2 className="text-xl font-bold text-gray-900 mb-2">📋 {t("scanPaperFormHeader")}</h2>
           </div>
 
           <div className="text-left bg-gray-50 p-4 rounded-xl space-y-3 w-full">
-            <p className="text-sm font-medium">1. फॉर्म को समतल जगह पर रखें / Place form on flat surface</p>
-            <p className="text-sm font-medium">2. पर्याप्त रोशनी सुनिश्चित करें / Ensure good lighting</p>
-            <p className="text-sm font-medium">3. पूरा फॉर्म कैमरे में आना चाहिए / Full form must be in frame</p>
-            <p className="text-sm font-medium">4. हिंदी और अंग्रेजी दोनों पढ़ी जा सकती हैं / Both Hindi and English are read</p>
+            <p className="text-sm font-medium">1. {t("placeFormOnFlatSurface")}</p>
+            <p className="text-sm font-medium">2. {t("ensureGoodLighting")}</p>
+            <p className="text-sm font-medium">3. {t("fullFormMustBeInFrame")}</p>
+            <p className="text-sm font-medium">4. {t("bothHindiAndEnglishAreRead")}</p>
           </div>
 
           <div className="w-full space-y-3">
@@ -108,7 +109,7 @@ export function FormScanner({ onScanned, onCancel }: Props) {
               onClick={() => fileInputRef.current?.click()}
               className="w-full h-[60px] bg-green-600 text-white rounded-xl font-bold text-lg shadow-md active:scale-95 transition-transform"
             >
-              📷 फोटो लें / Take Photo
+              📷 {t("takePhoto")}
             </button>
             <input
               type="file"
@@ -190,19 +191,19 @@ export function FormScanner({ onScanned, onCancel }: Props) {
 
           <div className="space-y-3 mt-auto">
             <p className="text-xs text-center text-gray-500 mb-2">
-              आप फॉर्म में जाकर गलत जानकारी सुधार सकते हैं / You can correct any mistakes in the form
+              {t("correctMistakes")}
             </p>
             <button
               onClick={() => onScanned(extractedData)}
               className="w-full h-[56px] bg-green-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-md"
             >
-              <Edit2 className="w-5 h-5" /> ✏️ फॉर्म में देखें / Review in Form
+              <Edit2 className="w-5 h-5" /> ✏️ {t("reviewInForm")}
             </button>
             <button
               onClick={() => setScanState('capture')}
               className="w-full h-[52px] border-2 border-gray-300 text-gray-700 font-semibold rounded-xl flex items-center justify-center gap-2"
             >
-              <RefreshCw className="w-5 h-5" /> 🔄 दोबारा स्कैन करें / Scan Again
+              <RefreshCw className="w-5 h-5" /> 🔄 {t("scanAgain")}
             </button>
           </div>
         </div>
@@ -214,8 +215,7 @@ export function FormScanner({ onScanned, onCancel }: Props) {
             <AlertCircle className="w-20 h-20 text-red-500" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">❌ स्कैन विफल</h2>
-            <p className="text-gray-600">Scan Failed</p>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">❌ {t("scanFailed")}</h2>
           </div>
           <p className="text-red-600 font-medium max-w-xs">{error}</p>
           <div className="w-full max-w-xs space-y-3 mt-8">
@@ -223,13 +223,13 @@ export function FormScanner({ onScanned, onCancel }: Props) {
               onClick={() => setScanState('capture')}
               className="w-full h-[52px] bg-gray-900 text-white rounded-xl font-bold"
             >
-              दोबारा कोशिश करें / Try Again
+              {t("tryAgain")}
             </button>
             <button
               onClick={onCancel}
               className="w-full h-[52px] font-semibold text-gray-500"
             >
-              Cancel
+              {t("cancel")}
             </button>
           </div>
         </div>

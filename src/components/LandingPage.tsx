@@ -11,61 +11,45 @@ export function LandingPage({ onLoginClick }: Props) {
   const { t } = useI18n();
 
   return (
-    <div className="flex min-h-[100dvh] flex-col items-center overflow-y-auto overscroll-y-contain bg-background px-6 py-12 pb-24 text-center text-foreground">
-      <div
-        className="absolute top-0 right-0 p-4"
-        style={{ paddingTop: 'calc(env(safe-area-inset-top, 16px) + 8px)' }}
-      >
+    <div className="min-h-screen bg-[#fafaf8] flex flex-col" style={{paddingTop: 'env(safe-area-inset-top, 0px)'}}>
+      <div className="flex justify-end px-4 pt-3">
         <LanguageToggle />
       </div>
 
-      <div className="mt-8 flex w-full max-w-sm flex-col items-center justify-center">
-        <div className="flex size-24 items-center justify-center rounded-3xl bg-primary text-primary-foreground shadow-lg">
-          <Sprout className="size-12" />
+      <div className="flex-1 flex flex-col items-center justify-center px-6 py-4 w-full max-w-sm mx-auto">
+        <div className="w-20 h-20 bg-green-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+          <Sprout className="w-10 h-10 text-white" />
         </div>
 
-        <h1 className="mt-6 text-5xl font-extrabold tracking-tight text-foreground">FarmLog</h1>
+        <h1 className="text-4xl font-black text-gray-900 mb-1">FarmLog</h1>
+        <p className="text-xs tracking-widest text-gray-400 uppercase mb-2">FIELD NOTES · INDIA</p>
 
-        <p className="mt-2 text-xs font-semibold tracking-widest text-muted-foreground uppercase">
-          Field Notes · India
-        </p>
+        <p className="text-gray-500 text-center text-base mb-8">{t('tagline')}</p>
 
-        <p className="mt-6 text-lg font-medium text-muted-foreground">
-          Khet se record tak
-          <br />
-          From field to record
-        </p>
-
-        <div className="mt-10 space-y-6 w-full text-left">
-          <div className="flex items-center gap-4">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <MapPin className="size-5" />
+        <div className="w-full space-y-4 mb-8">
+          {[
+            { icon: MapPin, key: 'feature1' },
+            { icon: ClipboardList, key: 'feature2' },
+            { icon: RefreshCw, key: 'feature3' },
+          ].map(({ icon: Icon, key }) => (
+            <div key={key} className="flex items-center gap-4 text-left">
+              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Icon className="w-5 h-5 text-green-600" />
+              </div>
+              <span className="text-gray-700 text-base">{t(key as any)}</span>
             </div>
-            <span className="text-base font-medium">Geotagged farm photos</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <ClipboardList className="size-5" />
-            </div>
-            <span className="text-base font-medium">Digital farmer records</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <RefreshCw className="size-5" />
-            </div>
-            <span className="text-base font-medium">Works offline, syncs automatically</span>
-          </div>
+          ))}
         </div>
       </div>
 
-      <div className="mt-auto w-full max-w-sm pt-8">
+      <div className="px-6 pb-8" style={{paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 24px)'}}>
         <Button
           onClick={onLoginClick}
-          className="h-[52px] w-full rounded-lg bg-primary text-lg font-bold text-primary-foreground shadow-md transition-transform active:scale-[0.98]"
+          className="h-[56px] w-full rounded-2xl bg-primary text-lg font-bold text-primary-foreground shadow-md transition-transform active:scale-[0.98]"
         >
-          Login / लॉगिन करें
+          {t('login')}
         </Button>
-        <p className="mt-4 text-xs font-medium text-muted-foreground">v1.0</p>
+        <p className="mt-4 text-xs font-medium text-muted-foreground text-center">v1.0</p>
       </div>
     </div>
   );
