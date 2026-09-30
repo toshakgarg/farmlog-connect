@@ -36,7 +36,8 @@
         {
           "cameraPermission": "Allow FarmLog to access your camera for field photos."
         }
-      ]
+      ],
+      "expo-splash-screen"
     ]
   }
 }
