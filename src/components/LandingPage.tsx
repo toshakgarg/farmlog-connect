@@ -49,7 +49,7 @@ export function LandingPage({ onLoginClick }: Props) {
         >
           {t('login')}
         </Button>
-        <p className="mt-4 text-xs font-medium text-muted-foreground text-center">v1.0</p>
+        <p className="mt-4 text-xs font-medium text-muted-foreground text-center">v1.0.0</p>
       </div>
     </div>
   );

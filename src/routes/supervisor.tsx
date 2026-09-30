@@ -547,7 +547,9 @@ function SupervisorPage() {
                 >
                   Logout / लॉगआउट
                 </Button>
-                <p className="text-center text-xs text-muted-foreground mt-4">v1.0</p>
+                <p className="text-center text-xs text-muted-foreground mt-4">
+                  v1.0.0 <br /> © 2026 JOITA Bioseed AI
+                </p>
               </CardContent>
             </Card>
           </TabsContent>
