@@ -19,19 +19,39 @@ jobs:
         with:
           submodules: true
           lfs: false
-      - name: Build And Deploy
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_AZURE_CLIENT_ID: ${{ secrets.VITE_AZURE_CLIENT_ID }}
+          VITE_AZURE_TENANT_ID: ${{ secrets.VITE_AZURE_TENANT_ID }}
+          VITE_AZURE_COSMOS_CONNECTION_STRING: ${{ secrets.VITE_AZURE_COSMOS_CONNECTION_STRING }}
+          VITE_AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.VITE_AZURE_STORAGE_CONNECTION_STRING }}
+          VITE_AZURE_STORAGE_ACCOUNT: ${{ secrets.VITE_AZURE_STORAGE_ACCOUNT }}
+          VITE_AZURE_VISION_API_KEY: ${{ secrets.VITE_AZURE_VISION_API_KEY }}
+          VITE_AZURE_VISION_ENDPOINT: ${{ secrets.VITE_AZURE_VISION_ENDPOINT }}
+          VITE_JWT_SECRET: ${{ secrets.VITE_JWT_SECRET }}
+          VITE_GOOGLE_VISION_API_KEY: ${{ secrets.VITE_GOOGLE_VISION_API_KEY }}
+
+      - name: Deploy to Azure Static Web Apps
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_BLACK_DESERT_0764E6B00 }}
-          repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for Github integrations (i.e. PR comments)
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          ###### Repository/Build Configurations - These values can be configured to match your app requirements. ######
-          # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
-          app_location: "/" # App source code path
-          api_location: "" # Api source code path - optional
-          output_location: ".output/public" # Built app content directory - optional
-          ###### End of Repository/Build Configurations ######
+          app_location: "/"
+          api_location: ""
+          output_location: ".output/public"
+          skip_app_build: true
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
@@ -44,3 +64,4 @@ jobs:
         with:
           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN_BLACK_DESERT_0764E6B00 }}
           action: "close"
+
