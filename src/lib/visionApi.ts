@@ -1,76 +1,52 @@
-if (!import.meta.env['VITE_GOOGLE_VISION_API_KEY']) {
-  console.warn('⚠️ VITE_GOOGLE_VISION_API_KEY not set. Form scanning will not work.')
-}
-
-const VISION_API_KEY = import.meta.env['VITE_GOOGLE_VISION_API_KEY']
-const VISION_API_URL = `https://vision.googleapis.com/v1/images:annotate?key=${VISION_API_KEY}`
+import { visionConfig } from './azure'
 
 export interface VisionResult {
   rawText: string
   confidence: number
-  blocks: TextBlock[]
-}
-
-interface TextBlock {
-  text: string
-  boundingBox: { x: number; y: number; width: number; height: number }
-  confidence: number
 }
 
 export async function extractTextFromImage(imageBase64: string): Promise<VisionResult> {
-  const requestBody = {
-    requests: [{
-      image: { content: imageBase64 },
-      features: [
-        { type: 'DOCUMENT_TEXT_DETECTION', maxResults: 1 },
-        { type: 'TEXT_DETECTION', maxResults: 50 }
-      ],
-      imageContext: {
-        languageHints: ['hi', 'en'] // Hindi + English
-      }
-    }]
+  if (!visionConfig.apiKey || !visionConfig.endpoint) {
+    throw new Error('Azure Vision API not configured')
   }
 
-  const response = await fetch(VISION_API_URL, {
+  // Convert base64 to binary
+  const byteString = atob(imageBase64.split(',')[1] || imageBase64)
+  const byteArray = new Uint8Array(byteString.length)
+  for (let i = 0; i < byteString.length; i++) {
+    byteArray[i] = byteString.charCodeAt(i)
+  }
+
+  // Call Azure Computer Vision OCR endpoint
+  const url = `${visionConfig.endpoint.replace(/\/$/, '')}/computervision/imageanalysis:analyze?api-version=2024-02-01&features=read&language=hi`
+  const response = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(requestBody)
+    headers: {
+      'Ocp-Apim-Subscription-Key': visionConfig.apiKey,
+      'Content-Type': 'application/octet-stream',
+    },
+    body: byteArray,
   })
 
   if (!response.ok) {
-    throw new Error(`Vision API error: ${response.status} ${response.statusText}`)
+    const error = await response.text()
+    throw new Error(`Azure Vision API error: ${response.status} - ${error}`)
   }
 
   const data = await response.json()
-  const annotation = data.responses?.[0]?.fullTextAnnotation
 
-  if (!annotation) {
-    throw new Error('No text detected in image')
-  }
-
-  const blocks: TextBlock[] = []
-  annotation.pages?.[0]?.blocks?.forEach((block: any) => {
-    const blockText = block.paragraphs
-      ?.map((p: any) => p.words?.map((w: any) => w.symbols?.map((s: any) => s.text).join('')).join(' '))
-      .join('\n') || ''
-    if (blockText.trim()) {
-      blocks.push({
-        text: blockText,
-        boundingBox: {
-          x: block.boundingBox?.vertices?.[0]?.x || 0,
-          y: block.boundingBox?.vertices?.[0]?.y || 0,
-          width: (block.boundingBox?.vertices?.[2]?.x || 0) - (block.boundingBox?.vertices?.[0]?.x || 0),
-          height: (block.boundingBox?.vertices?.[2]?.y || 0) - (block.boundingBox?.vertices?.[0]?.y || 0)
-        },
-        confidence: block.confidence || 0
-      })
-    }
+  // Extract all text from read results
+  const lines: string[] = []
+  data.readResult?.blocks?.forEach((block: any) => {
+    block.lines?.forEach((line: any) => {
+      lines.push(line.text)
+    })
   })
 
+  const rawText = lines.join('\n')
+
   return {
-    rawText: annotation.text || '',
-    confidence: annotation.pages?.[0]?.confidence || 0,
-    blocks
+    rawText,
+    confidence: data.readResult?.blocks?.[0]?.lines?.[0]?.words?.[0]?.confidence ?? 0.8
   }
 }
-

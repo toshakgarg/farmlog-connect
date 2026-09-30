@@ -1,94 +1,85 @@
 import {
-  collection,
-  deleteDoc,
-  doc,
-  getDoc,
-  getDocs,
-  orderBy,
-  query,
-  setDoc,
-  where,
-} from "firebase/firestore";
-import { fbDb } from "./firebase";
-import type { AppUser, FarmerRecord, SurveyQuestion } from "./types";
-import type { JOITAPerforma } from "./types";
-import {
-  cacheMeta,
-  readMeta,
-} from "./offline";
+  getUserProfile,
+  createUserProfile,
+  getAllUsers,
+  deleteUserProfile,
+  getSurveyQuestions,
+  saveSurveyQuestion,
+  deleteSurveyQuestion,
+  getAllFarmerRecords,
+  getFarmersBySupervisor,
+  getFarmerRecord,
+  deleteFarmerRecord,
+  saveJOITAPerforma as dbSaveJOITAPerforma,
+  getJOITAPerformasBySupervisor as dbGetJOITAPerformasBySupervisor,
+  getAllJOITAPerformas as dbGetAllJOITAPerformas,
+  deleteJOITAPerforma as dbDeleteJOITAPerforma
+} from './db'
+import { cacheMeta, readMeta } from './offline'
+import type { AppUser, FarmerRecord, SurveyQuestion, JOITAPerforma } from './types'
+
 export {
   pushRecord,
   saveRecordLocalFirst,
   syncPending,
 } from "./record-sync";
 
-// This module owns Firestore CRUD, question caching, CSV export, and the
-// JOITA collection API. Record upload/sync lives in ./record-sync.
-
-/* ----------------------------- users ----------------------------- */
-
+// Users
 export async function getAppUser(uid: string): Promise<AppUser | null> {
-  const snap = await getDoc(doc(fbDb(), "users", uid));
-  return snap.exists() ? ({ uid, ...snap.data() } as AppUser) : null;
+  return getUserProfile(uid)
 }
 
 export async function saveAppUser(user: AppUser) {
-  const { uid, ...rest } = user;
-  await setDoc(doc(fbDb(), "users", uid), rest, { merge: true });
+  // get existing user to preserve passwordHash
+  const { getUserByEmail } = await import('./db')
+  const existing = await getUserByEmail(user.email)
+  await createUserProfile({ ...user, passwordHash: existing?.passwordHash || '' })
 }
 
-export async function listUsers(role: AppUser["role"]): Promise<AppUser[]> {
-  const snap = await getDocs(query(collection(fbDb(), "users"), where("role", "==", role)));
-  return snap.docs.map((d) => ({ uid: d.id, ...d.data() }) as AppUser);
+export async function listUsers(role: AppUser['role']): Promise<AppUser[]> {
+  return getAllUsers(role)
 }
 
 export async function deleteAppUser(uid: string) {
-  await deleteDoc(doc(fbDb(), "users", uid));
+  await deleteUserProfile(uid)
 }
 
-/* --------------------------- questions --------------------------- */
-
+// Questions
 export async function listQuestions(): Promise<SurveyQuestion[]> {
   try {
-    const snap = await getDocs(query(collection(fbDb(), "questions"), orderBy("order")));
-    const qs = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as SurveyQuestion);
-    await cacheMeta("questions", qs);
-    return qs;
+    const qs = await getSurveyQuestions()
+    await cacheMeta('questions', qs)
+    return qs
   } catch {
-    return (await readMeta<SurveyQuestion[]>("questions")) ?? [];
+    return (await readMeta<SurveyQuestion[]>('questions')) ?? []
   }
 }
 
 export async function saveQuestion(q: SurveyQuestion) {
-  const { id, ...rest } = q;
-  await setDoc(doc(fbDb(), "questions", id), rest, { merge: true });
+  await saveSurveyQuestion(q)
 }
 
 export async function deleteQuestion(id: string) {
-  await deleteDoc(doc(fbDb(), "questions", id));
+  await deleteSurveyQuestion(id)
 }
 
-/* ---------------------------- records ---------------------------- */
-
+// Records
 export async function listRecords(supervisorID?: string): Promise<FarmerRecord[]> {
-  const base = collection(fbDb(), "farmers");
-  const snap = await getDocs(
-    supervisorID ? query(base, where("supervisorID", "==", supervisorID)) : query(base),
-  );
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }) as FarmerRecord);
+  if (supervisorID) {
+    return getFarmersBySupervisor(supervisorID)
+  }
+  return getAllFarmerRecords()
 }
 
 export async function getRecord(id: string): Promise<FarmerRecord | null> {
-  const snap = await getDoc(doc(fbDb(), "farmers", id));
-  return snap.exists() ? ({ id, ...snap.data() } as FarmerRecord) : null;
+  return getFarmerRecord(id)
 }
 
 export async function deleteRecord(id: string) {
-  await deleteDoc(doc(fbDb(), "farmers", id));
+  await deleteFarmerRecord(id)
 }
 
-/* ------------------------------ csv ------------------------------ */
-
+// CSV
 export function recordsToCsv(records: FarmerRecord[], questions: SurveyQuestion[]): string {
   const headers = [
     "id",
@@ -155,37 +146,19 @@ export function downloadCsv(filename: string, csv: string) {
   URL.revokeObjectURL(url);
 }
 
-/* ------------------------ JOITA Performa ------------------------- */
-
+// JOITA Performa
 export async function saveJOITAPerforma(data: Partial<JOITAPerforma>): Promise<string> {
-  const collectionRef = collection(fbDb(), "joita_performas");
-  const id = data.id || doc(collectionRef).id;
-  const now = new Date().toISOString();
-  const cleanData = {
-    ...data,
-    id,
-    updatedAt: now,
-    createdAt: data.createdAt || now,
-  };
-  
-  // Note: if photos are present, this will save photo metadata. If you need to handle photo blob upload, 
-  // you might need a separate pushJOITAPerforma logic. For now, matching the requested signature.
-  await setDoc(doc(fbDb(), "joita_performas", id), cleanData, { merge: true });
-  return id;
+  return dbSaveJOITAPerforma(data)
 }
 
 export async function getJOITAPerformasBySupervisor(supervisorId: string): Promise<JOITAPerforma[]> {
-  const snap = await getDocs(
-    query(collection(fbDb(), "joita_performas"), where("supervisorId", "==", supervisorId))
-  );
-  return snap.docs.map((d) => d.data() as JOITAPerforma);
+  return dbGetJOITAPerformasBySupervisor(supervisorId)
 }
 
 export async function getAllJOITAPerformas(): Promise<JOITAPerforma[]> {
-  const snap = await getDocs(collection(fbDb(), "joita_performas"));
-  return snap.docs.map((d) => d.data() as JOITAPerforma);
+  return dbGetAllJOITAPerformas()
 }
 
 export async function deleteJOITAPerforma(id: string): Promise<void> {
-  await deleteDoc(doc(fbDb(), "joita_performas", id));
+  return dbDeleteJOITAPerforma(id)
 }
