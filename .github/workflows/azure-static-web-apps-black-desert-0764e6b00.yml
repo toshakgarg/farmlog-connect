@@ -51,7 +51,16 @@ jobs:
           app_location: "/"
           api_location: ""
           output_location: ".output/public"
-          skip_app_build: true
+        env:
+          VITE_AZURE_CLIENT_ID: ${{ secrets.VITE_AZURE_CLIENT_ID }}
+          VITE_AZURE_TENANT_ID: ${{ secrets.VITE_AZURE_TENANT_ID }}
+          VITE_AZURE_COSMOS_CONNECTION_STRING: ${{ secrets.VITE_AZURE_COSMOS_CONNECTION_STRING }}
+          VITE_AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.VITE_AZURE_STORAGE_CONNECTION_STRING }}
+          VITE_AZURE_STORAGE_ACCOUNT: ${{ secrets.VITE_AZURE_STORAGE_ACCOUNT }}
+          VITE_AZURE_VISION_API_KEY: ${{ secrets.VITE_AZURE_VISION_API_KEY }}
+          VITE_AZURE_VISION_ENDPOINT: ${{ secrets.VITE_AZURE_VISION_ENDPOINT }}
+          VITE_JWT_SECRET: ${{ secrets.VITE_JWT_SECRET }}
+          VITE_GOOGLE_VISION_API_KEY: ${{ secrets.VITE_GOOGLE_VISION_API_KEY }}
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
