@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Camera, Upload, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X } from 'lucide-react';
 import { JOITAPhoto } from '../lib/types';
+import DualPhotoInput from './DualPhotoInput';
 
 interface Props {
   photos: JOITAPhoto[];
@@ -30,8 +31,6 @@ export default function PhotoCapture({ photos, onPhotosChange, maxPhotos = 10, r
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [gpsStatus, setGpsStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
-  const uploadInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setGpsStatus('loading');
@@ -45,17 +44,14 @@ export default function PhotoCapture({ photos, onPhotosChange, maxPhotos = 10, r
     );
   }, []);
 
-  const handleCapture = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = '';
+  const handleFileSelected = async (file: File) => {
     setUploading(true);
     try {
       let latitude: number | null = gpsCoords?.lat || null;
       let longitude: number | null = gpsCoords?.lng || null;
       try {
         const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 });
+          navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 });
         });
         latitude = position.coords.latitude;
         longitude = position.coords.longitude;
@@ -130,57 +126,17 @@ export default function PhotoCapture({ photos, onPhotosChange, maxPhotos = 10, r
         ))}
       </div>
 
-      {photos.length < maxPhotos && (
-        <div className="relative border-2 border-dashed border-green-400 rounded-2xl p-4 bg-green-50 overflow-hidden">
-          {uploading && (
-            <div className="absolute inset-0 bg-white/80 rounded-2xl flex flex-col items-center justify-center z-10">
-              <div className="w-10 h-10 border-4 border-green-600 border-t-transparent rounded-full animate-spin mb-2" />
-              <p className="text-green-700 text-sm font-medium">अपलोड हो रहा है...</p>
-              <p className="text-gray-400 text-xs">Uploading photo...</p>
-            </div>
-          )}
-          <input
-            type="file"
-            accept="image/*"
-            capture="environment"
-            multiple={false}
-            onChange={handleCapture}
-            className="hidden"
-            ref={cameraInputRef}
-          />
-          <input
-            type="file"
-            accept="image/*"
-            multiple={false}
-            onChange={handleCapture}
-            className="hidden"
-            ref={uploadInputRef}
-          />
-          <div className="flex gap-4">
-            <button
-              onClick={() => cameraInputRef.current?.click()}
-              className="flex-1 flex flex-col items-center gap-2 bg-white p-4 rounded-xl shadow-sm border border-green-200 hover:bg-green-50 transition-colors"
-              type="button"
-              disabled={uploading}
-            >
-              <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center">
-                <Camera className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-green-800 font-semibold text-sm text-center">फोटो लें<br/>Camera</span>
-            </button>
-            <button
-              onClick={() => uploadInputRef.current?.click()}
-              className="flex-1 flex flex-col items-center gap-2 bg-white p-4 rounded-xl shadow-sm border border-green-200 hover:bg-green-50 transition-colors"
-              type="button"
-              disabled={uploading}
-            >
-              <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center">
-                <Upload className="w-6 h-6 text-white" />
-              </div>
-              <span className="text-green-800 font-semibold text-sm text-center">अपलोड करें<br/>Gallery</span>
-            </button>
-          </div>
-          <p className="text-gray-400 text-[11px] text-center mt-3">GPS automatically stamped when available</p>
+      {photos.length < maxPhotos ? (
+        <DualPhotoInput
+          onFileSelected={handleFileSelected}
+          uploading={uploading}
+          label="फोटो लें या चुनें / Take or Choose Photo"
+          sublabel="GPS coordinates will be stamped automatically"
+          disabled={photos.length >= maxPhotos}
+        />
+      ) : (
+        <div className="text-center py-4 text-amber-600 text-sm bg-amber-50 rounded-xl">
+          ⚠️ Maximum {maxPhotos} photos reached
         </div>
       )}
 

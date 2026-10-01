@@ -12,7 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
-import { CameraCapture } from "@/components/CameraCapture";
+import DualPhotoInput from './DualPhotoInput';
 import { QuestionFields } from "@/components/QuestionFields";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -80,6 +80,45 @@ export function FarmerForm({
   useEffect(() => {
     localStorage.setItem("farmlog_current_draft", JSON.stringify(rec));
   }, [rec]);
+
+  // Step 5: Field Photos
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  const handleFarmerPhotoSelected = async (file: File) => {
+    setUploadingPhoto(true);
+    try {
+      let latitude: number | null = null;
+      let longitude: number | null = null;
+      try {
+        const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true, timeout: 8000
+          })
+        );
+        latitude = pos.coords.latitude;
+        longitude = pos.coords.longitude;
+      } catch { /* GPS unavailable */ }
+
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      let url = base64;
+      try {
+        const { uploadPhoto } = await import('../lib/storage');
+        url = await uploadPhoto(base64, `farmer_${Date.now()}.jpg`, rec.id ?? `new_${Date.now()}`);
+      } catch { /* use base64 */ }
+
+      const photo: PhotoMeta = { url, latitude, longitude, timestamp: Date.now() };
+      setRec((r) => ({ ...r, photos: [...r.photos, photo] }));
+      toast.success(photo.latitude ? t("gpsCaptured") : t("gpsUnavailable"));
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
 
   const validateStep1 = (): boolean => {
     const newErrors: Record<string, string> = {};
@@ -343,59 +382,62 @@ export function FarmerForm({
       case 5:
         return (
           <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
-            <div className="rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 p-6 text-center">
-              <CameraCapture onCaptured={addPhoto} />
-              <p className="mt-4 text-[14px] font-medium text-primary">
-                Tap to capture field photo
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                Photos will be GPS-stamped automatically.
-              </p>
-            </div>
+            <div className="space-y-4">
+              <DualPhotoInput
+                onFileSelected={handleFarmerPhotoSelected}
+                uploading={uploadingPhoto}
+                label="खेत की फोटो / Field Photo"
+                sublabel="Minimum 1 photo required — GPS auto-stamped"
+              />
 
-            {rec.photos.length > 0 && (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 mt-4">
-                {rec.photos.map((p, i) => (
-                  <div
-                    key={p.localKey ?? p.url ?? i}
-                    className="overflow-hidden rounded-xl border border-border shadow-sm group relative"
-                  >
-                    <img
-                      src={p.url || previews[p.localKey ?? ""] || ""}
-                      alt={`${t("photos")} ${i + 1}`}
-                      className="aspect-square w-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="%23f3f4f6"/><text x="50%" y="50%" text-anchor="middle" dy=".3em" fill="%236b7280" font-size="12">📷 Photo</text></svg>';
-                      }}
-                    />
-                    <div className="absolute inset-x-0 bottom-0 bg-black/60 p-2 backdrop-blur-sm flex justify-between items-center">
-                      <span className="flex items-center gap-1 text-[10px] text-white truncate max-w-[80%]">
-                        <MapPin className="size-3 shrink-0" />
-                        {p.latitude
-                          ? `${p.latitude.toFixed(3)}, ${p.longitude?.toFixed(3)}`
-                          : "No GPS"}
-                      </span>
+              {/* Photo count indicator */}
+              <p className="text-center text-sm text-gray-500">
+                {rec.photos?.length ?? 0} photo(s) added
+                {(rec.photos?.length ?? 0) === 0 && (
+                  <span className="text-red-500 ml-1">* Required</span>
+                )}
+              </p>
+
+              {/* Photo grid */}
+              {(rec.photos ?? []).length > 0 && (
+                <div className="grid grid-cols-2 gap-2">
+                  {(rec.photos ?? []).map((photo, idx) => (
+                    <div key={photo.localKey ?? photo.url ?? idx} className="relative rounded-xl overflow-hidden aspect-[4/3]">
+                      <img
+                        src={photo.url || previews[photo.localKey ?? ""] || ""}
+                        alt={`Photo ${idx + 1}`}
+                        className="w-full h-full object-cover cursor-pointer"
+                        onClick={() => setViewPhoto(photo.url || previews[photo.localKey ?? ""] || null)}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none'
+                        }}
+                      />
+                      {/* GPS overlay */}
+                      <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-2 py-1 pointer-events-none">
+                        {photo.latitude ? (
+                          <p className="text-white text-[10px]">
+                            📍 {photo.latitude.toFixed(4)}, {photo.longitude?.toFixed(4)}
+                          </p>
+                        ) : (
+                          <p className="text-gray-300 text-[10px]">📍 GPS not available</p>
+                        )}
+                        <p className="text-gray-300 text-[10px]">
+                          {new Date(photo.timestamp).toLocaleTimeString('en-IN')}
+                        </p>
+                      </div>
+                      {/* Delete button */}
                       <button
-                        type="button"
-                        onClick={() => setViewPhoto(p.url || previews[p.localKey ?? ""] || null)}
-                        aria-label="View photo"
-                        className="rounded-full bg-black/70 p-1.5 text-white active:scale-95 transition-transform"
+                        onClick={() => removePhoto(idx)}
+                        className="absolute top-2 right-2 w-7 h-7 bg-red-600 rounded-full flex items-center justify-center shadow-lg z-10"
                       >
-                        <Eye className="size-3.5" />
+                        <span className="text-white text-xs font-bold">✕</span>
                       </button>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => removePhoto(i)}
-                      className="absolute right-2 top-2 rounded-full bg-destructive/90 p-1.5 text-white"
-                      aria-label={t("delete")}
-                    >
-                      <Trash2 className="size-3.5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              )}
+            </div>
+
             {viewPhoto ? (
               <div className="fixed inset-0 z-[55] flex items-center justify-center bg-black/90 p-4">
                 <button

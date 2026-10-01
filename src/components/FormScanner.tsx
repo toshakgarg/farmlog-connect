@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Camera, RefreshCw, Edit2, AlertCircle } from 'lucide-react';
 import { JOITAPerforma } from '../lib/types';
+import DualPhotoInput from './DualPhotoInput';
 import { extractTextFromImage } from '../lib/visionApi';
 import { parseJOITAFromText, calculateExtractionConfidence } from '../lib/joitaParser';
 import { useI18n } from '../lib/i18n';
@@ -40,10 +41,7 @@ export function FormScanner({ onScanned, onCancel }: Props) {
     );
   }
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const handleFileSelect = async (file: File) => {
     setPreviewUrl(URL.createObjectURL(file));
     setScanState('processing');
     setProcessingStep(1);
@@ -89,10 +87,13 @@ export function FormScanner({ onScanned, onCancel }: Props) {
     <div className="flex flex-col h-full bg-white p-4">
       {scanState === 'capture' && (
         <div className="flex flex-col items-center justify-center flex-1 text-center max-w-sm mx-auto w-full space-y-8">
-          <div className="p-6 bg-green-50 rounded-full">
-            <Camera className="w-20 h-20 text-green-600" />
-          </div>
-          
+          <DualPhotoInput
+            onFileSelected={handleFileSelect}
+            uploading={scanState === 'processing'}
+            label="फॉर्म की फोटो लें या चुनें"
+            sublabel="Take photo or choose from gallery"
+          />
+
           <div>
             <h2 className="text-xl font-bold text-gray-900 mb-2">📋 {t("scanPaperFormHeader")}</h2>
           </div>
@@ -105,21 +106,6 @@ export function FormScanner({ onScanned, onCancel }: Props) {
           </div>
 
           <div className="w-full space-y-3">
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full h-[60px] bg-green-600 text-white rounded-xl font-bold text-lg shadow-md active:scale-95 transition-transform"
-            >
-              📷 {t("takePhoto")}
-            </button>
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              className="hidden"
-              ref={fileInputRef}
-              onChange={handleFileSelect}
-            />
-            
             <button
               onClick={onCancel}
               className="w-full h-[52px] font-semibold text-gray-500 active:bg-gray-100 rounded-xl transition-colors"
@@ -237,3 +223,5 @@ export function FormScanner({ onScanned, onCancel }: Props) {
     </div>
   );
 }
+
+
