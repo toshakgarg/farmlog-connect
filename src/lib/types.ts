@@ -167,7 +167,17 @@ export interface JOITAPerforma {
   farmerConsentGiven: boolean;
 
   // Photos
-  photos: { url: string; lat: number | null; lng: number | null; timestamp: string; localKey?: string }[];
+  photos: JOITAPhoto[];
+}
+
+export interface JOITAPhoto {
+  url: string;
+  latitude: number | null;
+  longitude: number | null;
+  timestamp: string;
+  caption?: string;
+  photoType: 'field' | 'crop' | 'soil' | 'pest' | 'other';
+  localKey?: string;
 }
 
 export const emptyJOITAPerforma = (supervisorId: string): JOITAPerforma => ({

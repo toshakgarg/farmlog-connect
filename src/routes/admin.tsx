@@ -206,21 +206,36 @@ function AdminPage() {
               </CardContent>
             </Card>
 
-            {joitaDetail.photos.length > 0 && (
-              <Card className="rounded-xl shadow-sm">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-[16px] text-[#15803d]">Photos</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 gap-2">
-                    {joitaDetail.photos.map((p, i) => (
-                      <div key={i} className="relative aspect-square rounded-lg overflow-hidden border">
-                        <img src={p.url} className="object-cover w-full h-full" alt="Field" />
+            {joitaDetail.photos && joitaDetail.photos.length > 0 && (
+              <div className="mt-4 bg-white rounded-xl shadow-sm p-4">
+                <h3 className="font-bold text-gray-700 mb-3">
+                  📷 Field Photos ({joitaDetail.photos.length})
+                </h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {joitaDetail.photos.map((photo, idx) => (
+                    <div key={idx} className="relative rounded-xl overflow-hidden aspect-[4/3]">
+                      <img
+                        src={photo.url}
+                        alt={`Field photo ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns%3D"http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg" viewBox%3D"0 0 400 300"%3E%3Crect width%3D"400" height%3D"300" fill%3D"%23f3f4f6"%2F%3E%3Ctext x%3D"50%25" y%3D"50%25" dominant-baseline%3D"middle" text-anchor%3D"middle" fill%3D"%239ca3af" font-family%3D"sans-serif" font-size%3D"20"%3EImage Error%3C%2Ftext%3E%3C%2Fsvg%3E';
+                        }}
+                      />
+                      <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-2 py-1">
+                        <p className="text-white text-xs font-medium capitalize">
+                          {photo.photoType}
+                        </p>
+                        {photo.latitude && (
+                          <p className="text-gray-300 text-[10px]">
+                            📍 {photo.latitude.toFixed(4)}, {photo.longitude?.toFixed(4)}
+                          </p>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
           

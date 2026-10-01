@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useI18n } from "@/lib/i18n";
 import { deletePhotoBlob, getPhotoBlob } from "@/lib/offline";
-import type { JOITAPerforma, PhotoMeta, FarmerRecord } from "@/lib/types";
+import type { JOITAPerforma, PhotoMeta, FarmerRecord, JOITAPhoto } from "@/lib/types";
+import PhotoCapture from "./PhotoCapture";
 
 const BilingualLabel = ({
   hindi,
@@ -688,6 +689,24 @@ export function JOITAForm({
 
         {step === 5 && (
           <div className="space-y-5">
+            {/* Photo Section */}
+            <div className="mb-6">
+              <div className="bg-green-700 text-white px-4 py-3 rounded-t-xl">
+                <h3 className="font-bold text-base">📷 फील्ड फोटो / Field Photos</h3>
+                <p className="text-green-200 text-xs mt-0.5">
+                  खेत, फसल, मिट्टी या कीट की फोटो लें
+                </p>
+              </div>
+              <div className="bg-white border border-green-200 rounded-b-xl p-4">
+                <PhotoCapture
+                  photos={rec.photos ?? []}
+                  onPhotosChange={(photos) => updateField("photos", photos)}
+                  maxPhotos={10}
+                  required={false}
+                />
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <BilingualLabel hindi="कटाई तिथि" english="Harvest Date" />
