@@ -89,7 +89,7 @@ export function FormScanner({ onScanned, onCancel }: Props) {
         <div className="flex flex-col items-center justify-center flex-1 text-center max-w-sm mx-auto w-full space-y-8">
           <DualPhotoInput
             onFileSelected={handleFileSelect}
-            uploading={scanState === 'processing'}
+            uploading={false}
             label="फॉर्म की फोटो लें या चुनें"
             sublabel="Take photo or choose from gallery"
           />
