@@ -132,9 +132,9 @@ Starts the Expo development server for the mobile wrapper.
 
 ## Deployment
 
-The repository includes a GitHub Actions workflow (`.github/workflows/azure-static-web-apps-black-desert-0764e6b00.yml`) configured for automatic deployment to **Azure Static Web Apps**.
+The repository includes a GitHub Actions workflow (`.github/workflows/azure-static-web-apps-black-desert-0764e6b00.yml`) configured for automatic deployment to **Azure Static Web Apps**. It is also fully compatible with **Vercel** for hosting.
 
-Ensure all required secrets (matching your `.env` keys) are added to your GitHub repository secrets for the CI/CD pipeline to successfully build and deploy the app.
+Ensure all required secrets (matching your `.env` keys) are added to your GitHub repository secrets (or Vercel project environment variables) for the CI/CD pipeline to successfully build and deploy the app.
 
 ## Contributing
 
