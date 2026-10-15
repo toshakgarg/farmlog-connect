@@ -693,9 +693,7 @@ export function JOITAForm({
             <div className="mb-6">
               <div className="bg-green-700 text-white px-4 py-3 rounded-t-xl">
                 <h3 className="font-bold text-base">📷 फील्ड फोटो / Field Photos</h3>
-                <p className="text-green-200 text-xs mt-0.5">
-                  खेत, फसल, मिट्टी या कीट की फोटो लें
-                </p>
+                <p className="text-green-200 text-xs mt-0.5">खेत, फसल, मिट्टी या कीट की फोटो लें</p>
               </div>
               <div className="bg-white border border-green-200 rounded-b-xl p-4">
                 <PhotoCapture
@@ -801,9 +799,9 @@ export function JOITAForm({
         </button>
       </div>
 
-      <div 
+      <div
         className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 flex gap-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-40"
-        style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
+        style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}
       >
         {step > 1 && (
           <button

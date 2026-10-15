@@ -310,253 +310,259 @@ function SupervisorPage() {
           />
         </div>
       ) : (
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-full overflow-x-hidden">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="w-full max-w-full overflow-x-hidden"
+        >
           <div className="pb-24 w-full max-w-full overflow-x-hidden">
             <TabsContent value="home" className="space-y-4 mt-0">
-            <div className="grid grid-cols-2 gap-3">
-              <Card className="shadow-sm rounded-xl">
-                <CardContent className="p-4 flex flex-col items-center text-center">
-                  <p className="text-3xl font-bold leading-none text-primary">{records.length}</p>
-                  <p className="mt-2 text-xs font-semibold text-muted-foreground uppercase">
-                    {t("myFarmers") || "My Farmers"}
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="shadow-sm rounded-xl bg-primary/10 border-primary/20">
-                <CardContent className="p-4 flex flex-col items-center text-center">
-                  <p className="text-3xl font-bold leading-none text-primary">
-                    {
-                      records.filter((r) => r.updatedAt > Date.now() - 7 * 24 * 60 * 60 * 1000)
-                        .length
-                    }
-                  </p>
-                  <p className="mt-2 text-xs font-semibold text-primary uppercase">
-                    Records This Week
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="shadow-sm rounded-xl bg-warning/10 border-warning/20 col-span-2">
-                <CardContent className="p-4 flex flex-col items-center text-center">
-                  <p className="text-3xl font-bold leading-none text-warning-foreground">
-                    {pendingCount}
-                  </p>
-                  <p className="mt-2 text-xs font-semibold text-warning-foreground uppercase">
-                    {t("pendingSyncs") || "Pending Sync"}
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="px-4 space-y-3 mt-4 mb-8">
-              <button
-                onClick={() => setEditing({ ...emptyFarmer(profile.uid), id: newLocalId() })}
-                className="w-full h-[56px] bg-green-600 text-white rounded-xl font-bold text-base flex items-center justify-center gap-2"
-              >
-                <Plus className="w-5 h-5" /> New Farmer Record / नया किसान रिकॉर्ड
-              </button>
-
-              <button
-                onClick={() => setEditingJoita({ ...emptyJOITAPerforma(profile.uid) })}
-                className="w-full h-[52px] border-2 border-green-600 text-green-700 rounded-xl font-semibold text-sm flex items-center justify-center gap-2"
-              >
-                <span>📋</span> JOITA प्रपत्र भरें / Fill JOITA Form
-              </button>
-
-              <button
-                onClick={() => setShowScanner(true)}
-                className="w-full h-[52px] border-2 border-blue-500 text-blue-700 rounded-xl font-semibold text-sm flex items-center justify-center gap-2"
-              >
-                <span>📷</span> पेपर फॉर्म स्कैन करें / Scan Paper Form
-              </button>
-            </div>
-
-            <h2 className="text-[20px] font-bold mt-4 mb-2">Recent Farmers</h2>
-            {records.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">
-                {t("noRecords") || "No records yet"}
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {[...records].slice(0, 3).map((r) => (
-                  <button
-                    key={r.id}
-                    type="button"
-                    onClick={() => setEditing(r)}
-                    className="flex w-full items-center gap-3 rounded-xl border border-border bg-card p-4 text-left shadow-[var(--shadow-card)] transition-transform active:scale-[0.98]"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-bold text-[16px]">
-                        {r.status === "draft" ? r.fullName || "Unnamed Farmer" : r.fullName}
-                      </p>
-                      <p className="truncate text-[13px] text-muted-foreground mt-0.5">
-                        {r.village || "Location not set"} ·{" "}
-                        {new Date(r.updatedAt || r.createdAt || Date.now()).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <StatusBadge status={r.status} pending={r.dirty} />
-                      {r.status === "draft" && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-8 text-destructive"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteDraft(r.id);
-                          }}
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </button>
-                ))}
+              <div className="grid grid-cols-2 gap-3">
+                <Card className="shadow-sm rounded-xl">
+                  <CardContent className="p-4 flex flex-col items-center text-center">
+                    <p className="text-3xl font-bold leading-none text-primary">{records.length}</p>
+                    <p className="mt-2 text-xs font-semibold text-muted-foreground uppercase">
+                      {t("myFarmers") || "My Farmers"}
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="shadow-sm rounded-xl bg-primary/10 border-primary/20">
+                  <CardContent className="p-4 flex flex-col items-center text-center">
+                    <p className="text-3xl font-bold leading-none text-primary">
+                      {
+                        records.filter((r) => r.updatedAt > Date.now() - 7 * 24 * 60 * 60 * 1000)
+                          .length
+                      }
+                    </p>
+                    <p className="mt-2 text-xs font-semibold text-primary uppercase">
+                      Records This Week
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card className="shadow-sm rounded-xl bg-warning/10 border-warning/20 col-span-2">
+                  <CardContent className="p-4 flex flex-col items-center text-center">
+                    <p className="text-3xl font-bold leading-none text-warning-foreground">
+                      {pendingCount}
+                    </p>
+                    <p className="mt-2 text-xs font-semibold text-warning-foreground uppercase">
+                      {t("pendingSyncs") || "Pending Sync"}
+                    </p>
+                  </CardContent>
+                </Card>
               </div>
-            )}
-          </TabsContent>
 
-          <TabsContent value="list" className="space-y-4 mt-0">
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  className="h-[52px] rounded-xl pl-10 bg-card border-border shadow-sm"
-                  placeholder={t("search") || "Search"}
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
+              <div className="px-4 space-y-3 mt-4 mb-8">
+                <button
+                  onClick={() => setEditing({ ...emptyFarmer(profile.uid), id: newLocalId() })}
+                  className="w-full h-[56px] bg-green-600 text-white rounded-xl font-bold text-base flex items-center justify-center gap-2"
+                >
+                  <Plus className="w-5 h-5" /> New Farmer Record / नया किसान रिकॉर्ड
+                </button>
+
+                <button
+                  onClick={() => setEditingJoita({ ...emptyJOITAPerforma(profile.uid) })}
+                  className="w-full h-[52px] border-2 border-green-600 text-green-700 rounded-xl font-semibold text-sm flex items-center justify-center gap-2"
+                >
+                  <span>📋</span> JOITA प्रपत्र भरें / Fill JOITA Form
+                </button>
+
+                <button
+                  onClick={() => setShowScanner(true)}
+                  className="w-full h-[52px] border-2 border-blue-500 text-blue-700 rounded-xl font-semibold text-sm flex items-center justify-center gap-2"
+                >
+                  <span>📷</span> पेपर फॉर्म स्कैन करें / Scan Paper Form
+                </button>
               </div>
-              <Button
-                variant="secondary"
-                className="h-[52px] w-[52px] rounded-xl shrink-0"
-                onClick={doSync}
-                disabled={syncing}
-              >
-                <RefreshCw className={`size-5 ${syncing ? "animate-spin" : ""}`} />
-              </Button>
-            </div>
 
-            <h3 className="font-bold text-lg mt-6">Farmer Records</h3>
-            {filtered.length === 0 ? (
-              <p className="py-10 text-center text-sm text-muted-foreground">
-                {t("noRecords") || "No records found"}
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {filtered.map((r) => (
-                  <button
-                    key={r.id}
-                    type="button"
-                    onClick={() => setEditing(r)}
-                    className="flex w-full items-center gap-3 rounded-xl border border-border bg-card p-4 text-left shadow-[var(--shadow-card)] transition-transform active:scale-[0.98]"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate font-bold text-[16px]">{r.fullName || t("draft")}</p>
-                      <p className="truncate text-[13px] text-muted-foreground mt-0.5">
-                        {r.village} · {r.killahs ?? 0} {t("killahs")?.split(" ")[0] || "Acres"} ·{" "}
-                        {r.photos.length} 📷
-                      </p>
-                    </div>
-                    <StatusBadge status={r.status} pending={r.dirty} />
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <h3 className="font-bold text-lg mt-4 pt-6 border-t border-border text-[#15803d]">JOITA Forms</h3>
-            {(joitaRecords || []).filter((r) =>
-              `${r.farmerName || ""} ${r.village || ""} ${r.cluster || ""}`
-                .toLowerCase()
-                .includes(search.toLowerCase()),
-            ).length === 0 ? (
-              <p className="py-10 text-center text-sm text-muted-foreground">
-                No JOITA forms found
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {(joitaRecords || [])
-                  .filter((r) =>
-                    `${r.farmerName || ""} ${r.village || ""} ${r.cluster || ""}`
-                      .toLowerCase()
-                      .includes(search.toLowerCase()),
-                  )
-                  .map((r) => (
-                    <div
+              <h2 className="text-[20px] font-bold mt-4 mb-2">Recent Farmers</h2>
+              {records.length === 0 ? (
+                <p className="py-6 text-center text-sm text-muted-foreground">
+                  {t("noRecords") || "No records yet"}
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {[...records].slice(0, 3).map((r) => (
+                    <button
                       key={r.id}
-                      className="flex w-full items-center gap-3 rounded-xl border border-border bg-card p-4 text-left shadow-[var(--shadow-card)] transition-transform"
+                      type="button"
+                      onClick={() => setEditing(r)}
+                      className="flex w-full items-center gap-3 rounded-xl border border-border bg-card p-4 text-left shadow-[var(--shadow-card)] transition-transform active:scale-[0.98]"
                     >
-                      <div
-                        className="min-w-0 flex-1 cursor-pointer"
-                        onClick={() => setEditingJoita(r)}
-                      >
-                        <p className="truncate font-bold text-[16px] text-[#15803d]">
-                          {r.farmerName || "Unnamed"}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-bold text-[16px]">
+                          {r.status === "draft" ? r.fullName || "Unnamed Farmer" : r.fullName}
                         </p>
                         <p className="truncate text-[13px] text-muted-foreground mt-0.5">
-                          {r.village} · {r.cluster} · {new Date(r.updatedAt).toLocaleDateString()}
+                          {r.village || "Location not set"} ·{" "}
+                          {new Date(r.updatedAt || r.createdAt || Date.now()).toLocaleDateString()}
                         </p>
                       </div>
-                      <StatusBadge status={r.status} pending={false} />
-                      {r.status === "draft" && (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteJoitaId(r.id);
-                          }}
-                          className="flex items-center justify-center p-2 text-red-500 hover:bg-red-50 rounded-full"
-                        >
-                          <Trash2 className="size-5" />
-                        </button>
-                      )}
-                    </div>
+                      <div className="flex items-center gap-2">
+                        <StatusBadge status={r.status} pending={r.dirty} />
+                        {r.status === "draft" && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="size-8 text-destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteDraft(r.id);
+                            }}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </button>
                   ))}
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="profile" className="space-y-4 mt-0">
-            <Card className="shadow-sm rounded-xl">
-              <CardContent className="p-6 text-center space-y-4">
-                <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-2xl">
-                  {profile.name.substring(0, 2).toUpperCase()}
                 </div>
-                <div>
-                  <h3 className="text-xl font-bold">{profile.name}</h3>
-                  <p className="text-muted-foreground">{profile.email}</p>
-                  <p className="text-xs font-semibold uppercase mt-1 text-primary">
-                    {profile.role}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+              )}
+            </TabsContent>
 
-            <Card className="shadow-sm rounded-xl">
-              <CardContent className="p-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Language</span>
-                  <LanguageToggle />
+            <TabsContent value="list" className="space-y-4 mt-0">
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    className="h-[52px] rounded-xl pl-10 bg-card border-border shadow-sm"
+                    placeholder={t("search") || "Search"}
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
                 </div>
                 <Button
-                  variant="outline"
-                  className="w-full h-[52px] rounded-xl font-bold text-destructive border-destructive"
-                  onClick={async () => {
-                    await logout();
-                    navigate({ to: "/" });
-                  }}
+                  variant="secondary"
+                  className="h-[52px] w-[52px] rounded-xl shrink-0"
+                  onClick={doSync}
+                  disabled={syncing}
                 >
-                  Logout / लॉगआउट
+                  <RefreshCw className={`size-5 ${syncing ? "animate-spin" : ""}`} />
                 </Button>
-                <p className="text-center text-xs text-muted-foreground mt-4">
-                  v1.0.0 <br /> © 2026 JOITA Bioseed AI
+              </div>
+
+              <h3 className="font-bold text-lg mt-6">Farmer Records</h3>
+              {filtered.length === 0 ? (
+                <p className="py-10 text-center text-sm text-muted-foreground">
+                  {t("noRecords") || "No records found"}
                 </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              ) : (
+                <div className="space-y-3">
+                  {filtered.map((r) => (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => setEditing(r)}
+                      className="flex w-full items-center gap-3 rounded-xl border border-border bg-card p-4 text-left shadow-[var(--shadow-card)] transition-transform active:scale-[0.98]"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-bold text-[16px]">{r.fullName || t("draft")}</p>
+                        <p className="truncate text-[13px] text-muted-foreground mt-0.5">
+                          {r.village} · {r.killahs ?? 0} {t("killahs")?.split(" ")[0] || "Acres"} ·{" "}
+                          {r.photos.length} 📷
+                        </p>
+                      </div>
+                      <StatusBadge status={r.status} pending={r.dirty} />
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <h3 className="font-bold text-lg mt-4 pt-6 border-t border-border text-[#15803d]">
+                JOITA Forms
+              </h3>
+              {(joitaRecords || []).filter((r) =>
+                `${r.farmerName || ""} ${r.village || ""} ${r.cluster || ""}`
+                  .toLowerCase()
+                  .includes(search.toLowerCase()),
+              ).length === 0 ? (
+                <p className="py-10 text-center text-sm text-muted-foreground">
+                  No JOITA forms found
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {(joitaRecords || [])
+                    .filter((r) =>
+                      `${r.farmerName || ""} ${r.village || ""} ${r.cluster || ""}`
+                        .toLowerCase()
+                        .includes(search.toLowerCase()),
+                    )
+                    .map((r) => (
+                      <div
+                        key={r.id}
+                        className="flex w-full items-center gap-3 rounded-xl border border-border bg-card p-4 text-left shadow-[var(--shadow-card)] transition-transform"
+                      >
+                        <div
+                          className="min-w-0 flex-1 cursor-pointer"
+                          onClick={() => setEditingJoita(r)}
+                        >
+                          <p className="truncate font-bold text-[16px] text-[#15803d]">
+                            {r.farmerName || "Unnamed"}
+                          </p>
+                          <p className="truncate text-[13px] text-muted-foreground mt-0.5">
+                            {r.village} · {r.cluster} · {new Date(r.updatedAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <StatusBadge status={r.status} pending={false} />
+                        {r.status === "draft" && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteJoitaId(r.id);
+                            }}
+                            className="flex items-center justify-center p-2 text-red-500 hover:bg-red-50 rounded-full"
+                          >
+                            <Trash2 className="size-5" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="profile" className="space-y-4 mt-0">
+              <Card className="shadow-sm rounded-xl">
+                <CardContent className="p-6 text-center space-y-4">
+                  <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-2xl">
+                    {profile.name.substring(0, 2).toUpperCase()}
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold">{profile.name}</h3>
+                    <p className="text-muted-foreground">{profile.email}</p>
+                    <p className="text-xs font-semibold uppercase mt-1 text-primary">
+                      {profile.role}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="shadow-sm rounded-xl">
+                <CardContent className="p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Language</span>
+                    <LanguageToggle />
+                  </div>
+                  <Button
+                    variant="outline"
+                    className="w-full h-[52px] rounded-xl font-bold text-destructive border-destructive"
+                    onClick={async () => {
+                      await logout();
+                      navigate({ to: "/" });
+                    }}
+                  >
+                    Logout / लॉगआउट
+                  </Button>
+                  <p className="text-center text-xs text-muted-foreground mt-4">
+                    v1.0.0 <br /> © 2026 JOITA Bioseed AI
+                  </p>
+                </CardContent>
+              </Card>
+            </TabsContent>
           </div>
-          <TabsList 
+          <TabsList
             className="fixed bottom-0 left-0 right-0 z-50 flex h-16 rounded-none border-t border-border bg-card p-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] justify-around text-muted-foreground"
-            style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+            style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
           >
             <TabsTrigger
               value="home"

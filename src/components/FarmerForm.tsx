@@ -12,7 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
-import DualPhotoInput from './DualPhotoInput';
+import DualPhotoInput from "./DualPhotoInput";
 import { QuestionFields } from "@/components/QuestionFields";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -92,12 +92,15 @@ export function FarmerForm({
       try {
         const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
           navigator.geolocation.getCurrentPosition(resolve, reject, {
-            enableHighAccuracy: true, timeout: 8000
-          })
+            enableHighAccuracy: true,
+            timeout: 8000,
+          }),
         );
         latitude = pos.coords.latitude;
         longitude = pos.coords.longitude;
-      } catch { /* GPS unavailable */ }
+      } catch {
+        /* GPS unavailable */
+      }
 
       const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
@@ -108,9 +111,11 @@ export function FarmerForm({
 
       let url = base64;
       try {
-        const { uploadPhoto } = await import('../lib/storage');
+        const { uploadPhoto } = await import("../lib/storage");
         url = await uploadPhoto(base64, `farmer_${Date.now()}.jpg`, rec.id ?? `new_${Date.now()}`);
-      } catch { /* use base64 */ }
+      } catch {
+        /* use base64 */
+      }
 
       const photo: PhotoMeta = { url, latitude, longitude, timestamp: Date.now() };
       setRec((r) => ({ ...r, photos: [...r.photos, photo] }));
@@ -402,14 +407,19 @@ export function FarmerForm({
               {(rec.photos ?? []).length > 0 && (
                 <div className="grid grid-cols-2 gap-2">
                   {(rec.photos ?? []).map((photo, idx) => (
-                    <div key={photo.localKey ?? photo.url ?? idx} className="relative rounded-xl overflow-hidden aspect-[4/3]">
+                    <div
+                      key={photo.localKey ?? photo.url ?? idx}
+                      className="relative rounded-xl overflow-hidden aspect-[4/3]"
+                    >
                       <img
                         src={photo.url || previews[photo.localKey ?? ""] || ""}
                         alt={`Photo ${idx + 1}`}
                         className="w-full h-full object-cover cursor-pointer"
-                        onClick={() => setViewPhoto(photo.url || previews[photo.localKey ?? ""] || null)}
+                        onClick={() =>
+                          setViewPhoto(photo.url || previews[photo.localKey ?? ""] || null)
+                        }
                         onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none'
+                          (e.target as HTMLImageElement).style.display = "none";
                         }}
                       />
                       {/* GPS overlay */}
@@ -422,7 +432,7 @@ export function FarmerForm({
                           <p className="text-gray-300 text-[10px]">📍 GPS not available</p>
                         )}
                         <p className="text-gray-300 text-[10px]">
-                          {new Date(photo.timestamp).toLocaleTimeString('en-IN')}
+                          {new Date(photo.timestamp).toLocaleTimeString("en-IN")}
                         </p>
                       </div>
                       {/* Delete button */}
@@ -521,9 +531,9 @@ export function FarmerForm({
         {renderStepContent()}
       </div>
 
-      <div 
+      <div
         className="fixed bottom-0 left-0 right-0 z-30 bg-card/95 backdrop-blur-md border-t border-border p-4 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.1)]"
-        style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
+        style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}
       >
         <div className="max-w-5xl mx-auto flex gap-3">
           {step > 1 ? (

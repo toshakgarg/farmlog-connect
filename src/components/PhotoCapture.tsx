@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
-import { JOITAPhoto } from '../lib/types';
-import DualPhotoInput from './DualPhotoInput';
+import React, { useState, useEffect } from "react";
+import { X } from "lucide-react";
+import { JOITAPhoto } from "../lib/types";
+import DualPhotoInput from "./DualPhotoInput";
 
 interface Props {
   photos: JOITAPhoto[];
@@ -11,36 +11,41 @@ interface Props {
 }
 
 function formatGPS(lat: number | null, lng: number | null): string {
-  if (!lat || !lng) return 'GPS not available';
+  if (!lat || !lng) return "GPS not available";
   return `${lat.toFixed(5)}°N, ${lng.toFixed(5)}°E`;
 }
 
 function formatTimestamp(iso: string): string {
-  return new Date(iso).toLocaleString('hi-IN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
+  return new Date(iso).toLocaleString("hi-IN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
-export default function PhotoCapture({ photos, onPhotosChange, maxPhotos = 10, required = false }: Props) {
+export default function PhotoCapture({
+  photos,
+  onPhotosChange,
+  maxPhotos = 10,
+  required = false,
+}: Props) {
   const [uploading, setUploading] = useState(false);
-  const [selectedPhotoType, setSelectedPhotoType] = useState<JOITAPhoto['photoType']>('field');
+  const [selectedPhotoType, setSelectedPhotoType] = useState<JOITAPhoto["photoType"]>("field");
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
-  const [gpsStatus, setGpsStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [gpsStatus, setGpsStatus] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [gpsCoords, setGpsCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
-    setGpsStatus('loading');
+    setGpsStatus("loading");
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setGpsCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setGpsStatus('ready');
+        setGpsStatus("ready");
       },
-      () => setGpsStatus('error'),
-      { enableHighAccuracy: true, timeout: 10000 }
+      () => setGpsStatus("error"),
+      { enableHighAccuracy: true, timeout: 10000 },
     );
   }, []);
 
@@ -51,12 +56,16 @@ export default function PhotoCapture({ photos, onPhotosChange, maxPhotos = 10, r
       let longitude: number | null = gpsCoords?.lng || null;
       try {
         const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 });
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 8000,
+            maximumAge: 30000,
+          });
         });
         latitude = position.coords.latitude;
         longitude = position.coords.longitude;
       } catch {
-        console.warn('GPS unavailable for this photo');
+        console.warn("GPS unavailable for this photo");
       }
       const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
@@ -67,19 +76,24 @@ export default function PhotoCapture({ photos, onPhotosChange, maxPhotos = 10, r
       const fileName = `joita_${Date.now()}.jpg`;
       let url = base64;
       try {
-        const { uploadPhoto } = await import('../lib/storage');
+        const { uploadPhoto } = await import("../lib/storage");
         const farmerId = `joita_${Date.now()}`;
         url = await uploadPhoto(base64, fileName, farmerId);
       } catch (uploadErr) {
-        console.warn('Upload failed, storing locally:', uploadErr);
+        console.warn("Upload failed, storing locally:", uploadErr);
       }
       const newPhoto: JOITAPhoto = {
-        url, latitude, longitude, timestamp: new Date().toISOString(), caption: '', photoType: selectedPhotoType,
+        url,
+        latitude,
+        longitude,
+        timestamp: new Date().toISOString(),
+        caption: "",
+        photoType: selectedPhotoType,
       };
       onPhotosChange([...photos, newPhoto]);
     } catch (err) {
-      console.error('Photo capture error:', err);
-      alert('फोटो लेने में समस्या / Photo capture failed. Please try again.');
+      console.error("Photo capture error:", err);
+      alert("फोटो लेने में समस्या / Photo capture failed. Please try again.");
     } finally {
       setUploading(false);
     }
@@ -91,19 +105,17 @@ export default function PhotoCapture({ photos, onPhotosChange, maxPhotos = 10, r
   };
 
   const photoTypes = [
-    { value: 'field', labelHi: '🌾 खेत', labelEn: 'Field' },
-    { value: 'crop', labelHi: '🌱 फसल', labelEn: 'Crop' },
-    { value: 'soil', labelHi: '🪨 मिट्टी', labelEn: 'Soil' },
-    { value: 'pest', labelHi: '🐛 कीट', labelEn: 'Pest' },
-    { value: 'other', labelHi: '📋 अन्य', labelEn: 'Other' },
+    { value: "field", labelHi: "🌾 खेत", labelEn: "Field" },
+    { value: "crop", labelHi: "🌱 फसल", labelEn: "Crop" },
+    { value: "soil", labelHi: "🪨 मिट्टी", labelEn: "Soil" },
+    { value: "pest", labelHi: "🐛 कीट", labelEn: "Pest" },
+    { value: "other", labelHi: "📋 अन्य", labelEn: "Other" },
   ] as const;
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h4 className="font-medium text-gray-700">
-          फोटो का प्रकार चुनें / Select Photo Type
-        </h4>
+        <h4 className="font-medium text-gray-700">फोटो का प्रकार चुनें / Select Photo Type</h4>
         <span className="text-xs text-gray-500">
           {photos.length} / {maxPhotos} photos added
         </span>
@@ -117,8 +129,8 @@ export default function PhotoCapture({ photos, onPhotosChange, maxPhotos = 10, r
             onClick={() => setSelectedPhotoType(pt.value as any)}
             className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
               selectedPhotoType === pt.value
-                ? 'bg-green-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? "bg-green-600 text-white"
+                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
           >
             {pt.labelHi} / {pt.labelEn}
@@ -141,12 +153,18 @@ export default function PhotoCapture({ photos, onPhotosChange, maxPhotos = 10, r
       )}
 
       <div className="text-xs text-center py-1">
-        {gpsStatus === 'loading' && <span className="text-gray-500">⏳ Getting GPS location...</span>}
-        {gpsStatus === 'ready' && gpsCoords && (
-          <span className="text-green-600">✅ GPS ready: {formatGPS(gpsCoords.lat, gpsCoords.lng)}</span>
+        {gpsStatus === "loading" && (
+          <span className="text-gray-500">⏳ Getting GPS location...</span>
         )}
-        {gpsStatus === 'error' && (
-          <span className="text-red-500">❌ GPS unavailable — photo will be saved without location</span>
+        {gpsStatus === "ready" && gpsCoords && (
+          <span className="text-green-600">
+            ✅ GPS ready: {formatGPS(gpsCoords.lat, gpsCoords.lng)}
+          </span>
+        )}
+        {gpsStatus === "error" && (
+          <span className="text-red-500">
+            ❌ GPS unavailable — photo will be saved without location
+          </span>
         )}
       </div>
 
@@ -168,9 +186,7 @@ export default function PhotoCapture({ photos, onPhotosChange, maxPhotos = 10, r
                 <X className="w-4 h-4" />
               </button>
               <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-2 py-1 pointer-events-none">
-                <p className="text-white text-xs font-medium capitalize">
-                  {photo.photoType}
-                </p>
+                <p className="text-white text-xs font-medium capitalize">{photo.photoType}</p>
                 {photo.latitude && (
                   <p className="text-gray-300 text-[10px]">
                     📍 {photo.latitude.toFixed(4)}, {photo.longitude?.toFixed(4)}

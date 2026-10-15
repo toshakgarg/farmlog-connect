@@ -11,7 +11,10 @@ export function LandingPage({ onLoginClick }: Props) {
   const { t } = useI18n();
 
   return (
-    <div className="min-h-screen bg-[#fafaf8] flex flex-col" style={{paddingTop: 'env(safe-area-inset-top, 0px)'}}>
+    <div
+      className="min-h-screen bg-[#fafaf8] flex flex-col"
+      style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+    >
       <div className="flex justify-end px-4 pt-3">
         <LanguageToggle />
       </div>
@@ -24,13 +27,13 @@ export function LandingPage({ onLoginClick }: Props) {
         <h1 className="text-4xl font-black text-gray-900 mb-1">FarmLog</h1>
         <p className="text-xs tracking-widest text-gray-400 uppercase mb-2">FIELD NOTES · INDIA</p>
 
-        <p className="text-gray-500 text-center text-base mb-8">{t('tagline')}</p>
+        <p className="text-gray-500 text-center text-base mb-8">{t("tagline")}</p>
 
         <div className="w-full space-y-4 mb-8">
           {[
-            { icon: MapPin, key: 'feature1' },
-            { icon: ClipboardList, key: 'feature2' },
-            { icon: RefreshCw, key: 'feature3' },
+            { icon: MapPin, key: "feature1" },
+            { icon: ClipboardList, key: "feature2" },
+            { icon: RefreshCw, key: "feature3" },
           ].map(({ icon: Icon, key }) => (
             <div key={key} className="flex items-center gap-4 text-left">
               <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -42,12 +45,15 @@ export function LandingPage({ onLoginClick }: Props) {
         </div>
       </div>
 
-      <div className="px-6 pb-8" style={{paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 24px)'}}>
+      <div
+        className="px-6 pb-8"
+        style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 24px)" }}
+      >
         <Button
           onClick={onLoginClick}
           className="h-[56px] w-full rounded-2xl bg-primary text-lg font-bold text-primary-foreground shadow-md transition-transform active:scale-[0.98]"
         >
-          {t('login')}
+          {t("login")}
         </Button>
         <p className="mt-4 text-xs font-medium text-muted-foreground text-center">v1.0.0</p>
       </div>

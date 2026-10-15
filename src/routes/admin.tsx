@@ -51,7 +51,14 @@ import { useI18n } from "@/lib/i18n";
 // and JOITA performas. Shared persistence details stay in lib/data and
 // lib/record-sync so this route remains focused on UI orchestration.
 import { newLocalId } from "@/lib/offline";
-import type { AppUser, FarmerRecord, QuestionType, Role, SurveyQuestion, JOITAPerforma } from "@/lib/types";
+import type {
+  AppUser,
+  FarmerRecord,
+  QuestionType,
+  Role,
+  SurveyQuestion,
+  JOITAPerforma,
+} from "@/lib/types";
 
 export const Route = createFileRoute("/admin")({
   ssr: false,
@@ -118,17 +125,17 @@ function AdminPage() {
   const filtered = useMemo(
     () =>
       records.filter((record) => {
-        if (filters.village && filters.village.trim() !== '') {
+        if (filters.village && filters.village.trim() !== "") {
           const search = filters.village.toLowerCase();
           const matchesVillage = record.village?.toLowerCase().includes(search);
           const matchesName = record.fullName?.toLowerCase().includes(search);
           if (!matchesVillage && !matchesName) return false;
         }
-        
-        if (filters.supervisor && filters.supervisor !== 'all' && filters.supervisor !== '') {
+
+        if (filters.supervisor && filters.supervisor !== "all" && filters.supervisor !== "") {
           if (record.supervisorID !== filters.supervisor) return false;
         }
-        
+
         if (filters.from && filters.to) {
           const recordDate = new Date(record.createdAt);
           const from = new Date(filters.from);
@@ -136,7 +143,7 @@ function AdminPage() {
           to.setHours(23, 59, 59);
           if (recordDate < from || recordDate > to) return false;
         }
-        
+
         return true;
       }),
     [records, filters],
@@ -156,497 +163,657 @@ function AdminPage() {
     <AppShell
       title={t("appName") || "FarmLog"}
       subtitle={`Admin · ${profile.name}`}
-      onBack={detail ? () => setDetail(null) : joitaDetail ? () => setJoitaDetail(null) : showSurvey ? () => setShowSurvey(false) : undefined}
+      onBack={
+        detail
+          ? () => setDetail(null)
+          : joitaDetail
+            ? () => setJoitaDetail(null)
+            : showSurvey
+              ? () => setShowSurvey(false)
+              : undefined
+      }
       onRefresh={refresh}
     >
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-full overflow-x-hidden">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="w-full max-w-full overflow-x-hidden"
+      >
         <div className="pb-20 w-full max-w-full overflow-x-hidden">
           {joitaDetail ? (
             <div className="flex flex-col h-full bg-[#fafaf8]">
               <div className="bg-white border-b border-border p-4 sticky top-0 z-20 shadow-sm">
-            <div className="flex justify-between items-start">
-              <h1 className="font-extrabold text-[#15803d] text-lg leading-tight">JOITA Form</h1>
-              <StatusBadge status={joitaDetail.status} pending={false} />
-            </div>
-            <h2 className="font-bold text-[15px] mt-1">{joitaDetail.farmerName}</h2>
-            <p className="text-[13px] text-muted-foreground">{joitaDetail.village} · {joitaDetail.cluster}</p>
-          </div>
-          <div className="p-4 space-y-4">
-            <Card className="rounded-xl shadow-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-[16px] text-[#15803d]">Farmer & Location</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="text-muted-foreground">ID Code</div><div className="font-medium text-right">{joitaDetail.farmerIdCode || "-"}</div>
-                  <div className="text-muted-foreground">Cluster</div><div className="font-medium text-right">{joitaDetail.cluster || "-"}</div>
-                  <div className="text-muted-foreground">Mobile</div><div className="font-medium text-right">{joitaDetail.mobile || "-"}</div>
-                  <div className="text-muted-foreground">District</div><div className="font-medium text-right">{joitaDetail.district || "-"}</div>
-                  <div className="text-muted-foreground">Block</div><div className="font-medium text-right">{joitaDetail.block || "-"}</div>
-                  <div className="text-muted-foreground">Gender</div><div className="font-medium text-right">{joitaDetail.gender || "-"}</div>
-                  <div className="text-muted-foreground">Total Land</div><div className="font-medium text-right">{joitaDetail.totalLandAcres ?? "-"} Acres</div>
-                  <div className="text-muted-foreground">CCF Area</div><div className="font-medium text-right">{joitaDetail.ccfMonitoringAreaAcres ?? "-"} Acres</div>
-                  <div className="text-muted-foreground">Farmer Category</div><div className="font-medium text-right">{joitaDetail.farmerCategory || "-"}</div>
+                <div className="flex justify-between items-start">
+                  <h1 className="font-extrabold text-[#15803d] text-lg leading-tight">
+                    JOITA Form
+                  </h1>
+                  <StatusBadge status={joitaDetail.status} pending={false} />
                 </div>
-              </CardContent>
-            </Card>
-            
-            <Card className="rounded-xl shadow-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-[16px] text-[#15803d]">Rice Crop Baseline</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 text-sm">
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="text-muted-foreground">Variety</div><div className="font-medium text-right">{joitaDetail.riceVariety || "-"}</div>
-                  <div className="text-muted-foreground">Sowing Date</div><div className="font-medium text-right">{joitaDetail.sowingDate || "-"}</div>
-                  <div className="text-muted-foreground">Stage</div><div className="font-medium text-right">{joitaDetail.cropStage || "-"}</div>
-                  <div className="text-muted-foreground">Irrigations</div><div className="font-medium text-right">{joitaDetail.irrigationCountSoFar ?? "-"}</div>
-                  <div className="text-muted-foreground">Moisture</div><div className="font-medium text-right">{joitaDetail.currentMoisture || "-"}</div>
-                </div>
-              </CardContent>
-            </Card>
+                <h2 className="font-bold text-[15px] mt-1">{joitaDetail.farmerName}</h2>
+                <p className="text-[13px] text-muted-foreground">
+                  {joitaDetail.village} · {joitaDetail.cluster}
+                </p>
+              </div>
+              <div className="p-4 space-y-4">
+                <Card className="rounded-xl shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-[16px] text-[#15803d]">Farmer & Location</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="text-muted-foreground">ID Code</div>
+                      <div className="font-medium text-right">
+                        {joitaDetail.farmerIdCode || "-"}
+                      </div>
+                      <div className="text-muted-foreground">Cluster</div>
+                      <div className="font-medium text-right">{joitaDetail.cluster || "-"}</div>
+                      <div className="text-muted-foreground">Mobile</div>
+                      <div className="font-medium text-right">{joitaDetail.mobile || "-"}</div>
+                      <div className="text-muted-foreground">District</div>
+                      <div className="font-medium text-right">{joitaDetail.district || "-"}</div>
+                      <div className="text-muted-foreground">Block</div>
+                      <div className="font-medium text-right">{joitaDetail.block || "-"}</div>
+                      <div className="text-muted-foreground">Gender</div>
+                      <div className="font-medium text-right">{joitaDetail.gender || "-"}</div>
+                      <div className="text-muted-foreground">Total Land</div>
+                      <div className="font-medium text-right">
+                        {joitaDetail.totalLandAcres ?? "-"} Acres
+                      </div>
+                      <div className="text-muted-foreground">CCF Area</div>
+                      <div className="font-medium text-right">
+                        {joitaDetail.ccfMonitoringAreaAcres ?? "-"} Acres
+                      </div>
+                      <div className="text-muted-foreground">Farmer Category</div>
+                      <div className="font-medium text-right">
+                        {joitaDetail.farmerCategory || "-"}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-            {joitaDetail.photos && joitaDetail.photos.length > 0 && (
-              <div className="mt-4 bg-white rounded-xl shadow-sm p-4">
-                <h3 className="font-bold text-gray-700 mb-3">
-                  📷 Field Photos ({joitaDetail.photos.length})
-                </h3>
-                <div className="grid grid-cols-2 gap-2">
-                  {joitaDetail.photos.map((photo, idx) => (
-                    <div key={idx} className="relative rounded-xl overflow-hidden aspect-[4/3]">
-                      <img
-                        src={photo.url}
-                        alt={`Field photo ${idx + 1}`}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = 'data:image/svg+xml;charset=utf-8,%3Csvg xmlns%3D"http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg" viewBox%3D"0 0 400 300"%3E%3Crect width%3D"400" height%3D"300" fill%3D"%23f3f4f6"%2F%3E%3Ctext x%3D"50%25" y%3D"50%25" dominant-baseline%3D"middle" text-anchor%3D"middle" fill%3D"%239ca3af" font-family%3D"sans-serif" font-size%3D"20"%3EImage Error%3C%2Ftext%3E%3C%2Fsvg%3E';
-                        }}
-                      />
-                      <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-2 py-1">
-                        <p className="text-white text-xs font-medium capitalize">
-                          {photo.photoType}
-                        </p>
-                        {photo.latitude && (
-                          <p className="text-gray-300 text-[10px]">
-                            📍 {photo.latitude.toFixed(4)}, {photo.longitude?.toFixed(4)}
-                          </p>
+                <Card className="rounded-xl shadow-sm">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-[16px] text-[#15803d]">Rice Crop Baseline</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="text-muted-foreground">Variety</div>
+                      <div className="font-medium text-right">{joitaDetail.riceVariety || "-"}</div>
+                      <div className="text-muted-foreground">Sowing Date</div>
+                      <div className="font-medium text-right">{joitaDetail.sowingDate || "-"}</div>
+                      <div className="text-muted-foreground">Stage</div>
+                      <div className="font-medium text-right">{joitaDetail.cropStage || "-"}</div>
+                      <div className="text-muted-foreground">Irrigations</div>
+                      <div className="font-medium text-right">
+                        {joitaDetail.irrigationCountSoFar ?? "-"}
+                      </div>
+                      <div className="text-muted-foreground">Moisture</div>
+                      <div className="font-medium text-right">
+                        {joitaDetail.currentMoisture || "-"}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {joitaDetail.photos && joitaDetail.photos.length > 0 && (
+                  <div className="mt-4 bg-white rounded-xl shadow-sm p-4">
+                    <h3 className="font-bold text-gray-700 mb-3">
+                      📷 Field Photos ({joitaDetail.photos.length})
+                    </h3>
+                    <div className="grid grid-cols-2 gap-2">
+                      {joitaDetail.photos.map((photo, idx) => (
+                        <div key={idx} className="relative rounded-xl overflow-hidden aspect-[4/3]">
+                          <img
+                            src={photo.url}
+                            alt={`Field photo ${idx + 1}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src =
+                                'data:image/svg+xml;charset=utf-8,%3Csvg xmlns%3D"http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg" viewBox%3D"0 0 400 300"%3E%3Crect width%3D"400" height%3D"300" fill%3D"%23f3f4f6"%2F%3E%3Ctext x%3D"50%25" y%3D"50%25" dominant-baseline%3D"middle" text-anchor%3D"middle" fill%3D"%239ca3af" font-family%3D"sans-serif" font-size%3D"20"%3EImage Error%3C%2Ftext%3E%3C%2Fsvg%3E';
+                            }}
+                          />
+                          <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-2 py-1">
+                            <p className="text-white text-xs font-medium capitalize">
+                              {photo.photoType}
+                            </p>
+                            {photo.latitude && (
+                              <p className="text-gray-300 text-[10px]">
+                                📍 {photo.latitude.toFixed(4)}, {photo.longitude?.toFixed(4)}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div
+                className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur border-t pb-safe z-30"
+                style={{ paddingBottom: "calc(1rem + env(safe-area-inset-bottom, 0px))" }}
+              >
+                <Button
+                  onClick={() => setJoitaDetail(null)}
+                  className="w-full h-12 rounded-xl"
+                  variant="outline"
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          ) : detail ? (
+            <RecordDetail
+              record={detail}
+              questions={questions}
+              supervisorName={supervisorName(detail.supervisorID)}
+              onClose={() => setDetail(null)}
+            />
+          ) : showSurvey ? (
+            <QuestionManagement
+              questions={questions}
+              onChanged={refresh}
+              onClose={() => setShowSurvey(false)}
+            />
+          ) : (
+            <>
+              <TabsContent value="dashboard" className="space-y-6 mt-0">
+                <h2 className="text-xl font-bold">Dashboard</h2>
+                <Card
+                  className="shadow-sm rounded-xl border-border bg-card hover:bg-muted/50 cursor-pointer transition-colors"
+                  onClick={() => setShowSurvey(true)}
+                >
+                  <CardContent className="p-4 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                        <List className="size-6" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold">Survey Questions</h3>
+                        <p className="text-xs text-muted-foreground">Manage forms</p>
+                      </div>
+                    </div>
+                    <Settings className="size-5 text-muted-foreground" />
+                  </CardContent>
+                </Card>
+                <div className="grid grid-cols-2 gap-4">
+                  <Stat
+                    label="Total Farmers"
+                    value={farmerUsers.length}
+                    icon={<Tractor className="size-5 text-primary" />}
+                  />
+                  <Stat
+                    label="Total Supervisors"
+                    value={supervisors.length}
+                    icon={<Shield className="size-5 text-primary" />}
+                  />
+                  <Stat
+                    label="Total Records"
+                    value={records.length}
+                    icon={<List className="size-5 text-primary" />}
+                  />
+                  <Stat
+                    label="Records This Month"
+                    value={
+                      records.filter(
+                        (r) => new Date(r.createdAt).getMonth() === new Date().getMonth(),
+                      ).length
+                    }
+                    icon={<CheckCircle2 className="size-5 text-primary" />}
+                  />
+                </div>
+
+                <Card className="shadow-sm rounded-xl overflow-hidden">
+                  <CardHeader className="pb-2 border-b border-border/50 bg-muted/20">
+                    <CardTitle className="text-[18px] font-bold">Recent Submissions</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0">
+                    <div className="divide-y divide-border">
+                      {records.length === 0 && (
+                        <div className="p-8 text-center text-muted-foreground">No records yet.</div>
+                      )}
+                      {records
+                        .sort((a, b) => b.updatedAt - a.updatedAt)
+                        .slice(0, 5)
+                        .map((r) => (
+                          <button
+                            key={r.id}
+                            type="button"
+                            onClick={() => setDetail(r)}
+                            className="flex w-full items-center justify-between gap-3 p-4 text-left transition-colors hover:bg-muted/50 active:bg-muted"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-[16px] font-bold text-foreground">
+                                {r.fullName}
+                              </p>
+                              <p className="truncate text-[13px] text-muted-foreground mt-0.5">
+                                {r.village} · {supervisorName(r.supervisorID)} ·{" "}
+                                {new Date(r.updatedAt).toLocaleDateString()}
+                              </p>
+                            </div>
+                            <StatusBadge status={r.status} />
+                          </button>
+                        ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="users" className="space-y-4 mt-0">
+                <UserManagement
+                  allUsers={[...supervisors, ...farmerUsers]}
+                  records={records}
+                  createAccount={createAccount}
+                  onChanged={refresh}
+                />
+              </TabsContent>
+
+              <TabsContent value="records" className="space-y-4 mt-0">
+                <Tabs value={recordsTab} onValueChange={setRecordsTab}>
+                  <TabsList className="grid w-full grid-cols-2 mb-4 bg-muted/50 p-1 rounded-xl">
+                    <TabsTrigger value="farmer_records" className="rounded-lg">
+                      Farmer Records
+                    </TabsTrigger>
+                    <TabsTrigger value="joita_forms" className="rounded-lg">
+                      JOITA Forms
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="farmer_records" className="space-y-4 mt-0">
+                    <Card className="shadow-sm rounded-xl">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-[16px]">Filters</CardTitle>
+                      </CardHeader>
+                      <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <Input
+                          placeholder="Search by Village..."
+                          className="h-[52px] rounded-xl"
+                          value={filters.village}
+                          onChange={(e) => setFilters({ ...filters, village: e.target.value })}
+                        />
+                        <select
+                          className="w-full h-[48px] px-3 rounded-xl border border-gray-200 bg-white text-gray-700 text-sm focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-100"
+                          value={filters.supervisor}
+                          onChange={(e) => setFilters({ ...filters, supervisor: e.target.value })}
+                        >
+                          <option value="">All Supervisors</option>
+                          {supervisors.map((s) => (
+                            <option key={s.uid} value={s.uid}>
+                              {s.name}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="flex gap-2">
+                          <input
+                            type="date"
+                            className="flex-1 h-[48px] px-3 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:border-green-500"
+                            value={filters.from}
+                            onChange={(e) => setFilters({ ...filters, from: e.target.value })}
+                          />
+                          <input
+                            type="date"
+                            className="flex-1 h-[48px] px-3 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:border-green-500"
+                            value={filters.to}
+                            onChange={(e) => setFilters({ ...filters, to: e.target.value })}
+                          />
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Button
+                      variant="secondary"
+                      className="w-full h-[52px] rounded-xl shadow-sm text-base font-bold bg-primary/10 text-primary hover:bg-primary/20"
+                      onClick={() =>
+                        downloadCsv(`farmlog-${Date.now()}.csv`, recordsToCsv(filtered, questions))
+                      }
+                    >
+                      <Download className="mr-2 size-5" /> Export All (CSV)
+                    </Button>
+
+                    <div className="space-y-3">
+                      {filtered.length === 0 && (
+                        <div className="text-center p-8 text-muted-foreground bg-muted/30 rounded-xl">
+                          No records match your filters.
+                        </div>
+                      )}
+                      {filtered.map((r) => (
+                        <Card key={r.id} className="shadow-sm rounded-xl overflow-hidden">
+                          <button
+                            type="button"
+                            className="flex w-full flex-col p-4 text-left transition-colors hover:bg-muted/30 active:bg-muted/50"
+                            onClick={() => setDetail(r)}
+                          >
+                            <div className="flex justify-between items-start mb-2 w-full">
+                              <p className="font-bold text-[18px]">{r.fullName}</p>
+                              <StatusBadge status={r.status} />
+                            </div>
+                            <p className="text-[14px] text-muted-foreground flex items-center gap-1.5 mb-1">
+                              <MapPin className="size-4" /> {r.village}
+                            </p>
+                            <p className="text-[13px] text-muted-foreground flex items-center gap-1.5">
+                              <Shield className="size-4" /> {supervisorName(r.supervisorID)}
+                            </p>
+                            <div className="flex items-center gap-3 mt-3 pt-3 border-t border-border/50 text-[12px] font-medium">
+                              <span>{r.killahs ?? 0} Killahs</span>
+                              <span>•</span>
+                              <span>{r.photos.length} Photos</span>
+                              <span>•</span>
+                              <span>{new Date(r.updatedAt).toLocaleDateString()}</span>
+                            </div>
+                          </button>
+                        </Card>
+                      ))}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="joita_forms" className="space-y-4 mt-0">
+                    <Button
+                      variant="secondary"
+                      className="w-full h-[52px] rounded-xl shadow-sm text-base font-bold bg-[#15803d]/10 text-[#15803d] hover:bg-[#15803d]/20"
+                      onClick={() => {
+                        const headers = [
+                          "id",
+                          "farmerIdCode",
+                          "cluster",
+                          "farmerName",
+                          "fatherHusbandName",
+                          "mobile",
+                          "village",
+                          "block",
+                          "district",
+                          "gender",
+                          "totalLandAcres",
+                          "ccfMonitoringAreaAcres",
+                          "fieldIdMark",
+                          "gpsLat",
+                          "gpsLng",
+                          "farmerCategory",
+                          "hasFarmerCompanion",
+                          "riceVariety",
+                          "sowingDate",
+                          "cropStage",
+                          "firstVisitDate",
+                          "irrigationSource",
+                          "irrigationCountSoFar",
+                          "lastIrrigationDate",
+                          "currentMoisture",
+                          "fertilizerDetails",
+                          "pesticideDetails",
+                          "currentProblems",
+                          "farmerMainNeed",
+                          "spadChlorophyll",
+                          "labSampleCode",
+                          "farmAssistAdvice",
+                          "adviceType",
+                          "biosynthNanoDemo",
+                          "biosynthNanoDemoDate",
+                          "treatmentAreaAcres",
+                          "controlAreaAcres",
+                          "harvestDate",
+                          "productionQuintalPerAcre",
+                          "cropStatus",
+                          "satisfactionLevel",
+                          "nextCropAdvice",
+                          "mainResultsFarmerFeedback",
+                          "farmerConsentGiven",
+                          "status",
+                          "createdAt",
+                          "updatedAt",
+                        ];
+                        const rows = joitaRecords.map((r) =>
+                          [
+                            r.id,
+                            r.farmerIdCode,
+                            r.cluster,
+                            r.farmerName,
+                            r.fatherHusbandName,
+                            r.mobile,
+                            r.village,
+                            r.block,
+                            r.district,
+                            r.gender,
+                            r.totalLandAcres,
+                            r.ccfMonitoringAreaAcres,
+                            r.fieldIdMark,
+                            r.gpsLat,
+                            r.gpsLng,
+                            r.farmerCategory,
+                            r.hasFarmerCompanion,
+                            r.riceVariety,
+                            r.sowingDate,
+                            r.cropStage,
+                            r.firstVisitDate,
+                            (r.irrigationSource || []).join("|"),
+                            r.irrigationCountSoFar,
+                            r.lastIrrigationDate,
+                            r.currentMoisture,
+                            r.fertilizerDetails,
+                            r.pesticideDetails,
+                            r.currentProblems,
+                            r.farmerMainNeed,
+                            r.spadChlorophyll,
+                            r.labSampleCode,
+                            r.farmAssistAdvice,
+                            (r.adviceType || []).join("|"),
+                            r.biosynthNanoDemo,
+                            r.biosynthNanoDemoDate,
+                            r.treatmentAreaAcres,
+                            r.controlAreaAcres,
+                            r.harvestDate,
+                            r.productionQuintalPerAcre,
+                            r.cropStatus,
+                            r.satisfactionLevel,
+                            r.nextCropAdvice,
+                            r.mainResultsFarmerFeedback,
+                            r.farmerConsentGiven,
+                            r.status,
+                            r.createdAt,
+                            r.updatedAt,
+                          ]
+                            .map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`)
+                            .join(","),
+                        );
+
+                        const csv = [headers.join(","), ...rows].join("\n");
+                        downloadCsv(`joita-forms-${Date.now()}.csv`, csv);
+                      }}
+                    >
+                      <Download className="mr-2 size-5" /> Export JOITA Forms (CSV)
+                    </Button>
+
+                    <div className="px-4 py-3 space-y-2">
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                          type="text"
+                          placeholder="Search farmer name, village..."
+                          value={joitaSearch}
+                          onChange={(e) => setJoitaSearch(e.target.value)}
+                          className="w-full h-[48px] pl-10 pr-4 rounded-xl border border-gray-200 text-sm"
+                        />
+                      </div>
+                      <div className="flex gap-2 overflow-x-auto pb-1">
+                        {["All", "Draft", "Submitted"].map((status) => (
+                          <button
+                            key={status}
+                            onClick={() => setJoitaStatusFilter(status)}
+                            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0 ${
+                              joitaStatusFilter === status
+                                ? "bg-green-600 text-white"
+                                : "bg-gray-100 text-gray-600"
+                            }`}
+                          >
+                            {status}
+                          </button>
+                        ))}
+                      </div>
+                      <div className="flex gap-2 overflow-x-auto pb-1">
+                        {["All Clusters", "Taragarh", "Jaswant", "Siwan", "Cheeka"].map(
+                          (cluster) => (
+                            <button
+                              key={cluster}
+                              onClick={() => setJoitaClusterFilter(cluster)}
+                              className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 ${
+                                joitaClusterFilter === cluster
+                                  ? "bg-green-100 text-green-700 border border-green-300"
+                                  : "bg-gray-50 text-gray-500 border border-gray-200"
+                              }`}
+                            >
+                              {cluster}
+                            </button>
+                          ),
                         )}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-          
-          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur border-t pb-safe z-30" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}>
-            <Button onClick={() => setJoitaDetail(null)} className="w-full h-12 rounded-xl" variant="outline">Close</Button>
-          </div>
-        </div>
-      ) : detail ? (
-        <RecordDetail
-          record={detail}
-          questions={questions}
-          supervisorName={supervisorName(detail.supervisorID)}
-          onClose={() => setDetail(null)}
-        />
-      ) : showSurvey ? (
-        <QuestionManagement
-          questions={questions}
-          onChanged={refresh}
-          onClose={() => setShowSurvey(false)}
-        />
-      ) : (
-        <>
-          <TabsContent value="dashboard" className="space-y-6 mt-0">
-            <h2 className="text-xl font-bold">Dashboard</h2>
-            <Card
-              className="shadow-sm rounded-xl border-border bg-card hover:bg-muted/50 cursor-pointer transition-colors"
-              onClick={() => setShowSurvey(true)}
-            >
-              <CardContent className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                    <List className="size-6" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold">Survey Questions</h3>
-                    <p className="text-xs text-muted-foreground">Manage forms</p>
-                  </div>
-                </div>
-                <Settings className="size-5 text-muted-foreground" />
-              </CardContent>
-            </Card>
-            <div className="grid grid-cols-2 gap-4">
-              <Stat
-                label="Total Farmers"
-                value={farmerUsers.length}
-                icon={<Tractor className="size-5 text-primary" />}
-              />
-              <Stat
-                label="Total Supervisors"
-                value={supervisors.length}
-                icon={<Shield className="size-5 text-primary" />}
-              />
-              <Stat
-                label="Total Records"
-                value={records.length}
-                icon={<List className="size-5 text-primary" />}
-              />
-              <Stat
-                label="Records This Month"
-                value={
-                  records.filter((r) => new Date(r.createdAt).getMonth() === new Date().getMonth())
-                    .length
-                }
-                icon={<CheckCircle2 className="size-5 text-primary" />}
-              />
-            </div>
 
-            <Card className="shadow-sm rounded-xl overflow-hidden">
-              <CardHeader className="pb-2 border-b border-border/50 bg-muted/20">
-                <CardTitle className="text-[18px] font-bold">Recent Submissions</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="divide-y divide-border">
-                  {records.length === 0 && (
-                    <div className="p-8 text-center text-muted-foreground">No records yet.</div>
-                  )}
-                  {records
-                    .sort((a, b) => b.updatedAt - a.updatedAt)
-                    .slice(0, 5)
-                    .map((r) => (
-                      <button
-                        key={r.id}
-                        type="button"
-                        onClick={() => setDetail(r)}
-                        className="flex w-full items-center justify-between gap-3 p-4 text-left transition-colors hover:bg-muted/50 active:bg-muted"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-[16px] font-bold text-foreground">
-                            {r.fullName}
-                          </p>
-                          <p className="truncate text-[13px] text-muted-foreground mt-0.5">
-                            {r.village} · {supervisorName(r.supervisorID)} ·{" "}
-                            {new Date(r.updatedAt).toLocaleDateString()}
-                          </p>
+                    <div className="space-y-3">
+                      {joitaRecords.filter((r) => {
+                        const matchSearch = `${r.farmerName} ${r.village} ${r.cluster}`
+                          .toLowerCase()
+                          .includes(joitaSearch.toLowerCase());
+                        const matchStatus =
+                          joitaStatusFilter === "All" ||
+                          (joitaStatusFilter === "Draft" && r.status === "draft") ||
+                          (joitaStatusFilter === "Submitted" && r.status === "submitted");
+                        const matchCluster =
+                          joitaClusterFilter === "All Clusters" || r.cluster === joitaClusterFilter;
+                        return matchSearch && matchStatus && matchCluster;
+                      }).length === 0 && (
+                        <div className="text-center p-8 text-muted-foreground bg-muted/30 rounded-xl">
+                          No JOITA records found.
                         </div>
-                        <StatusBadge status={r.status} />
-                      </button>
-                    ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="users" className="space-y-4 mt-0">
-            <UserManagement
-              allUsers={[...supervisors, ...farmerUsers]}
-              records={records}
-              createAccount={createAccount}
-              onChanged={refresh}
-            />
-          </TabsContent>
-
-          <TabsContent value="records" className="space-y-4 mt-0">
-            <Tabs value={recordsTab} onValueChange={setRecordsTab}>
-              <TabsList className="grid w-full grid-cols-2 mb-4 bg-muted/50 p-1 rounded-xl">
-                <TabsTrigger value="farmer_records" className="rounded-lg">Farmer Records</TabsTrigger>
-                <TabsTrigger value="joita_forms" className="rounded-lg">JOITA Forms</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="farmer_records" className="space-y-4 mt-0">
-            <Card className="shadow-sm rounded-xl">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-[16px]">Filters</CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Input
-                  placeholder="Search by Village..."
-                  className="h-[52px] rounded-xl"
-                  value={filters.village}
-                  onChange={(e) => setFilters({ ...filters, village: e.target.value })}
-                />
-                <select
-                  className="w-full h-[48px] px-3 rounded-xl border border-gray-200 bg-white text-gray-700 text-sm focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-100"
-                  value={filters.supervisor}
-                  onChange={(e) => setFilters({ ...filters, supervisor: e.target.value })}
-                >
-                  <option value="">All Supervisors</option>
-                  {supervisors.map((s) => (
-                    <option key={s.uid} value={s.uid}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
-                <div className="flex gap-2">
-                  <input
-                    type="date"
-                    className="flex-1 h-[48px] px-3 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:border-green-500"
-                    value={filters.from}
-                    onChange={(e) => setFilters({ ...filters, from: e.target.value })}
-                  />
-                  <input
-                    type="date"
-                    className="flex-1 h-[48px] px-3 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:border-green-500"
-                    value={filters.to}
-                    onChange={(e) => setFilters({ ...filters, to: e.target.value })}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-            <Button
-              variant="secondary"
-              className="w-full h-[52px] rounded-xl shadow-sm text-base font-bold bg-primary/10 text-primary hover:bg-primary/20"
-              onClick={() =>
-                downloadCsv(`farmlog-${Date.now()}.csv`, recordsToCsv(filtered, questions))
-              }
-            >
-              <Download className="mr-2 size-5" /> Export All (CSV)
-            </Button>
-
-            <div className="space-y-3">
-              {filtered.length === 0 && (
-                <div className="text-center p-8 text-muted-foreground bg-muted/30 rounded-xl">
-                  No records match your filters.
-                </div>
-              )}
-              {filtered.map((r) => (
-                <Card key={r.id} className="shadow-sm rounded-xl overflow-hidden">
-                  <button
-                    type="button"
-                    className="flex w-full flex-col p-4 text-left transition-colors hover:bg-muted/30 active:bg-muted/50"
-                    onClick={() => setDetail(r)}
-                  >
-                    <div className="flex justify-between items-start mb-2 w-full">
-                      <p className="font-bold text-[18px]">{r.fullName}</p>
-                      <StatusBadge status={r.status} />
+                      )}
+                      {joitaRecords
+                        .filter((r) => {
+                          const matchSearch = `${r.farmerName} ${r.village} ${r.cluster}`
+                            .toLowerCase()
+                            .includes(joitaSearch.toLowerCase());
+                          const matchStatus =
+                            joitaStatusFilter === "All" ||
+                            (joitaStatusFilter === "Draft" && r.status === "draft") ||
+                            (joitaStatusFilter === "Submitted" && r.status === "submitted");
+                          const matchCluster =
+                            joitaClusterFilter === "All Clusters" ||
+                            r.cluster === joitaClusterFilter;
+                          return matchSearch && matchStatus && matchCluster;
+                        })
+                        .map((r) => (
+                          <Card key={r.id} className="shadow-sm rounded-xl overflow-hidden">
+                            <button
+                              type="button"
+                              className="flex w-full flex-col p-4 text-left transition-colors hover:bg-muted/30 active:bg-muted/50"
+                              onClick={() => setJoitaDetail(r)}
+                            >
+                              <div className="flex justify-between items-start mb-2 w-full">
+                                <p className="font-bold text-[18px] text-[#15803d]">
+                                  {r.farmerName}
+                                </p>
+                                <StatusBadge status={r.status} pending={false} />
+                              </div>
+                              <p className="text-[14px] text-muted-foreground flex items-center gap-1.5 mb-1">
+                                <MapPin className="size-4" /> {r.village} ({r.cluster})
+                              </p>
+                              <p className="text-[13px] text-muted-foreground flex items-center gap-1.5">
+                                <Shield className="size-4" /> {supervisorName(r.supervisorId)}
+                              </p>
+                              <div className="flex items-center gap-3 mt-3 pt-3 border-t border-border/50 text-[12px] font-medium">
+                                <span>{new Date(r.updatedAt).toLocaleDateString()}</span>
+                              </div>
+                            </button>
+                          </Card>
+                        ))}
                     </div>
-                    <p className="text-[14px] text-muted-foreground flex items-center gap-1.5 mb-1">
-                      <MapPin className="size-4" /> {r.village}
-                    </p>
-                    <p className="text-[13px] text-muted-foreground flex items-center gap-1.5">
-                      <Shield className="size-4" /> {supervisorName(r.supervisorID)}
-                    </p>
-                    <div className="flex items-center gap-3 mt-3 pt-3 border-t border-border/50 text-[12px] font-medium">
-                      <span>{r.killahs ?? 0} Killahs</span>
-                      <span>•</span>
-                      <span>{r.photos.length} Photos</span>
-                      <span>•</span>
-                      <span>{new Date(r.updatedAt).toLocaleDateString()}</span>
+                  </TabsContent>
+                </Tabs>
+              </TabsContent>
+
+              <TabsContent value="settings" className="space-y-4 mt-0">
+                <h2 className="text-xl font-bold">Settings</h2>
+                <Card className="shadow-sm rounded-xl">
+                  <CardContent className="p-6 flex items-center gap-4">
+                    <div className="flex items-center justify-center size-14 rounded-full bg-primary/10 text-primary font-bold text-2xl">
+                      {profile.name.substring(0, 2).toUpperCase()}
                     </div>
-                  </button>
+                    <div>
+                      <h3 className="text-xl font-bold">{profile.name}</h3>
+                      <p className="text-muted-foreground">{profile.email}</p>
+                      <p className="text-xs font-semibold uppercase mt-1 text-primary">
+                        {profile.role}
+                      </p>
+                    </div>
+                  </CardContent>
                 </Card>
-              ))}
-            </div>
-            </TabsContent>
 
-            <TabsContent value="joita_forms" className="space-y-4 mt-0">
-              <Button
-                variant="secondary"
-                className="w-full h-[52px] rounded-xl shadow-sm text-base font-bold bg-[#15803d]/10 text-[#15803d] hover:bg-[#15803d]/20"
-                onClick={() => {
-                  const headers = [
-                    "id", "farmerIdCode", "cluster", "farmerName", "fatherHusbandName", "mobile", 
-                    "village", "block", "district", "gender", "totalLandAcres", "ccfMonitoringAreaAcres",
-                    "fieldIdMark", "gpsLat", "gpsLng", "farmerCategory", "hasFarmerCompanion", "riceVariety",
-                    "sowingDate", "cropStage", "firstVisitDate", "irrigationSource", "irrigationCountSoFar",
-                    "lastIrrigationDate", "currentMoisture", "fertilizerDetails", "pesticideDetails", "currentProblems",
-                    "farmerMainNeed", "spadChlorophyll", "labSampleCode", "farmAssistAdvice", "adviceType", 
-                    "biosynthNanoDemo", "biosynthNanoDemoDate", "treatmentAreaAcres", "controlAreaAcres",
-                    "harvestDate", "productionQuintalPerAcre", "cropStatus", "satisfactionLevel", "nextCropAdvice",
-                    "mainResultsFarmerFeedback", "farmerConsentGiven", "status", "createdAt", "updatedAt"
-                  ];
-                  const rows = joitaRecords.map(r => [
-                    r.id, r.farmerIdCode, r.cluster, r.farmerName, r.fatherHusbandName, r.mobile,
-                    r.village, r.block, r.district, r.gender, r.totalLandAcres, r.ccfMonitoringAreaAcres,
-                    r.fieldIdMark, r.gpsLat, r.gpsLng, r.farmerCategory, r.hasFarmerCompanion, r.riceVariety,
-                    r.sowingDate, r.cropStage, r.firstVisitDate, (r.irrigationSource || []).join("|"), r.irrigationCountSoFar,
-                    r.lastIrrigationDate, r.currentMoisture, r.fertilizerDetails, r.pesticideDetails, r.currentProblems,
-                    r.farmerMainNeed, r.spadChlorophyll, r.labSampleCode, r.farmAssistAdvice, (r.adviceType || []).join("|"),
-                    r.biosynthNanoDemo, r.biosynthNanoDemoDate, r.treatmentAreaAcres, r.controlAreaAcres,
-                    r.harvestDate, r.productionQuintalPerAcre, r.cropStatus, r.satisfactionLevel, r.nextCropAdvice,
-                    r.mainResultsFarmerFeedback, r.farmerConsentGiven, r.status, r.createdAt, r.updatedAt
-                  ].map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(","));
-                  
-                  const csv = [headers.join(","), ...rows].join("\n");
-                  downloadCsv(`joita-forms-${Date.now()}.csv`, csv);
-                }}
-              >
-                <Download className="mr-2 size-5" /> Export JOITA Forms (CSV)
-              </Button>
-
-              <div className="px-4 py-3 space-y-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <input
-                    type="text"
-                    placeholder="Search farmer name, village..."
-                    value={joitaSearch}
-                    onChange={e => setJoitaSearch(e.target.value)}
-                    className="w-full h-[48px] pl-10 pr-4 rounded-xl border border-gray-200 text-sm"
-                  />
-                </div>
-                <div className="flex gap-2 overflow-x-auto pb-1">
-                  {['All', 'Draft', 'Submitted'].map(status => (
-                    <button
-                      key={status}
-                      onClick={() => setJoitaStatusFilter(status)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0 ${
-                        joitaStatusFilter === status
-                          ? 'bg-green-600 text-white'
-                          : 'bg-gray-100 text-gray-600'
-                      }`}
+                <Card className="shadow-sm rounded-xl">
+                  <CardContent className="p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium">Language</span>
+                      <LanguageToggle />
+                    </div>
+                    <Button
+                      variant="outline"
+                      className="w-full h-[52px] rounded-xl font-bold text-destructive border-destructive"
+                      onClick={async () => {
+                        await logout();
+                        navigate({ to: "/" });
+                      }}
                     >
-                      {status}
-                    </button>
-                  ))}
-                </div>
-                <div className="flex gap-2 overflow-x-auto pb-1">
-                  {['All Clusters', 'Taragarh', 'Jaswant', 'Siwan', 'Cheeka'].map(cluster => (
-                    <button
-                      key={cluster}
-                      onClick={() => setJoitaClusterFilter(cluster)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap flex-shrink-0 ${
-                        joitaClusterFilter === cluster
-                          ? 'bg-green-100 text-green-700 border border-green-300'
-                          : 'bg-gray-50 text-gray-500 border border-gray-200'
-                      }`}
-                    >
-                      {cluster}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {joitaRecords
-                  .filter(r => {
-                    const matchSearch = `${r.farmerName} ${r.village} ${r.cluster}`.toLowerCase().includes(joitaSearch.toLowerCase());
-                    const matchStatus = joitaStatusFilter === 'All' || (joitaStatusFilter === 'Draft' && r.status === 'draft') || (joitaStatusFilter === 'Submitted' && r.status === 'submitted');
-                    const matchCluster = joitaClusterFilter === 'All Clusters' || r.cluster === joitaClusterFilter;
-                    return matchSearch && matchStatus && matchCluster;
-                  })
-                  .length === 0 && (
-                  <div className="text-center p-8 text-muted-foreground bg-muted/30 rounded-xl">
-                    No JOITA records found.
-                  </div>
-                )}
-                {joitaRecords
-                  .filter(r => {
-                    const matchSearch = `${r.farmerName} ${r.village} ${r.cluster}`.toLowerCase().includes(joitaSearch.toLowerCase());
-                    const matchStatus = joitaStatusFilter === 'All' || (joitaStatusFilter === 'Draft' && r.status === 'draft') || (joitaStatusFilter === 'Submitted' && r.status === 'submitted');
-                    const matchCluster = joitaClusterFilter === 'All Clusters' || r.cluster === joitaClusterFilter;
-                    return matchSearch && matchStatus && matchCluster;
-                  })
-                  .map((r) => (
-                  <Card key={r.id} className="shadow-sm rounded-xl overflow-hidden">
-                    <button
-                      type="button"
-                      className="flex w-full flex-col p-4 text-left transition-colors hover:bg-muted/30 active:bg-muted/50"
-                      onClick={() => setJoitaDetail(r)}
-                    >
-                      <div className="flex justify-between items-start mb-2 w-full">
-                        <p className="font-bold text-[18px] text-[#15803d]">{r.farmerName}</p>
-                        <StatusBadge status={r.status} pending={false} />
-                      </div>
-                      <p className="text-[14px] text-muted-foreground flex items-center gap-1.5 mb-1">
-                        <MapPin className="size-4" /> {r.village} ({r.cluster})
-                      </p>
-                      <p className="text-[13px] text-muted-foreground flex items-center gap-1.5">
-                        <Shield className="size-4" /> {supervisorName(r.supervisorId)}
-                      </p>
-                      <div className="flex items-center gap-3 mt-3 pt-3 border-t border-border/50 text-[12px] font-medium">
-                        <span>{new Date(r.updatedAt).toLocaleDateString()}</span>
-                      </div>
-                    </button>
-                  </Card>
-                ))}
-              </div>
-            </TabsContent>
-            </Tabs>
-          </TabsContent>
-
-          <TabsContent value="settings" className="space-y-4 mt-0">
-            <h2 className="text-xl font-bold">Settings</h2>
-            <Card className="shadow-sm rounded-xl">
-              <CardContent className="p-6 flex items-center gap-4">
-                <div className="flex items-center justify-center size-14 rounded-full bg-primary/10 text-primary font-bold text-2xl">
-                  {profile.name.substring(0, 2).toUpperCase()}
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold">{profile.name}</h3>
-                  <p className="text-muted-foreground">{profile.email}</p>
-                  <p className="text-xs font-semibold uppercase mt-1 text-primary">
-                    {profile.role}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="shadow-sm rounded-xl">
-              <CardContent className="p-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">Language</span>
-                  <LanguageToggle />
-                </div>
-                <Button
-                  variant="outline"
-                  className="w-full h-[52px] rounded-xl font-bold text-destructive border-destructive"
-                  onClick={async () => {
-                    await logout();
-                    navigate({ to: "/" });
-                  }}
-                >
-                  Logout / लॉगआउट
-                </Button>
-                <p className="text-center text-xs text-muted-foreground mt-4">
-                  v1.0.0 <br /> © 2026 JOITA Bioseed AI
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </>
-        )}
+                      Logout / लॉगआउट
+                    </Button>
+                    <p className="text-center text-xs text-muted-foreground mt-4">
+                      v1.0.0 <br /> © 2026 JOITA Bioseed AI
+                    </p>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </>
+          )}
         </div>
 
-          <TabsList 
-            className="fixed bottom-0 left-0 right-0 z-50 flex h-16 rounded-none border-t border-gray-200 bg-white p-0 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)] justify-around"
-            style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+        <TabsList
+          className="fixed bottom-0 left-0 right-0 z-50 flex h-16 rounded-none border-t border-gray-200 bg-white p-0 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)] justify-around"
+          style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+        >
+          <TabsTrigger
+            value="dashboard"
+            className="relative flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-green-600 data-[state=inactive]:text-gray-400 data-[state=active]:shadow-none"
           >
-            <TabsTrigger
-              value="dashboard"
-              className="relative flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-green-600 data-[state=inactive]:text-gray-400 data-[state=active]:shadow-none"
-            >
-              {activeTab === 'dashboard' && <div className="absolute top-0 w-10 h-1 bg-green-600 rounded-b-full" />}
-              <Home className="size-6" />
-              <span className="text-[10px] font-bold leading-none uppercase mt-1">Home</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="users"
-              className="relative flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-green-600 data-[state=inactive]:text-gray-400 data-[state=active]:shadow-none"
-            >
-              {activeTab === 'users' && <div className="absolute top-0 w-10 h-1 bg-green-600 rounded-b-full" />}
-              <Users className="size-6" />
-              <span className="text-[10px] font-bold leading-none uppercase mt-1">Users</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="records"
-              className="relative flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-green-600 data-[state=inactive]:text-gray-400 data-[state=active]:shadow-none"
-            >
-              {activeTab === 'records' && <div className="absolute top-0 w-10 h-1 bg-green-600 rounded-b-full" />}
-              <List className="size-6" />
-              <span className="text-[10px] font-bold leading-none uppercase mt-1">Records</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="settings"
-              className="relative flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-green-600 data-[state=inactive]:text-gray-400 data-[state=active]:shadow-none"
-            >
-              {activeTab === 'settings' && <div className="absolute top-0 w-10 h-1 bg-green-600 rounded-b-full" />}
-              <Settings className="size-6" />
-              <span className="text-[10px] font-bold leading-none uppercase mt-1">Settings</span>
-            </TabsTrigger>
-          </TabsList>
+            {activeTab === "dashboard" && (
+              <div className="absolute top-0 w-10 h-1 bg-green-600 rounded-b-full" />
+            )}
+            <Home className="size-6" />
+            <span className="text-[10px] font-bold leading-none uppercase mt-1">Home</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="users"
+            className="relative flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-green-600 data-[state=inactive]:text-gray-400 data-[state=active]:shadow-none"
+          >
+            {activeTab === "users" && (
+              <div className="absolute top-0 w-10 h-1 bg-green-600 rounded-b-full" />
+            )}
+            <Users className="size-6" />
+            <span className="text-[10px] font-bold leading-none uppercase mt-1">Users</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="records"
+            className="relative flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-green-600 data-[state=inactive]:text-gray-400 data-[state=active]:shadow-none"
+          >
+            {activeTab === "records" && (
+              <div className="absolute top-0 w-10 h-1 bg-green-600 rounded-b-full" />
+            )}
+            <List className="size-6" />
+            <span className="text-[10px] font-bold leading-none uppercase mt-1">Records</span>
+          </TabsTrigger>
+          <TabsTrigger
+            value="settings"
+            className="relative flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-green-600 data-[state=inactive]:text-gray-400 data-[state=active]:shadow-none"
+          >
+            {activeTab === "settings" && (
+              <div className="absolute top-0 w-10 h-1 bg-green-600 rounded-b-full" />
+            )}
+            <Settings className="size-6" />
+            <span className="text-[10px] font-bold leading-none uppercase mt-1">Settings</span>
+          </TabsTrigger>
+        </TabsList>
       </Tabs>
     </AppShell>
   );

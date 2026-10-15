@@ -1,30 +1,30 @@
-import React, { useState, useRef } from 'react';
-import { Camera, RefreshCw, Edit2, AlertCircle } from 'lucide-react';
-import { JOITAPerforma } from '../lib/types';
-import DualPhotoInput from './DualPhotoInput';
-import { extractTextFromImage } from '../lib/visionApi';
-import { parseJOITAFromText, calculateExtractionConfidence } from '../lib/joitaParser';
-import { useI18n } from '../lib/i18n';
+import React, { useState, useRef } from "react";
+import { Camera, RefreshCw, Edit2, AlertCircle } from "lucide-react";
+import { JOITAPerforma } from "../lib/types";
+import DualPhotoInput from "./DualPhotoInput";
+import { extractTextFromImage } from "../lib/visionApi";
+import { parseJOITAFromText, calculateExtractionConfidence } from "../lib/joitaParser";
+import { useI18n } from "../lib/i18n";
 
 interface Props {
   onScanned: (data: Partial<JOITAPerforma>) => void;
   onCancel: () => void;
 }
 
-type ScanState = 'capture' | 'processing' | 'review' | 'error';
+type ScanState = "capture" | "processing" | "review" | "error";
 
 export function FormScanner({ onScanned, onCancel }: Props) {
   const { t } = useI18n();
-  const [scanState, setScanState] = useState<ScanState>('capture');
-  const [error, setError] = useState<string>('');
+  const [scanState, setScanState] = useState<ScanState>("capture");
+  const [error, setError] = useState<string>("");
   const [extractedData, setExtractedData] = useState<Partial<JOITAPerforma>>({});
   const [confidenceResult, setConfidenceResult] = useState<any>(null);
-  const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [previewUrl, setPreviewUrl] = useState<string>("");
   const [processingStep, setProcessingStep] = useState(0);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  if (!import.meta.env['VITE_GOOGLE_VISION_API_KEY']) {
+  if (!import.meta.env["VITE_GOOGLE_VISION_API_KEY"]) {
     return (
       <div className="p-6 text-center">
         <p className="text-amber-600 font-semibold">⚠️ Form Scanner Not Configured</p>
@@ -43,18 +43,18 @@ export function FormScanner({ onScanned, onCancel }: Props) {
 
   const handleFileSelect = async (file: File) => {
     setPreviewUrl(URL.createObjectURL(file));
-    setScanState('processing');
+    setScanState("processing");
     setProcessingStep(1);
 
     try {
       // Step 2 delay
       setTimeout(() => setProcessingStep(2), 800);
-      
+
       const base64 = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => {
           const result = reader.result as string | null;
-          resolve(result ? result.split(',')[1] || '' : '');
+          resolve(result ? result.split(",")[1] || "" : "");
         };
         reader.onerror = reject;
         reader.readAsDataURL(file);
@@ -74,18 +74,17 @@ export function FormScanner({ onScanned, onCancel }: Props) {
       setTimeout(() => {
         setExtractedData(parsed);
         setConfidenceResult(confidence);
-        setScanState('review');
+        setScanState("review");
       }, 3200);
-
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
-      setScanState('error');
+      setError(err instanceof Error ? err.message : "Unknown error");
+      setScanState("error");
     }
   };
 
   return (
     <div className="flex flex-col h-full bg-white p-4">
-      {scanState === 'capture' && (
+      {scanState === "capture" && (
         <div className="flex flex-col items-center justify-center flex-1 text-center max-w-sm mx-auto w-full space-y-8">
           <DualPhotoInput
             onFileSelected={handleFileSelect}
@@ -116,37 +115,52 @@ export function FormScanner({ onScanned, onCancel }: Props) {
         </div>
       )}
 
-      {scanState === 'processing' && (
+      {scanState === "processing" && (
         <div className="flex flex-col items-center justify-center flex-1 space-y-6">
           {previewUrl && (
-            <img src={previewUrl} alt="Preview" className="w-48 h-64 object-cover rounded-xl shadow-md opacity-50" />
+            <img
+              src={previewUrl}
+              alt="Preview"
+              className="w-48 h-64 object-cover rounded-xl shadow-md opacity-50"
+            />
           )}
           <div className="space-y-4 w-full max-w-sm px-6">
-            <p className={`flex items-center gap-2 font-medium ${processingStep >= 1 ? 'text-green-600' : 'text-gray-400'}`}>
-              {processingStep >= 1 ? '✓' : '○'} Image captured
+            <p
+              className={`flex items-center gap-2 font-medium ${processingStep >= 1 ? "text-green-600" : "text-gray-400"}`}
+            >
+              {processingStep >= 1 ? "✓" : "○"} Image captured
             </p>
-            <p className={`flex items-center gap-2 font-medium ${processingStep >= 2 ? 'text-green-600' : 'text-gray-400'}`}>
-              {processingStep >= 2 ? (processingStep > 2 ? '✓' : '⏳') : '○'} Sending to Google Vision API...
+            <p
+              className={`flex items-center gap-2 font-medium ${processingStep >= 2 ? "text-green-600" : "text-gray-400"}`}
+            >
+              {processingStep >= 2 ? (processingStep > 2 ? "✓" : "⏳") : "○"} Sending to Google
+              Vision API...
             </p>
-            <p className={`flex items-center gap-2 font-medium ${processingStep >= 3 ? 'text-green-600' : 'text-gray-400'}`}>
-              {processingStep >= 3 ? (processingStep > 3 ? '✓' : '⏳') : '○'} Extracting Hindi + English text...
+            <p
+              className={`flex items-center gap-2 font-medium ${processingStep >= 3 ? "text-green-600" : "text-gray-400"}`}
+            >
+              {processingStep >= 3 ? (processingStep > 3 ? "✓" : "⏳") : "○"} Extracting Hindi +
+              English text...
             </p>
-            <p className={`flex items-center gap-2 font-medium ${processingStep >= 4 ? 'text-green-600' : 'text-gray-400'}`}>
-              {processingStep >= 4 ? '⏳' : '○'} Mapping to JOITA fields...
+            <p
+              className={`flex items-center gap-2 font-medium ${processingStep >= 4 ? "text-green-600" : "text-gray-400"}`}
+            >
+              {processingStep >= 4 ? "⏳" : "○"} Mapping to JOITA fields...
             </p>
           </div>
         </div>
       )}
 
-      {scanState === 'review' && confidenceResult && (
+      {scanState === "review" && confidenceResult && (
         <div className="flex flex-col flex-1 max-w-md mx-auto w-full">
           <div className="bg-green-50 p-4 rounded-xl mb-6">
             <h3 className="font-bold text-green-800 mb-2">
-              ✅ {confidenceResult.filledFields}/{confidenceResult.totalFields} fields extracted ({confidenceResult.percentage}%)
+              ✅ {confidenceResult.filledFields}/{confidenceResult.totalFields} fields extracted (
+              {confidenceResult.percentage}%)
             </h3>
             <div className="w-full bg-green-200 rounded-full h-2">
-              <div 
-                className="bg-green-600 h-2 rounded-full transition-all" 
+              <div
+                className="bg-green-600 h-2 rounded-full transition-all"
                 style={{ width: `${confidenceResult.percentage}%` }}
               ></div>
             </div>
@@ -155,13 +169,37 @@ export function FormScanner({ onScanned, onCancel }: Props) {
           <div className="flex-1 overflow-y-auto space-y-4 mb-6">
             <div className="space-y-2">
               <p className="font-bold text-gray-700 border-b pb-1">Extracted Information:</p>
-              {extractedData.farmerName && <p className="text-sm">✓ Farmer Name: <b>{extractedData.farmerName}</b></p>}
-              {extractedData.village && <p className="text-sm">✓ Village: <b>{extractedData.village}</b></p>}
-              {extractedData.mobile && <p className="text-sm">✓ Mobile: <b>{extractedData.mobile}</b></p>}
-              {extractedData.cluster && <p className="text-sm">✓ Cluster: <b>{extractedData.cluster}</b></p>}
-              {extractedData.riceVariety && <p className="text-sm">✓ Rice Variety: <b>{extractedData.riceVariety}</b></p>}
-              {extractedData.totalLandAcres && <p className="text-sm">✓ Land Acres: <b>{extractedData.totalLandAcres}</b></p>}
-              
+              {extractedData.farmerName && (
+                <p className="text-sm">
+                  ✓ Farmer Name: <b>{extractedData.farmerName}</b>
+                </p>
+              )}
+              {extractedData.village && (
+                <p className="text-sm">
+                  ✓ Village: <b>{extractedData.village}</b>
+                </p>
+              )}
+              {extractedData.mobile && (
+                <p className="text-sm">
+                  ✓ Mobile: <b>{extractedData.mobile}</b>
+                </p>
+              )}
+              {extractedData.cluster && (
+                <p className="text-sm">
+                  ✓ Cluster: <b>{extractedData.cluster}</b>
+                </p>
+              )}
+              {extractedData.riceVariety && (
+                <p className="text-sm">
+                  ✓ Rice Variety: <b>{extractedData.riceVariety}</b>
+                </p>
+              )}
+              {extractedData.totalLandAcres && (
+                <p className="text-sm">
+                  ✓ Land Acres: <b>{extractedData.totalLandAcres}</b>
+                </p>
+              )}
+
               {confidenceResult.missedFields.length > 0 && (
                 <div className="mt-4 pt-4 border-t">
                   <p className="font-bold text-amber-700 mb-2">Fields to fill manually:</p>
@@ -176,9 +214,7 @@ export function FormScanner({ onScanned, onCancel }: Props) {
           </div>
 
           <div className="space-y-3 mt-auto">
-            <p className="text-xs text-center text-gray-500 mb-2">
-              {t("correctMistakes")}
-            </p>
+            <p className="text-xs text-center text-gray-500 mb-2">{t("correctMistakes")}</p>
             <button
               onClick={() => onScanned(extractedData)}
               className="w-full h-[56px] bg-green-600 text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-md"
@@ -186,7 +222,7 @@ export function FormScanner({ onScanned, onCancel }: Props) {
               <Edit2 className="w-5 h-5" /> ✏️ {t("reviewInForm")}
             </button>
             <button
-              onClick={() => setScanState('capture')}
+              onClick={() => setScanState("capture")}
               className="w-full h-[52px] border-2 border-gray-300 text-gray-700 font-semibold rounded-xl flex items-center justify-center gap-2"
             >
               <RefreshCw className="w-5 h-5" /> 🔄 {t("scanAgain")}
@@ -195,7 +231,7 @@ export function FormScanner({ onScanned, onCancel }: Props) {
         </div>
       )}
 
-      {scanState === 'error' && (
+      {scanState === "error" && (
         <div className="flex flex-col items-center justify-center flex-1 text-center space-y-6">
           <div className="p-6 bg-red-50 rounded-full">
             <AlertCircle className="w-20 h-20 text-red-500" />
@@ -206,15 +242,12 @@ export function FormScanner({ onScanned, onCancel }: Props) {
           <p className="text-red-600 font-medium max-w-xs">{error}</p>
           <div className="w-full max-w-xs space-y-3 mt-8">
             <button
-              onClick={() => setScanState('capture')}
+              onClick={() => setScanState("capture")}
               className="w-full h-[52px] bg-gray-900 text-white rounded-xl font-bold"
             >
               {t("tryAgain")}
             </button>
-            <button
-              onClick={onCancel}
-              className="w-full h-[52px] font-semibold text-gray-500"
-            >
+            <button onClick={onCancel} className="w-full h-[52px] font-semibold text-gray-500">
               {t("cancel")}
             </button>
           </div>
@@ -223,5 +256,3 @@ export function FormScanner({ onScanned, onCancel }: Props) {
     </div>
   );
 }
-
-

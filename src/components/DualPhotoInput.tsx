@@ -1,12 +1,12 @@
-import { useRef } from 'react'
-import { Camera, Upload } from 'lucide-react'
+import { useRef } from "react";
+import { Camera, Upload } from "lucide-react";
 
 interface Props {
-  onFileSelected: (file: File) => void
-  uploading?: boolean
-  label?: string
-  sublabel?: string
-  disabled?: boolean
+  onFileSelected: (file: File) => void;
+  uploading?: boolean;
+  label?: string;
+  sublabel?: string;
+  disabled?: boolean;
 }
 
 export default function DualPhotoInput({
@@ -14,16 +14,16 @@ export default function DualPhotoInput({
   uploading = false,
   label,
   sublabel,
-  disabled = false
+  disabled = false,
 }: Props) {
-  const cameraRef = useRef<HTMLInputElement>(null)
-  const uploadRef = useRef<HTMLInputElement>(null)
+  const cameraRef = useRef<HTMLInputElement>(null);
+  const uploadRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) onFileSelected(file)
-    e.target.value = '' // reset so same file can be selected again
-  }
+    const file = e.target.files?.[0];
+    if (file) onFileSelected(file);
+    e.target.value = ""; // reset so same file can be selected again
+  };
 
   return (
     <div className="w-full">
@@ -45,16 +45,11 @@ export default function DualPhotoInput({
       />
 
       {/* Label */}
-      {label && (
-        <p className="font-semibold text-gray-800 text-sm mb-1">{label}</p>
-      )}
-      {sublabel && (
-        <p className="text-gray-400 text-xs mb-3">{sublabel}</p>
-      )}
+      {label && <p className="font-semibold text-gray-800 text-sm mb-1">{label}</p>}
+      {sublabel && <p className="text-gray-400 text-xs mb-3">{sublabel}</p>}
 
       {/* Two buttons side by side */}
       <div className="grid grid-cols-2 gap-3">
-
         {/* Camera Button */}
         <button
           type="button"
@@ -67,9 +62,7 @@ export default function DualPhotoInput({
           ) : (
             <Camera className="w-7 h-7" />
           )}
-          <span className="text-sm font-semibold">
-            {uploading ? 'Uploading...' : 'Camera'}
-          </span>
+          <span className="text-sm font-semibold">{uploading ? "Uploading..." : "Camera"}</span>
           <span className="text-green-200 text-[10px]">कैमरा</span>
         </button>
 
@@ -84,8 +77,7 @@ export default function DualPhotoInput({
           <span className="text-sm font-semibold">Gallery</span>
           <span className="text-green-600 text-[10px]">गैलरी से चुनें</span>
         </button>
-
       </div>
     </div>
-  )
+  );
 }

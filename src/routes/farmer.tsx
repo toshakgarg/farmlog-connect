@@ -101,175 +101,185 @@ function FarmerPage() {
       subtitle={`${t("farmer") || "Farmer"} · ${profile?.name}`}
       onRefresh={refresh}
     >
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-full overflow-x-hidden">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="w-full max-w-full overflow-x-hidden"
+      >
         <div className="pb-24 w-full max-w-full overflow-x-hidden">
           <TabsContent value="home" className="space-y-4 mt-0">
-          {!record ? (
-            <Card className="shadow-sm rounded-xl border-dashed">
-              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                <p className="text-muted-foreground">
-                  {t("noProfileLinked") || "No farmer profile linked to your account."}
+            {!record ? (
+              <Card className="shadow-sm rounded-xl border-dashed">
+                <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                  <p className="text-muted-foreground">
+                    {t("noProfileLinked") || "No farmer profile linked to your account."}
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4 animate-in fade-in duration-300">
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="text-2xl font-bold">Welcome, {profile?.name.split(" ")[0]}</h2>
+                  <div className="flex flex-col items-end">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
+                      Completion
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <Progress value={completionPercentage} className="h-2 w-16" />
+                      <span className="text-xs font-bold text-primary">
+                        {completionPercentage}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                {record.isLeadFarmer && (
+                  <Card className="bg-primary/10 border-primary/20 shadow-none">
+                    <CardContent className="p-3 flex items-center gap-3">
+                      <div className="flex size-8 items-center justify-center rounded-full bg-primary/20 text-primary">
+                        <Tractor className="size-4" />
+                      </div>
+                      <p className="text-sm font-semibold text-primary">You are a Lead Farmer.</p>
+                    </CardContent>
+                  </Card>
+                )}
+
+                <Card className="shadow-sm rounded-xl">
+                  <CardHeader className="pb-2 bg-muted/20 border-b border-border/50">
+                    <CardTitle className="text-[16px] font-bold flex items-center gap-2">
+                      <MapPin className="size-4 text-muted-foreground" /> Land Details
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid grid-cols-2 sm:grid-cols-3 gap-4 p-4 text-sm">
+                    <div>
+                      <p className="text-[11px] text-muted-foreground uppercase font-semibold">
+                        Village
+                      </p>
+                      <p className="font-bold text-[15px]">{record.village || "-"}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] text-muted-foreground uppercase font-semibold">
+                        District
+                      </p>
+                      <p className="font-bold text-[15px]">{record.district || "-"}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] text-muted-foreground uppercase font-semibold">
+                        Land Size
+                      </p>
+                      <p className="font-bold text-[15px]">{record.killahs ?? 0} Killahs</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {questions.length > 0 && (
+                  <Card className="shadow-sm rounded-xl">
+                    <CardHeader className="pb-2 bg-muted/20 border-b border-border/50">
+                      <CardTitle className="text-[16px] font-bold">Survey Answers</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                      <div className="divide-y divide-border">
+                        {questions.map((q) => (
+                          <div key={q.id} className="flex justify-between items-center p-3 text-sm">
+                            <span className="text-muted-foreground">
+                              {lang === "hi" ? q.labelHi : q.labelEn}
+                            </span>
+                            <span className="font-bold">
+                              {String(record.answers?.[q.id] ?? "-")}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {record.photos.length > 0 && (
+                  <Card className="shadow-sm rounded-xl overflow-hidden">
+                    <CardHeader className="pb-2 bg-muted/20 border-b border-border/50">
+                      <CardTitle className="text-[16px] font-bold">Field Photos</CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-2 gap-3 sm:grid-cols-3 p-4">
+                      {record.photos.map((p, i) => (
+                        <div
+                          key={i}
+                          className="relative overflow-hidden rounded-xl border border-border shadow-sm aspect-square bg-muted"
+                        >
+                          <img
+                            src={p.url}
+                            alt="Field"
+                            className="size-full object-cover"
+                            loading="lazy"
+                          />
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
+          </TabsContent>
+          <TabsContent value="profile" className="space-y-4 mt-0">
+            <Card className="shadow-sm rounded-xl">
+              <CardContent className="p-6 text-center space-y-4">
+                <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-2xl">
+                  {profile?.name.substring(0, 2).toUpperCase()}
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold">{profile?.name}</h3>
+                  <p className="text-muted-foreground">{profile?.email}</p>
+                  <p className="text-xs font-semibold uppercase mt-1 text-primary">
+                    {profile?.role}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {record && editable.length > 0 ? (
+              <Card className="shadow-sm rounded-xl">
+                <CardHeader className="pb-2 bg-muted/20 border-b border-border/50">
+                  <CardTitle className="text-[16px] font-bold">
+                    {t("updateAnswers") || "Update Answers"}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 p-4">
+                  <QuestionFields
+                    questions={editable}
+                    answers={answers}
+                    onChange={(id, v) => setAnswers((a) => ({ ...a, [id]: v }))}
+                  />
+                  <Button
+                    className="w-full h-[52px] rounded-xl font-bold shadow-md"
+                    onClick={save}
+                    disabled={saving}
+                  >
+                    {t("save") || "Save Updates"}
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : null}
+
+            <Card className="shadow-sm rounded-xl">
+              <CardContent className="p-4 space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">Language</span>
+                  <LanguageToggle />
+                </div>
+                <Button
+                  variant="outline"
+                  className="w-full h-[52px] rounded-xl font-bold text-destructive border-destructive"
+                  onClick={async () => {
+                    await logout();
+                    navigate({ to: "/" });
+                  }}
+                >
+                  Logout / लॉगआउट
+                </Button>
+                <p className="text-center text-xs text-muted-foreground mt-4">
+                  v1.0.0 <br /> © 2026 JOITA Bioseed AI
                 </p>
               </CardContent>
             </Card>
-          ) : (
-            <div className="space-y-4 animate-in fade-in duration-300">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-2xl font-bold">Welcome, {profile?.name.split(" ")[0]}</h2>
-                <div className="flex flex-col items-end">
-                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                    Completion
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <Progress value={completionPercentage} className="h-2 w-16" />
-                    <span className="text-xs font-bold text-primary">{completionPercentage}%</span>
-                  </div>
-                </div>
-              </div>
-              {record.isLeadFarmer && (
-                <Card className="bg-primary/10 border-primary/20 shadow-none">
-                  <CardContent className="p-3 flex items-center gap-3">
-                    <div className="flex size-8 items-center justify-center rounded-full bg-primary/20 text-primary">
-                      <Tractor className="size-4" />
-                    </div>
-                    <p className="text-sm font-semibold text-primary">You are a Lead Farmer.</p>
-                  </CardContent>
-                </Card>
-              )}
-
-              <Card className="shadow-sm rounded-xl">
-                <CardHeader className="pb-2 bg-muted/20 border-b border-border/50">
-                  <CardTitle className="text-[16px] font-bold flex items-center gap-2">
-                    <MapPin className="size-4 text-muted-foreground" /> Land Details
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="grid grid-cols-2 sm:grid-cols-3 gap-4 p-4 text-sm">
-                  <div>
-                    <p className="text-[11px] text-muted-foreground uppercase font-semibold">
-                      Village
-                    </p>
-                    <p className="font-bold text-[15px]">{record.village || "-"}</p>
-                  </div>
-                  <div>
-                    <p className="text-[11px] text-muted-foreground uppercase font-semibold">
-                      District
-                    </p>
-                    <p className="font-bold text-[15px]">{record.district || "-"}</p>
-                  </div>
-                  <div>
-                    <p className="text-[11px] text-muted-foreground uppercase font-semibold">
-                      Land Size
-                    </p>
-                    <p className="font-bold text-[15px]">{record.killahs ?? 0} Killahs</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {questions.length > 0 && (
-                <Card className="shadow-sm rounded-xl">
-                  <CardHeader className="pb-2 bg-muted/20 border-b border-border/50">
-                    <CardTitle className="text-[16px] font-bold">Survey Answers</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-0">
-                    <div className="divide-y divide-border">
-                      {questions.map((q) => (
-                        <div key={q.id} className="flex justify-between items-center p-3 text-sm">
-                          <span className="text-muted-foreground">
-                            {lang === "hi" ? q.labelHi : q.labelEn}
-                          </span>
-                          <span className="font-bold">{String(record.answers?.[q.id] ?? "-")}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {record.photos.length > 0 && (
-                <Card className="shadow-sm rounded-xl overflow-hidden">
-                  <CardHeader className="pb-2 bg-muted/20 border-b border-border/50">
-                    <CardTitle className="text-[16px] font-bold">Field Photos</CardTitle>
-                  </CardHeader>
-                  <CardContent className="grid grid-cols-2 gap-3 sm:grid-cols-3 p-4">
-                    {record.photos.map((p, i) => (
-                      <div
-                        key={i}
-                        className="relative overflow-hidden rounded-xl border border-border shadow-sm aspect-square bg-muted"
-                      >
-                        <img
-                          src={p.url}
-                          alt="Field"
-                          className="size-full object-cover"
-                          loading="lazy"
-                        />
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          )}
-        </TabsContent>
-        <TabsContent value="profile" className="space-y-4 mt-0">
-          <Card className="shadow-sm rounded-xl">
-            <CardContent className="p-6 text-center space-y-4">
-              <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-2xl">
-                {profile?.name.substring(0, 2).toUpperCase()}
-              </div>
-              <div>
-                <h3 className="text-xl font-bold">{profile?.name}</h3>
-                <p className="text-muted-foreground">{profile?.email}</p>
-                <p className="text-xs font-semibold uppercase mt-1 text-primary">{profile?.role}</p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {record && editable.length > 0 ? (
-            <Card className="shadow-sm rounded-xl">
-              <CardHeader className="pb-2 bg-muted/20 border-b border-border/50">
-                <CardTitle className="text-[16px] font-bold">
-                  {t("updateAnswers") || "Update Answers"}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 p-4">
-                <QuestionFields
-                  questions={editable}
-                  answers={answers}
-                  onChange={(id, v) => setAnswers((a) => ({ ...a, [id]: v }))}
-                />
-                <Button
-                  className="w-full h-[52px] rounded-xl font-bold shadow-md"
-                  onClick={save}
-                  disabled={saving}
-                >
-                  {t("save") || "Save Updates"}
-                </Button>
-              </CardContent>
-            </Card>
-          ) : null}
-
-          <Card className="shadow-sm rounded-xl">
-            <CardContent className="p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="font-medium">Language</span>
-                <LanguageToggle />
-              </div>
-              <Button
-                variant="outline"
-                className="w-full h-[52px] rounded-xl font-bold text-destructive border-destructive"
-                onClick={async () => {
-                  await logout();
-                  navigate({ to: "/" });
-                }}
-              >
-                Logout / लॉगआउट
-              </Button>
-              <p className="text-center text-xs text-muted-foreground mt-4">
-                v1.0.0 <br /> © 2026 JOITA Bioseed AI
-              </p>
-            </CardContent>
-          </Card>
-        </TabsContent>
+          </TabsContent>
         </div>
 
         <TabsList className="fixed bottom-0 left-0 right-0 z-50 flex h-[72px] rounded-none border-t border-gray-200 bg-white p-0 shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)] justify-around pb-safe">
@@ -277,7 +287,9 @@ function FarmerPage() {
             value="home"
             className="relative flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-green-600 data-[state=inactive]:text-gray-400 data-[state=active]:shadow-none"
           >
-            {activeTab === 'home' && <div className="absolute top-0 w-10 h-1 bg-green-600 rounded-b-full" />}
+            {activeTab === "home" && (
+              <div className="absolute top-0 w-10 h-1 bg-green-600 rounded-b-full" />
+            )}
             <Home className="size-6" />
             <span className="text-[10px] font-bold leading-none uppercase mt-1">Home</span>
           </TabsTrigger>
@@ -285,7 +297,9 @@ function FarmerPage() {
             value="profile"
             className="relative flex flex-col items-center justify-center flex-1 h-full gap-1 rounded-none border-none bg-transparent data-[state=active]:bg-transparent data-[state=active]:text-green-600 data-[state=inactive]:text-gray-400 data-[state=active]:shadow-none"
           >
-            {activeTab === 'profile' && <div className="absolute top-0 w-10 h-1 bg-green-600 rounded-b-full" />}
+            {activeTab === "profile" && (
+              <div className="absolute top-0 w-10 h-1 bg-green-600 rounded-b-full" />
+            )}
             <User className="size-6" />
             <span className="text-[10px] font-bold leading-none uppercase mt-1">Profile</span>
           </TabsTrigger>

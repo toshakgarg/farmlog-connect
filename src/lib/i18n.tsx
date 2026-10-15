@@ -151,8 +151,14 @@ export const strings: Dict = {
   placeFormOnFlatSurface: { en: "Place form on flat surface", hi: "फॉर्म को समतल जगह पर रखें" },
   ensureGoodLighting: { en: "Ensure good lighting", hi: "पर्याप्त रोशनी सुनिश्चित करें" },
   fullFormMustBeInFrame: { en: "Full form must be in frame", hi: "पूरा फॉर्म कैमरे में आना चाहिए" },
-  bothHindiAndEnglishAreRead: { en: "Both Hindi and English are read", hi: "हिंदी और अंग्रेजी दोनों पढ़ी जा सकती हैं" },
-  correctMistakes: { en: "You can correct any mistakes in the form", hi: "आप फॉर्म में जाकर गलत जानकारी सुधार सकते हैं" },
+  bothHindiAndEnglishAreRead: {
+    en: "Both Hindi and English are read",
+    hi: "हिंदी और अंग्रेजी दोनों पढ़ी जा सकती हैं",
+  },
+  correctMistakes: {
+    en: "You can correct any mistakes in the form",
+    hi: "आप फॉर्म में जाकर गलत जानकारी सुधार सकते हैं",
+  },
   reviewInForm: { en: "Review in Form", hi: "फॉर्म में देखें" },
   scanAgain: { en: "Scan Again", hi: "दोबारा स्कैन करें" },
   tryAgain: { en: "Try Again", hi: "दोबारा कोशिश करें" },
@@ -160,7 +166,7 @@ export const strings: Dict = {
   baseline: { en: "Baseline", hi: "आधार रेखा" },
   followUp: { en: "Follow-up", hi: "अनुवर्ती" },
   scanPaperFormHeader: { en: "Scan Paper Form", hi: "पेपर फॉर्म स्कैन करें" },
-  scanFailed: { en: "Scan Failed", hi: "स्कैन विफल" }
+  scanFailed: { en: "Scan Failed", hi: "स्कैन विफल" },
 };
 
 interface Ctx {

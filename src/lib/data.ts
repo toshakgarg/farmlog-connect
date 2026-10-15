@@ -13,70 +13,66 @@ import {
   saveJOITAPerforma as dbSaveJOITAPerforma,
   getJOITAPerformasBySupervisor as dbGetJOITAPerformasBySupervisor,
   getAllJOITAPerformas as dbGetAllJOITAPerformas,
-  deleteJOITAPerforma as dbDeleteJOITAPerforma
-} from './db'
-import { cacheMeta, readMeta } from './offline'
-import type { AppUser, FarmerRecord, SurveyQuestion, JOITAPerforma } from './types'
+  deleteJOITAPerforma as dbDeleteJOITAPerforma,
+} from "./db";
+import { cacheMeta, readMeta } from "./offline";
+import type { AppUser, FarmerRecord, SurveyQuestion, JOITAPerforma } from "./types";
 
-export {
-  pushRecord,
-  saveRecordLocalFirst,
-  syncPending,
-} from "./record-sync";
+export { pushRecord, saveRecordLocalFirst, syncPending } from "./record-sync";
 
 // Users
 export async function getAppUser(uid: string): Promise<AppUser | null> {
-  return getUserProfile(uid)
+  return getUserProfile(uid);
 }
 
 export async function saveAppUser(user: AppUser) {
   // get existing user to preserve passwordHash
-  const { getUserByEmail } = await import('./db')
-  const existing = await getUserByEmail(user.email)
-  await createUserProfile({ ...user, passwordHash: existing?.passwordHash || '' })
+  const { getUserByEmail } = await import("./db");
+  const existing = await getUserByEmail(user.email);
+  await createUserProfile({ ...user, passwordHash: existing?.passwordHash || "" });
 }
 
-export async function listUsers(role: AppUser['role']): Promise<AppUser[]> {
-  return getAllUsers(role)
+export async function listUsers(role: AppUser["role"]): Promise<AppUser[]> {
+  return getAllUsers(role);
 }
 
 export async function deleteAppUser(uid: string) {
-  await deleteUserProfile(uid)
+  await deleteUserProfile(uid);
 }
 
 // Questions
 export async function listQuestions(): Promise<SurveyQuestion[]> {
   try {
-    const qs = await getSurveyQuestions()
-    await cacheMeta('questions', qs)
-    return qs
+    const qs = await getSurveyQuestions();
+    await cacheMeta("questions", qs);
+    return qs;
   } catch {
-    return (await readMeta<SurveyQuestion[]>('questions')) ?? []
+    return (await readMeta<SurveyQuestion[]>("questions")) ?? [];
   }
 }
 
 export async function saveQuestion(q: SurveyQuestion) {
-  await saveSurveyQuestion(q)
+  await saveSurveyQuestion(q);
 }
 
 export async function deleteQuestion(id: string) {
-  await deleteSurveyQuestion(id)
+  await deleteSurveyQuestion(id);
 }
 
 // Records
 export async function listRecords(supervisorID?: string): Promise<FarmerRecord[]> {
   if (supervisorID) {
-    return getFarmersBySupervisor(supervisorID)
+    return getFarmersBySupervisor(supervisorID);
   }
-  return getAllFarmerRecords()
+  return getAllFarmerRecords();
 }
 
 export async function getRecord(id: string): Promise<FarmerRecord | null> {
-  return getFarmerRecord(id)
+  return getFarmerRecord(id);
 }
 
 export async function deleteRecord(id: string) {
-  await deleteFarmerRecord(id)
+  await deleteFarmerRecord(id);
 }
 
 // CSV
@@ -148,17 +144,19 @@ export function downloadCsv(filename: string, csv: string) {
 
 // JOITA Performa
 export async function saveJOITAPerforma(data: Partial<JOITAPerforma>): Promise<string> {
-  return dbSaveJOITAPerforma(data)
+  return dbSaveJOITAPerforma(data);
 }
 
-export async function getJOITAPerformasBySupervisor(supervisorId: string): Promise<JOITAPerforma[]> {
-  return dbGetJOITAPerformasBySupervisor(supervisorId)
+export async function getJOITAPerformasBySupervisor(
+  supervisorId: string,
+): Promise<JOITAPerforma[]> {
+  return dbGetJOITAPerformasBySupervisor(supervisorId);
 }
 
 export async function getAllJOITAPerformas(): Promise<JOITAPerforma[]> {
-  return dbGetAllJOITAPerformas()
+  return dbGetAllJOITAPerformas();
 }
 
 export async function deleteJOITAPerforma(id: string): Promise<void> {
-  return dbDeleteJOITAPerforma(id)
+  return dbDeleteJOITAPerforma(id);
 }

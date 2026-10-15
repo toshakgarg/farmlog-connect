@@ -176,7 +176,7 @@ export interface JOITAPhoto {
   longitude: number | null;
   timestamp: string;
   caption?: string;
-  photoType: 'field' | 'crop' | 'soil' | 'pest' | 'other';
+  photoType: "field" | "crop" | "soil" | "pest" | "other";
   localKey?: string;
 }
 
@@ -216,10 +216,24 @@ export const emptyJOITAPerforma = (supervisorId: string): JOITAPerforma => ({
   currentProblems: "",
   farmerMainNeed: "",
   soilBaseline: {
-    ph: "", ec: "", salinity: "", moisture: "", temperature: "", nitrogen: "", phosphorus: "", potassium: ""
+    ph: "",
+    ec: "",
+    salinity: "",
+    moisture: "",
+    temperature: "",
+    nitrogen: "",
+    phosphorus: "",
+    potassium: "",
   },
   soilFollowup: {
-    ph: "", ec: "", salinity: "", moisture: "", temperature: "", nitrogen: "", phosphorus: "", potassium: ""
+    ph: "",
+    ec: "",
+    salinity: "",
+    moisture: "",
+    temperature: "",
+    nitrogen: "",
+    phosphorus: "",
+    potassium: "",
   },
   spadChlorophyll: "",
   labSampleCode: "",
@@ -238,4 +252,3 @@ export const emptyJOITAPerforma = (supervisorId: string): JOITAPerforma => ({
   farmerConsentGiven: false,
   photos: [],
 });
-

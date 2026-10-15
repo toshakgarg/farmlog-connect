@@ -35,13 +35,19 @@ export function AppShell({
   useBackNavigation(handleBack);
 
   return (
-    <div className="min-h-screen bg-gray-50 app-shell flex flex-col w-full overflow-x-hidden" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
+    <div
+      className="min-h-screen bg-gray-50 app-shell flex flex-col w-full overflow-x-hidden"
+      style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+    >
       <header
         className="fixed top-0 left-0 right-0 z-50 w-full bg-white border-b border-gray-100"
-        style={{ paddingTop: 'env(safe-area-inset-top, 24px)' }}
+        style={{ paddingTop: "env(safe-area-inset-top, 24px)" }}
       >
         {onRefresh && (refreshing || distance > 0) ? (
-          <div className="absolute top-16 left-0 right-0 flex justify-center pull-refresh-indicator bg-white/90 backdrop-blur" style={{ height: `${Math.max(0, distance)}px` }}>
+          <div
+            className="absolute top-16 left-0 right-0 flex justify-center pull-refresh-indicator bg-white/90 backdrop-blur"
+            style={{ height: `${Math.max(0, distance)}px` }}
+          >
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <Wifi className={`size-4 ${refreshing ? "animate-spin" : ""}`} />
               <span>{refreshing ? "Refreshing..." : "Pull to refresh"}</span>
@@ -64,7 +70,9 @@ export function AppShell({
           )}
           <div className="flex items-center gap-2 min-w-0 flex-1 px-2">
             <div className="min-w-0">
-              <p className="font-bold text-gray-900 text-[15px] leading-tight whitespace-nowrap">FarmLog</p>
+              <p className="font-bold text-gray-900 text-[15px] leading-tight whitespace-nowrap">
+                FarmLog
+              </p>
               <p className="text-gray-500 text-xs truncate">{subtitle || title}</p>
             </div>
           </div>
@@ -88,7 +96,12 @@ export function AppShell({
       </header>
       <main
         className={`mx-auto max-w-5xl w-full flex-1 px-4 app-main overflow-x-hidden`}
-        style={{ paddingTop: actions ? 'calc(env(safe-area-inset-top, 24px) + 112px)' : 'calc(env(safe-area-inset-top, 0px) + 64px)', paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 64px)' }}
+        style={{
+          paddingTop: actions
+            ? "calc(env(safe-area-inset-top, 24px) + 112px)"
+            : "calc(env(safe-area-inset-top, 0px) + 64px)",
+          paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 64px)",
+        }}
       >
         {children}
       </main>
