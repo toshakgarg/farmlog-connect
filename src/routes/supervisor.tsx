@@ -7,6 +7,7 @@ import { AppShell } from "@/components/AppShell";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { FarmerForm } from "@/components/FarmerForm";
 import { FormScanner } from "@/components/FormScanner";
+import { FormPaperReader } from "@/components/FormPaperReader";
 import { JOITAForm } from "@/components/JOITAForm";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -94,6 +95,7 @@ function SupervisorPage() {
   const [editing, setEditing] = useState<FarmerRecord | null>(null);
   const [editingJoita, setEditingJoita] = useState<JOITAPerforma | null>(null);
   const [showScanner, setShowScanner] = useState(false);
+  const [showFormReader, setShowFormReader] = useState(false);
   const [search, setSearch] = useState("");
   const [syncing, setSyncing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -276,7 +278,12 @@ function SupervisorPage() {
         }}
         onCancel={() => setDeleteJoitaId(null)}
       />
-      {showScanner ? (
+      {showFormReader ? (
+        <FormPaperReader
+          farmers={records}
+          onCancel={() => setShowFormReader(false)}
+        />
+      ) : showScanner ? (
         <FormScanner
           onScanned={(data) => {
             setShowScanner(false);
@@ -370,7 +377,13 @@ function SupervisorPage() {
                   onClick={() => setShowScanner(true)}
                   className="w-full h-[52px] border-2 border-blue-500 text-blue-700 rounded-xl font-semibold text-sm flex items-center justify-center gap-2"
                 >
-                  <span>📷</span> पेपर फॉर्म स्कैन करें / Scan Paper Form
+                  <span>📷</span> पेपर फॉर्म स्कैन करें (Legacy)
+                </button>
+                <button
+                  onClick={() => setShowFormReader(true)}
+                  className="w-full h-[52px] border-2 border-primary text-primary rounded-xl font-semibold text-sm flex items-center justify-center gap-2 mt-3"
+                >
+                  <span>🤖</span> पेपर फॉर्म स्कैन करें / Scan Paper Form (New AI)
                 </button>
               </div>
 

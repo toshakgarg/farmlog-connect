@@ -143,3 +143,22 @@ See `CONTRIBUTING.md` for guidelines on how to contribute to this project.
 ## License
 
 _(No explicit license provided. Please consult the repository owner before using or distributing.)_
+
+## Form Intelligence (Python service)
+
+A new FastAPI-based python service resides in `farmlog-intelligence-python/`. 
+It exposes these endpoints (locally on port 8000):
+- `POST /api/form-intelligence/setup`
+- `POST /api/form-intelligence/upload`
+- `POST /api/form-intelligence/digitize`
+- `GET /api/form-intelligence/schemas`
+- `GET /api/form-intelligence/pending?schema_id=...`
+
+To start it:
+1. `cd farmlog-intelligence-python`
+2. `python -m venv venv`
+3. `.\venv\Scripts\activate` (Windows) or `source venv/bin/activate` (Mac/Linux)
+4. `pip install -r requirements.txt`
+5. Copy `.env.example` to `.env` and fill the variables.
+6. `uvicorn app.main:app --reload --port 8000`
+

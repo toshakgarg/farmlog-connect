@@ -23,6 +23,7 @@ import {
 import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { FormTemplateSetup } from "@/components/FormTemplateSetup";
 import { LanguageToggle } from "@/components/LanguageToggle";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Button } from "@/components/ui/button";
@@ -742,6 +743,8 @@ function AdminPage() {
                     </div>
                   </CardContent>
                 </Card>
+
+                <FormTemplateSetup />
 
                 <Card className="shadow-sm rounded-xl">
                   <CardContent className="p-4 space-y-4">
