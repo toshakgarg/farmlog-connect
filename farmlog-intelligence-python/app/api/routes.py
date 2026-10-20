@@ -137,14 +137,18 @@ async def upload_photos(request: UploadRequest):
 async def digitize(request: DigitizetRequest):
     """
     Trigger digitization of all pending photos for a schema.
-    Fetches photos from Blob → Claude Vision (parallel) → merge → save record.
+    Fetches photos from Blob → Vision API (parallel) → save records.
     """
-    logger.info(f"POST /digitize | schema={request.schema_id} | supervisor={request.supervisor_id}")
+    logger.info(
+        f"POST /digitize | schema={request.schema_id} | "
+        f"supervisor={request.supervisor_id} | batch_mode={request.batch_mode}"
+    )
     try:
         response = await _reader_pipeline.run(
             schema_id     = request.schema_id,
             supervisor_id = request.supervisor_id,
             farmer_id     = request.farmer_id,
+            batch_mode    = request.batch_mode,
         )
         return response
     except ValueError as e:

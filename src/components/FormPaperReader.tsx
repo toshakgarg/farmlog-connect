@@ -89,39 +89,77 @@ export function FormPaperReader({ farmers, onCancel }: Props) {
     }
   };
 
+  const [batchMode, setBatchMode] = useState<boolean>(true);
+
   const doUpload = async () => {
-    if (!selectedSchema || !selectedFarmer || photos.length === 0) return;
-    await upload(photos, selectedSchema, selectedFarmer, profile?.uid || "supervisor");
+    if (!selectedSchema || photos.length === 0) return;
+    await upload(photos, selectedSchema, selectedFarmer || "auto", profile?.uid || "supervisor");
     setPhotos([]);
   };
 
   const doDigitize = async () => {
     if (!selectedSchema) return;
     setSavedSuccess(false);
-    await digitize(selectedSchema, profile?.uid || "supervisor", selectedFarmer || undefined);
+    await digitize(selectedSchema, profile?.uid || "supervisor", selectedFarmer || undefined, batchMode);
   };
 
   const handleDownloadCsv = () => {
-    if (!digitizeResult || !digitizeResult.data) return;
+    if (!digitizeResult) return;
 
-    const rows = [["Field Key", "Extracted Value", "Confidence Score (%)", "Detection Source"]];
-    Object.entries(digitizeResult.data).forEach(([key, item]) => {
-      rows.push([
-        key,
-        item.value || "",
-        String(item.confidence ?? 0),
-        item.source || "",
-      ]);
-    });
+    const records = digitizeResult.records && digitizeResult.records.length > 0
+      ? digitizeResult.records
+      : digitizeResult.record
+      ? [digitizeResult.record]
+      : [];
 
-    const csvText = rows
-      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
-      .join("\n");
+    if (records.length === 0 && !digitizeResult.data) return;
 
-    const schemaObj = schemas.find((s) => s.id === selectedSchema);
-    const code = schemaObj?.form_code || "form";
-    downloadCsv(`digitized-${code}-${Date.now()}.csv`, csvText);
-    toast.success("CSV file downloaded successfully!");
+    if (records.length > 0) {
+      // Wide/Flat Format: 1 row per form/farmer
+      const schemaObj = schemas.find((s) => s.id === selectedSchema);
+      const fieldKeys = schemaObj?.fields?.map((f) => f.key) || Object.keys(digitizeResult.data || {});
+
+      const header = ["Record ID", "Farmer ID / Name", "Submitted At", ...fieldKeys];
+      const rows = [header];
+
+      records.forEach((rec) => {
+        const row = [
+          rec.id,
+          rec.farmer_id || "Auto-detected",
+          rec.submitted_at || new Date().toISOString(),
+          ...fieldKeys.map((k) => rec.data?.[k]?.value || ""),
+        ];
+        rows.push(row);
+      });
+
+      const csvText = rows
+        .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+        .join("\n");
+
+      const code = schemaObj?.form_code || "survey";
+      downloadCsv(`survey-data-${code}-${Date.now()}.csv`, csvText);
+      toast.success(`Downloaded CSV with ${records.length} form record(s)!`);
+    } else {
+      // Fallback single-record format
+      const rows = [["Field Key", "Extracted Value", "Confidence Score (%)", "Detection Source"]];
+      Object.entries(digitizeResult.data).forEach(([key, item]) => {
+        rows.push([
+          key,
+          item.value || "",
+          String(item.confidence ?? 0),
+          item.source || "",
+        ]);
+      });
+
+      const csvText = rows
+        .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+        .join("\n");
+
+      const schemaObj = schemas.find((s) => s.id === selectedSchema);
+      const code = schemaObj?.form_code || "form";
+      downloadCsv(`digitized-${code}-${Date.now()}.csv`, csvText);
+      toast.success("CSV file downloaded successfully!");
+    }
   };
 
   const handleApproveAndSave = async () => {
@@ -247,13 +285,15 @@ export function FormPaperReader({ farmers, onCancel }: Props) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Select Farmer</label>
+              <label className="block text-sm font-medium mb-1">
+                Select Farmer <span className="text-xs text-muted-foreground font-normal">(Optional — AI will auto-detect from form if blank)</span>
+              </label>
               <select
                 className="w-full h-12 px-3 rounded-xl border border-border bg-card"
                 value={selectedFarmer}
                 onChange={(e) => setSelectedFarmer(e.target.value)}
               >
-                <option value="">-- Choose a farmer --</option>
+                <option value="">-- Auto-detect from handwritten form --</option>
                 {farmers.map((f) => (
                   <option key={f.id} value={f.id}>
                     {f.fullName || f.name || "Unnamed Farmer"}
@@ -278,11 +318,29 @@ export function FormPaperReader({ farmers, onCancel }: Props) {
               )}
             </div>
 
+            <div className="flex items-center justify-between p-3 bg-muted/40 rounded-xl border">
+              <div>
+                <p className="text-sm font-semibold">Form Batch Processing Mode</p>
+                <p className="text-xs text-muted-foreground">
+                  {batchMode
+                    ? "Batch mode: Each photo is a SEPARATE form (1 survey record per photo)"
+                    : "Multi-page mode: Combine all photos into 1 single multi-page form record"}
+                </p>
+              </div>
+              <Button
+                variant={batchMode ? "default" : "outline"}
+                size="sm"
+                onClick={() => setBatchMode(!batchMode)}
+              >
+                {batchMode ? "Batch (Multiple Forms)" : "Multi-Page (1 Form)"}
+              </Button>
+            </div>
+
             <Button
               className="w-full h-12 font-bold"
               onClick={doUpload}
               disabled={
-                stage === "uploading" || !selectedSchema || !selectedFarmer || photos.length === 0
+                stage === "uploading" || !selectedSchema || photos.length === 0
               }
             >
               {stage === "uploading" ? (

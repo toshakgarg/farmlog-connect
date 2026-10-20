@@ -32,8 +32,8 @@ export interface UseFormDigitizeReturn {
   digitizeResult: DigitizeResponse | null;
   pendingCount:   number;
   error:          string | null;
-  upload:   (photos: File[], schemaId: string, farmerId: string, supervisorId: string) => Promise<void>;
-  digitize: (schemaId: string, supervisorId: string, farmerId?: string) => Promise<void>;
+  upload:   (photos: File[], schemaId: string, farmerId?: string, supervisorId?: string) => Promise<void>;
+  digitize: (schemaId: string, supervisorId?: string, farmerId?: string, batchMode?: boolean) => Promise<void>;
   loadPending: (schemaId: string) => Promise<void>;
   reset:    () => void;
 }
@@ -50,8 +50,8 @@ export function useFormDigitize(): UseFormDigitizeReturn {
   const upload = useCallback(async (
     photos: File[],
     schemaId: string,
-    farmerId: string,
-    supervisorId: string,
+    farmerId: string = "auto",
+    supervisorId: string = "supervisor",
   ) => {
     setStage("uploading");
     setProgress(5);
@@ -59,7 +59,7 @@ export function useFormDigitize(): UseFormDigitizeReturn {
 
     const tick = setInterval(() => setProgress(p => Math.min(p + 10, 90)), 600);
     try {
-      const response = await uploadPhotos(photos, schemaId, farmerId, supervisorId);
+      const response = await uploadPhotos(photos, schemaId, farmerId || "auto", supervisorId);
       clearInterval(tick);
       setProgress(100);
       setStage("uploaded");
@@ -76,8 +76,9 @@ export function useFormDigitize(): UseFormDigitizeReturn {
   // ── Step 2: Digitize all pending photos ────────────────────────────────────
   const digitize = useCallback(async (
     schemaId: string,
-    supervisorId: string,
+    supervisorId: string = "supervisor",
     farmerId?: string,
+    batchMode: boolean = true,
   ) => {
     setStage("digitizing");
     setProgress(10);
@@ -85,7 +86,7 @@ export function useFormDigitize(): UseFormDigitizeReturn {
 
     const tick = setInterval(() => setProgress(p => Math.min(p + 4, 88)), 1200);
     try {
-      const response = await digitizeAll(schemaId, supervisorId, farmerId);
+      const response = await digitizeAll(schemaId, supervisorId, farmerId, batchMode);
       clearInterval(tick);
       setProgress(100);
       setStage("done");

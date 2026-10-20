@@ -59,9 +59,12 @@ class ReaderPipeline:
         schema_id: str,
         supervisor_id: str,
         farmer_id: str | None = None,
+        batch_mode: bool = True,
     ) -> DigitizeResponse:
         """
         Run the full digitization pipeline for all pending uploads.
+        If batch_mode=True, creates 1 FormRecord per photo.
+        If batch_mode=False, combines all photos into 1 multi-page FormRecord.
         """
         start = datetime.utcnow()
 
@@ -80,11 +83,11 @@ class ReaderPipeline:
         if not pending:
             raise ValueError(f"No pending uploads found for schema {schema_id}.")
 
-        # Filter by farmer if specified
-        if farmer_id:
+        # Filter by farmer if specified and not default "auto"
+        if farmer_id and farmer_id != "auto":
             pending = [p for p in pending if p.farmer_id == farmer_id]
 
-        logger.info(f"Found {len(pending)} pending photos to digitize")
+        logger.info(f"Found {len(pending)} pending photos to digitize (batch_mode={batch_mode})")
 
         # ── Step 3: Mark all as processing ───────────────────────────────────
         for upload in pending:
@@ -95,7 +98,7 @@ class ReaderPipeline:
         # ── Step 4: Download + read all photos in parallel ───────────────────
         logger.info(f"ReaderPipeline step 3/5: reading {len(pending)} photos in parallel")
 
-        async def process_one(upload: PendingUpload) -> list[dict] | None:
+        async def process_one(upload: PendingUpload) -> tuple[PendingUpload, list[dict] | None]:
             try:
                 # Download from Blob Storage
                 image_bytes, content_type = self.blob.download_image(
@@ -112,80 +115,131 @@ class ReaderPipeline:
                     f"{len([p for p in result['pairs'] if p.get('value')])} values read "
                     f"(quality: {result['image_quality']})"
                 )
-                return result["pairs"]
+                return (upload, result["pairs"])
 
-            except Exception as e:
+                except Exception as e:
                 logger.error(f"  ✗ Photo {upload.photo_index} failed: {e}")
-                return None
+                return (upload, None)
 
-        results = await asyncio.gather(*[process_one(u) for u in pending])
+        processed_results = await asyncio.gather(*[process_one(u) for u in pending])
 
-        # Collect successful reads
-        successful_pairs: list[list[dict]] = [r for r in results if r is not None]
-        failed_count = len(results) - len(successful_pairs)
+        successful = [(upload, pairs) for upload, pairs in processed_results if pairs is not None]
+        failed_count = len(processed_results) - len(successful)
 
-        if not successful_pairs:
+        if not successful:
             raise RuntimeError(f"All {len(pending)} photos failed to process.")
 
         logger.info(
-            f"ReaderPipeline: {len(successful_pairs)}/{len(pending)} photos read successfully"
+            f"ReaderPipeline: {len(successful)}/{len(pending)} photos read successfully"
             + (f", {failed_count} failed" if failed_count else "")
         )
 
-        # ── Step 5: Merge + validate ──────────────────────────────────────────
-        logger.info("ReaderPipeline step 4/5: merging and validating")
-        merged = merge_and_validate(
-            all_photo_pairs=successful_pairs,
-            schema_fields=schema.fields,
-            confidence_threshold=self.threshold,
-        )
+        saved_records: list[FormRecord] = []
 
-        # ── Step 6: Save record ───────────────────────────────────────────────
-        logger.info("ReaderPipeline step 5/5: saving record to Cosmos DB")
-        record_id = generate_record_id(schema_id)
-        resolved_farmer = farmer_id or (pending[0].farmer_id if pending else "unknown")
+        if batch_mode or len(successful) == 1:
+            # ── Mode A: Process each photo as its OWN separate FormRecord ─────
+            logger.info("ReaderPipeline step 4/5 (Batch Mode): creating individual records per form photo")
+            for upload, pairs in successful:
+                merged = merge_and_validate(
+                    all_photo_pairs=[pairs],
+                    schema_fields=schema.fields,
+                    confidence_threshold=self.threshold,
+                )
 
-        record = FormRecord(
-            id            = record_id,
-            schema_id     = schema_id,
-            farmer_id     = resolved_farmer,
-            supervisor_id = supervisor_id,
-            submitted_at  = datetime.utcnow().isoformat(),
-            photo_count   = len(pending),
-            data          = merged["data"],
-            flags         = merged["flags"],
-            status        = merged["status"],
-            blob_paths    = [u.blob_path for u in pending],
-        )
+                # Auto-detect farmer name/ID if present in extracted data
+                extracted_farmer = None
+                for key_candidate in ["farmer_name", "farmer_id", "farmer_mobile", "mobile_number"]:
+                    if key_candidate in merged["data"] and merged["data"][key_candidate].value:
+                        extracted_farmer = str(merged["data"][key_candidate].value)
+                        break
 
-        saved = self.cosmos.save_record(record)
+                resolved_farmer = extracted_farmer or (
+                    upload.farmer_id if upload.farmer_id != "auto" else f"farmer_{upload.photo_index + 1}"
+                )
 
-        # ── Step 7: Mark pending uploads as done ─────────────────────────────
-        for upload in pending:
-            self.cosmos.update_pending_status(
-                upload.id,
-                schema_id,
-                UploadStatus.DONE,
-                record_id=record_id,
-                digitized_at=datetime.utcnow().isoformat(),
+                rec_id = generate_record_id(schema_id)
+                record = FormRecord(
+                    id            = rec_id,
+                    schema_id     = schema_id,
+                    farmer_id     = resolved_farmer,
+                    supervisor_id = supervisor_id,
+                    submitted_at  = datetime.utcnow().isoformat(),
+                    photo_count   = 1,
+                    data          = merged["data"],
+                    flags         = merged["flags"],
+                    status        = merged["status"],
+                    blob_paths    = [upload.blob_path],
+                )
+
+                saved = self.cosmos.save_record(record)
+                saved_records.append(saved)
+
+                self.cosmos.update_pending_status(
+                    upload.id,
+                    schema_id,
+                    UploadStatus.DONE,
+                    record_id=rec_id,
+                    digitized_at=datetime.utcnow().isoformat(),
+                )
+
+        else:
+            # ── Mode B: Combine ALL photos into 1 multi-page FormRecord ────────
+            logger.info("ReaderPipeline step 4/5 (Multi-page Mode): merging all photos into 1 record")
+            all_pairs = [pairs for _, pairs in successful]
+            merged = merge_and_validate(
+                all_photo_pairs=all_pairs,
+                schema_fields=schema.fields,
+                confidence_threshold=self.threshold,
             )
 
+            rec_id = generate_record_id(schema_id)
+            resolved_farmer = (
+                farmer_id if (farmer_id and farmer_id != "auto")
+                else pending[0].farmer_id if pending[0].farmer_id != "auto"
+                else "multi_page_farmer"
+            )
+
+            record = FormRecord(
+                id            = rec_id,
+                schema_id     = schema_id,
+                farmer_id     = resolved_farmer,
+                supervisor_id = supervisor_id,
+                submitted_at  = datetime.utcnow().isoformat(),
+                photo_count   = len(successful),
+                data          = merged["data"],
+                flags         = merged["flags"],
+                status        = merged["status"],
+                blob_paths    = [u.blob_path for u, _ in successful],
+            )
+
+            saved = self.cosmos.save_record(record)
+            saved_records.append(saved)
+
+            for u, _ in successful:
+                self.cosmos.update_pending_status(
+                    u.id,
+                    schema_id,
+                    UploadStatus.DONE,
+                    record_id=rec_id,
+                    digitized_at=datetime.utcnow().isoformat(),
+                )
+
+        primary = saved_records[0]
         duration = (datetime.utcnow() - start).total_seconds()
         logger.info(
             f"ReaderPipeline complete: "
-            f"record_id={record_id}, "
-            f"status={saved.status}, "
-            f"flags={len(saved.flags)}, "
-            f"avg_confidence={merged['stats']['avg_confidence']}%, "
+            f"created {len(saved_records)} record(s), "
+            f"primary_id={primary.id}, "
             f"duration={duration:.1f}s"
         )
 
         return DigitizeResponse(
             success     = True,
-            record_id   = saved.id,
-            status      = saved.status,
-            data        = saved.data,
-            flags       = saved.flags,
-            photo_count = saved.photo_count,
-            record      = saved,
+            record_id   = primary.id,
+            status      = primary.status,
+            data        = primary.data,
+            flags       = primary.flags,
+            photo_count = primary.photo_count,
+            record      = primary,
+            records     = saved_records,
         )

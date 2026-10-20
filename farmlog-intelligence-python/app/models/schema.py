@@ -190,16 +190,16 @@ class SetupResponse(BaseModel):
 
 # Upload Pipeline
 class UploadRequest(BaseModel):
-    photos:       list[PhotoPayload]
-    schema_id:    str
-    farmer_id:    str
+    photos:        list[PhotoPayload]
+    schema_id:     str
+    farmer_id:     str = "auto"
     supervisor_id: str
 
 class UploadResponse(BaseModel):
-    success:       bool
+    success:        bool
     uploaded_count: int
-    pending_ids:   list[str]
-    error:         str | None = None
+    pending_ids:    list[str]
+    error:          str | None = None
 
 
 # Digitize Pipeline
@@ -207,15 +207,17 @@ class DigitizetRequest(BaseModel):
     schema_id:     str
     supervisor_id: str
     farmer_id:     str | None = None   # optional filter
+    batch_mode:    bool = True         # True = 1 record per photo; False = combine all into 1 multi-page record
 
 class DigitizeResponse(BaseModel):
     success:     bool
-    record_id:   str
-    status:      RecordStatus
-    data:        dict[str, FieldValue]
-    flags:       list[LowConfidenceFlag]
-    photo_count: int
-    record:      FormRecord
+    record_id:   str = ""
+    status:      RecordStatus = RecordStatus.COMPLETE
+    data:        dict[str, FieldValue] = Field(default_factory=dict)
+    flags:       list[LowConfidenceFlag] = Field(default_factory=list)
+    photo_count: int = 0
+    record:      FormRecord | None = None
+    records:     list[FormRecord] = Field(default_factory=list)
     error:       str | None = None
 
 

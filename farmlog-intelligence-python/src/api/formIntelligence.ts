@@ -66,6 +66,19 @@ export interface UploadResponse {
   error?:         string;
 }
 
+export interface FormRecord {
+  id:            string;
+  schema_id:     string;
+  farmer_id:     string;
+  supervisor_id: string;
+  submitted_at:  string;
+  photo_count:   number;
+  data:          Record<string, FieldValue>;
+  flags:         LowConfidenceFlag[];
+  status:        "complete" | "needs_review";
+  blob_paths:    string[];
+}
+
 export interface DigitizeResponse {
   success:     boolean;
   record_id:   string;
@@ -73,6 +86,8 @@ export interface DigitizeResponse {
   data:        Record<string, FieldValue>;
   flags:       LowConfidenceFlag[];
   photo_count: number;
+  record?:     FormRecord;
+  records?:    FormRecord[];
   error?:      string;
 }
 
@@ -139,8 +154,8 @@ export async function setupForm(
 export async function uploadPhotos(
   photos: File[],
   schemaId: string,
-  farmerId: string,
-  supervisorId: string
+  farmerId: string = "auto",
+  supervisorId: string = "supervisor"
 ): Promise<UploadResponse> {
   const photoPayloads = await Promise.all(
     photos.map(async (file, idx) => {
@@ -149,9 +164,9 @@ export async function uploadPhotos(
     })
   );
   return apiPost<UploadResponse>("/upload", {
-    photos:       photoPayloads,
-    schema_id:    schemaId,
-    farmer_id:    farmerId,
+    photos:        photoPayloads,
+    schema_id:     schemaId,
+    farmer_id:     farmerId || "auto",
     supervisor_id: supervisorId,
   });
 }
@@ -160,13 +175,15 @@ export async function uploadPhotos(
 
 export async function digitizeAll(
   schemaId: string,
-  supervisorId: string,
-  farmerId?: string
+  supervisorId: string = "supervisor",
+  farmerId?: string,
+  batchMode: boolean = true
 ): Promise<DigitizeResponse> {
   return apiPost<DigitizeResponse>("/digitize", {
     schema_id:     schemaId,
     supervisor_id: supervisorId,
     farmer_id:     farmerId,
+    batch_mode:    batchMode,
   });
 }
 
